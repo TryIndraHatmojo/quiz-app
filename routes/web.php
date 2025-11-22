@@ -17,8 +17,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 Route::middleware(['auth', 'verified'])->prefix('master')->name('master.')->group(function () {
-    Route::get('/users', [App\Http\Controllers\Master\UserController::class, 'index'])->name('users.index');
-    Route::get('/roles', [App\Http\Controllers\Master\RoleController::class, 'index'])->name('roles.index');
+    Route::resource('users', App\Http\Controllers\Master\UserController::class);
+    Route::resource('roles', App\Http\Controllers\Master\RoleController::class);
 });
 
 require __DIR__.'/settings.php';

@@ -13,15 +13,14 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::firstOrCreate(
-            ['email' => 'test@example.com'],
-            [
-                'name' => 'Test User',
-                'password' => 'password',
-                'email_verified_at' => now(),
-            ]
-        );
+        // Call seeders in dependency order
+        $this->call([
+            RoleSeeder::class,           // First - no dependencies
+            UserSeeder::class,            // Depends on roles
+            QuizCategorySeeder::class,    // No dependencies
+            QuizSeeder::class,            // Depends on users and categories
+            QuizQuestionSeeder::class,    // Depends on quizzes
+            QuizQuestionOptionSeeder::class, // Depends on questions
+        ]);
     }
 }

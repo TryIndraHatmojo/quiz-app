@@ -1,5 +1,6 @@
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
+import { NavMainWithDropdown } from '@/components/nav-main-with-dropdown';
 import { NavUser } from '@/components/nav-user';
 import {
     Sidebar,
@@ -11,16 +12,43 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
-import { type NavItem } from '@/types';
+import { type NavGroup, type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid } from 'lucide-react';
+import { BookOpen, Database, Folder, LayoutGrid, Shield, Users } from 'lucide-react';
 import AppLogo from './app-logo';
 
-const mainNavItems: NavItem[] = [
+const mainNavGroups: NavGroup[] = [
     {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
+        title: 'Platform',
+        items: [
+            {
+                title: 'Dashboard',
+                href: dashboard(),
+                icon: LayoutGrid,
+            },
+        ],
+    },
+    {
+        title: 'Data Master',
+        items: [
+            {
+                title: 'Master Data',
+                href: '#',
+                icon: Database,
+                items: [
+                    {
+                        title: 'Pengguna',
+                        href: '/master/users',
+                        icon: Users,
+                    },
+                    {
+                        title: 'Peran',
+                        href: '/master/roles',
+                        icon: Shield,
+                    },
+                ],
+            },
+        ],
     },
 ];
 
@@ -53,7 +81,7 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={mainNavItems} />
+                <NavMainWithDropdown groups={mainNavGroups} />
             </SidebarContent>
 
             <SidebarFooter>

@@ -2,54 +2,44 @@
 
 namespace Database\Seeders;
 
+use App\Models\QuizCategory;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class QuizCategorySeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         $categories = [
             [
                 'name' => 'Mathematics',
                 'slug' => 'mathematics',
-                'description' => 'Kategori untuk quiz matematika',
-                'created_at' => now(),
-                'updated_at' => now(),
+                'description' => 'Math quizzes and assessments',
             ],
             [
                 'name' => 'Science',
                 'slug' => 'science',
-                'description' => 'Kategori untuk quiz sains dan IPA',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'History',
-                'slug' => 'history',
-                'description' => 'Kategori untuk quiz sejarah',
-                'created_at' => now(),
-                'updated_at' => now(),
+                'description' => 'Science quizzes covering physics, chemistry, and biology',
             ],
             [
                 'name' => 'English',
                 'slug' => 'english',
-                'description' => 'Kategori untuk quiz bahasa Inggris',
-                'created_at' => now(),
-                'updated_at' => now(),
+                'description' => 'English language and literature quizzes',
             ],
             [
-                'name' => 'Bahasa Arab',
-                'slug' => 'bahasa-arab',
-                'description' => 'Kategori untuk quiz bahasa Arab',
-                'created_at' => now(),
-                'updated_at' => now(),
+                'name' => 'History',
+                'slug' => 'history',
+                'description' => 'Historical events and facts',
+            ],
+            [
+                'name' => 'General Knowledge',
+                'slug' => 'general-knowledge',
+                'description' => 'General knowledge and trivia',
             ],
         ];
 
-        DB::table('quiz_categories')->insert($categories);
+        foreach ($categories as $category) {
+            QuizCategory::create($category);
+        }
     }
 }

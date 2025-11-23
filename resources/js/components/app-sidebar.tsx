@@ -14,7 +14,7 @@ import {
 import { dashboard } from '@/routes';
 import { type NavGroup, type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { Database, LayoutGrid, Shield, Users } from 'lucide-react';
+import { BookOpen, Database, LayoutGrid, Plus, Shield, Users } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavGroups: NavGroup[] = [
@@ -25,6 +25,21 @@ const mainNavGroups: NavGroup[] = [
                 title: 'Dashboard',
                 href: dashboard(),
                 icon: LayoutGrid,
+            },
+        ],
+    },
+    {
+        title: 'Library',
+        items: [
+            {
+                title: 'Create',
+                href: '/library/quizzes/create',
+                icon: Plus,
+            },
+            {
+                title: 'All Activities',
+                href: '/library/quizzes',
+                icon: BookOpen,
             },
         ],
     },

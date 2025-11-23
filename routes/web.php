@@ -21,4 +21,8 @@ Route::middleware(['auth', 'verified'])->prefix('master')->name('master.')->grou
     Route::resource('roles', App\Http\Controllers\Master\RoleController::class);
 });
 
+Route::middleware(['auth', 'verified'])->prefix('library')->name('library.')->group(function () {
+    Route::resource('quizzes', App\Http\Controllers\Library\QuizController::class);
+});
+
 require __DIR__.'/settings.php';

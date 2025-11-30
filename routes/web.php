@@ -23,6 +23,8 @@ Route::middleware(['auth', 'verified'])->prefix('master')->name('master.')->grou
 
 Route::middleware(['auth', 'verified'])->prefix('library')->name('library.')->group(function () {
     Route::resource('quizzes', App\Http\Controllers\Library\QuizController::class);
+    Route::get('quizzes/{quiz}/questions', [App\Http\Controllers\Library\QuizController::class, 'questions'])->name('quizzes.questions');
+    Route::post('quizzes/{quiz}/questions', [App\Http\Controllers\Library\QuizController::class, 'storeQuestions'])->name('quizzes.questions.store');
 });
 
 require __DIR__.'/settings.php';

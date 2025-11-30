@@ -35,7 +35,7 @@ export default function RoleIndex({ roles }: Props) {
     const { flash } = usePage<SharedData>().props;
 
     const handleDelete = (id: number) => {
-        if (confirm('Are you sure you want to delete this role?')) {
+        if (confirm('Apakah Anda yakin ingin menghapus peran ini?')) {
             router.delete(route('master.roles.destroy', id));
         }
     };
@@ -57,7 +57,7 @@ export default function RoleIndex({ roles }: Props) {
                 {flash.success && (
                     <Alert variant="default" className="bg-green-50 text-green-900 border-green-200">
                         <CheckCircle2 className="h-4 w-4 text-green-600" />
-                        <AlertTitle>Success</AlertTitle>
+                        <AlertTitle>Berhasil</AlertTitle>
                         <AlertDescription>{flash.success}</AlertDescription>
                     </Alert>
                 )}

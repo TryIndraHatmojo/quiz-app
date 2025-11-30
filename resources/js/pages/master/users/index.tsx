@@ -27,7 +27,7 @@ export default function UserIndex({ users }: Props) {
     const { flash } = usePage<SharedData>().props;
 
     const handleDelete = (id: number) => {
-        if (confirm('Are you sure you want to delete this user?')) {
+        if (confirm('Apakah Anda yakin ingin menghapus pengguna ini?')) {
             router.delete(route('master.users.destroy', id));
         }
     };
@@ -49,7 +49,7 @@ export default function UserIndex({ users }: Props) {
                 {flash.success && (
                     <Alert variant="default" className="bg-green-50 text-green-900 border-green-200">
                         <CheckCircle2 className="h-4 w-4 text-green-600" />
-                        <AlertTitle>Success</AlertTitle>
+                        <AlertTitle>Berhasil</AlertTitle>
                         <AlertDescription>{flash.success}</AlertDescription>
                     </Alert>
                 )}

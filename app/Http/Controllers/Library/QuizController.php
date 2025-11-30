@@ -125,4 +125,71 @@ class QuizController extends Controller
         return redirect()->route('library.quizzes.index')
             ->with('success', 'Quiz deleted successfully.');
     }
+
+    public function questions(Quiz $quiz)
+    {
+        if ($quiz->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        return Inertia::render('library/quizzes/questions', [
+            'quiz' => $quiz->load(['questions.options']),
+        ]);
+    }
+
+    public function storeQuestions(Request $request, Quiz $quiz)
+    {
+        if ($quiz->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $data = $request->validate([
+            'questions' => 'array',
+            'questions.*.id' => 'nullable|integer',
+            'questions.*.question_text' => 'required|string',
+            'questions.*.question_type' => 'required|string',
+            'questions.*.time_limit' => 'required|integer',
+            'questions.*.points' => 'required|integer',
+            'questions.*.options' => 'array',
+            'questions.*.options.*.option_text' => 'required|string',
+            'questions.*.options.*.is_correct' => 'boolean',
+        ]);
+
+        // Simple sync strategy: delete all and recreate (or update existing)
+        // For a better UX, we might want to be smarter here, but for now let's iterate and update/create
+        
+        // This is a simplified implementation. In a real app, we'd handle IDs to update existing records.
+        // For this MVP, let's assume we receive the full state.
+        
+        // Note: A proper sync would be more complex. 
+        // Let's implement a basic "update or create" loop.
+
+        $existingQuestionIds = collect($request->questions)->pluck('id')->filter()->toArray();
+        $quiz->questions()->whereNotIn('id', $existingQuestionIds)->delete();
+
+        foreach ($request->questions as $index => $qData) {
+            $question = $quiz->questions()->updateOrCreate(
+                ['id' => $qData['id'] ?? null],
+                [
+                    'question_text' => $qData['question_text'],
+                    'question_type' => $qData['question_type'],
+                    'time_limit' => $qData['time_limit'],
+                    'points' => $qData['points'],
+                    'order' => $index,
+                ]
+            );
+
+            // Handle options
+            $question->options()->delete(); // Simplest way for options for now
+            foreach ($qData['options'] as $oIndex => $oData) {
+                $question->options()->create([
+                    'option_text' => $oData['option_text'],
+                    'is_correct' => $oData['is_correct'],
+                    'order' => $oIndex,
+                ]);
+            }
+        }
+
+        return back()->with('success', 'Questions saved successfully.');
+    }
 }

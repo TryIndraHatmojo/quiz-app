@@ -29,11 +29,11 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: '#',
     },
     {
-        title: 'All Activities',
+        title: 'Semua Aktivitas',
         href: '/library/quizzes',
     },
     {
-        title: 'Create',
+        title: 'Buat',
         href: '/library/quizzes/create',
     },
 ];
@@ -51,7 +51,7 @@ export default function QuizCreate({ categories = [] }: Props) {
         
         // Check if category is selected
         if (!data.quiz_category_id) {
-            alert('Please select a category');
+            alert('Harap pilih kategori');
             return;
         }
         
@@ -60,25 +60,25 @@ export default function QuizCreate({ categories = [] }: Props) {
 
     return (
         <AppSidebarLayout breadcrumbs={breadcrumbs}>
-            <Head title="Create Activity" />
+            <Head title="Buat Aktivitas" />
 
             <div className="flex h-full flex-1 flex-col gap-4 p-4">
                 <div className="max-w-2xl">
                     <div className="mb-6">
-                        <h1 className="text-2xl font-bold tracking-tight">Create Activity</h1>
+                        <h1 className="text-2xl font-bold tracking-tight">Buat Aktivitas</h1>
                         <p className="text-muted-foreground">
-                            Create a new quiz or activity for your students.
+                            Buat kuis atau aktivitas baru untuk siswa Anda.
                         </p>
                     </div>
 
                     <form onSubmit={submit} className="space-y-6">
                         <div className="space-y-2">
-                            <Label htmlFor="title">Title</Label>
+                            <Label htmlFor="title">Judul</Label>
                             <Input
                                 id="title"
                                 value={data.title}
                                 onChange={(e) => setData('title', e.target.value)}
-                                placeholder="e.g. Mathematics Final Exam"
+                                placeholder="contoh: Ujian Akhir Matematika"
                                 required
                             />
                             {errors.title && (
@@ -87,13 +87,13 @@ export default function QuizCreate({ categories = [] }: Props) {
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="category">Category *</Label>
+                            <Label htmlFor="category">Kategori *</Label>
                             <Select
                                 value={data.quiz_category_id}
                                 onValueChange={(value) => setData('quiz_category_id', value)}
                             >
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Select a category" />
+                                    <SelectValue placeholder="Pilih kategori" />
                             </SelectTrigger>
                             <SelectContent>
                                 {categories.map((cat) => (
@@ -109,12 +109,12 @@ export default function QuizCreate({ categories = [] }: Props) {
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="description">Description</Label>
+                            <Label htmlFor="description">Deskripsi</Label>
                             <Textarea
                                 id="description"
                                 value={data.description}
                                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setData('description', e.target.value)}
-                                placeholder="Optional description for this activity..."
+                                placeholder="Deskripsi opsional untuk aktivitas ini..."
                                 className="h-32"
                             />
                             {errors.description && (
@@ -124,14 +124,14 @@ export default function QuizCreate({ categories = [] }: Props) {
 
                         <div className="flex items-center gap-4">
                             <Button type="submit" disabled={processing}>
-                                Create Activity
+                                Buat Aktivitas
                             </Button>
                             <Button
                                 type="button"
                                 variant="outline"
                                 onClick={() => window.history.back()}
                             >
-                                Cancel
+                                Batal
                             </Button>
                         </div>
                     </form>

@@ -57,7 +57,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: '#',
     },
     {
-        title: 'All Activities',
+        title: 'Semua Aktivitas',
         href: '/library/quizzes',
     },
 ];
@@ -102,7 +102,7 @@ export default function QuizIndex({ quizzes, categories = [], filters }: Props) 
     };
 
     const handleDelete = (id: number) => {
-        if (confirm('Are you sure you want to delete this quiz?')) {
+        if (confirm('Apakah Anda yakin ingin menghapus kuis ini?')) {
             router.delete(route('library.quizzes.destroy', id), {
                 preserveScroll: true,
             });
@@ -144,13 +144,13 @@ export default function QuizIndex({ quizzes, categories = [], filters }: Props) 
 
     return (
         <AppSidebarLayout breadcrumbs={breadcrumbs}>
-            <Head title="Library - All Activities" />
+            <Head title="Library - Semua Aktivitas" />
 
             <div className="flex h-full flex-1 flex-col gap-4 p-4">
                 {flash.success && (
                     <Alert variant="default" className="border-green-500 bg-green-50 text-green-900 dark:bg-green-900/20 dark:text-green-300">
                         <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-                        <AlertTitle>Success</AlertTitle>
+                        <AlertTitle>Berhasil</AlertTitle>
                         <AlertDescription>{flash.success}</AlertDescription>
                     </Alert>
                 )}
@@ -167,13 +167,13 @@ export default function QuizIndex({ quizzes, categories = [], filters }: Props) 
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight">Library</h1>
                         <p className="text-muted-foreground">
-                            Manage your quizzes and activities.
+                            Kelola kuis dan aktivitas Anda.
                         </p>
                     </div>
                     <Button asChild>
                         <Link href={route('library.quizzes.create')}>
                             <Plus className="mr-2 h-4 w-4" />
-                            Create Activity
+                            Buat Aktivitas
                         </Link>
                     </Button>
                 </div>
@@ -192,7 +192,7 @@ export default function QuizIndex({ quizzes, categories = [], filters }: Props) 
                                 }, { preserveState: true, preserveScroll: true });
                             }}
                         >
-                            All
+                            Semua
                         </Button>
                         <Button
                             variant={statusFilter === 'live' ? 'default' : 'outline'}
@@ -237,10 +237,10 @@ export default function QuizIndex({ quizzes, categories = [], filters }: Props) 
                             }}
                         >
                             <SelectTrigger className="w-[200px]">
-                                <SelectValue placeholder="All Categories" />
+                                <SelectValue placeholder="Semua Kategori" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">All Categories</SelectItem>
+                                <SelectItem value="all">Semua Kategori</SelectItem>
                                 {categories.map((cat) => (
                                     <SelectItem key={cat.id} value={cat.id.toString()}>
                                         {cat.name}
@@ -251,7 +251,7 @@ export default function QuizIndex({ quizzes, categories = [], filters }: Props) 
 
                         <form onSubmit={handleSearchSubmit} className="flex flex-1 gap-2">
                             <Input
-                                placeholder="Search quizzes..."
+                                placeholder="Cari kuis..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 className="flex-1"
@@ -267,7 +267,7 @@ export default function QuizIndex({ quizzes, categories = [], filters }: Props) 
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {localQuizzes.length === 0 ? (
                         <div className="col-span-full py-12 text-center text-muted-foreground">
-                            No activities found. Click "Create Activity" to get started.
+                            Tidak ada aktivitas ditemukan. Klik "Buat Aktivitas" untuk memulai.
                         </div>
                     ) : (
                         localQuizzes.map((quiz) => (
@@ -277,7 +277,7 @@ export default function QuizIndex({ quizzes, categories = [], filters }: Props) 
                                         <div className="flex-1">
                                             <CardTitle className="line-clamp-1">{quiz.title}</CardTitle>
                                             <CardDescription className="mt-1">
-                                                Code: <span className="font-mono">{quiz.join_code}</span>
+                                                Kode: <span className="font-mono">{quiz.join_code}</span>
                                             </CardDescription>
                                         </div>
                                         <span className={`ml-2 rounded-full px-2.5 py-0.5 text-xs font-medium ${
@@ -291,21 +291,26 @@ export default function QuizIndex({ quizzes, categories = [], filters }: Props) 
                                 </CardHeader>
                                 <CardContent className="flex-1">
                                     <p className="line-clamp-3 text-sm text-muted-foreground">
-                                        {quiz.description || 'No description provided.'}
+                                        {quiz.description || 'Tidak ada deskripsi.'}
                                     </p>
                                     {quiz.category && (
                                         <p className="mt-2 text-xs text-muted-foreground">
-                                            Category: {quiz.category.name}
+                                            Kategori: {quiz.category.name}
                                         </p>
                                     )}
                                     <p className="mt-2 text-xs text-muted-foreground">
-                                        Created: {new Date(quiz.created_at).toLocaleDateString()}
+                                        Dibuat: {new Date(quiz.created_at).toLocaleDateString()}
                                     </p>
                                 </CardContent>
                                 <CardFooter className="flex gap-2">
                                     <Button variant="outline" size="sm" className="flex-1" asChild>
-                                        <Link href={route('library.quizzes.edit', quiz.id)}>
+                                        <Link href={route('library.quizzes.questions', quiz.id)}>
                                             <Pencil className="mr-2 h-4 w-4" />
+                                            Pertanyaan
+                                        </Link>
+                                    </Button>
+                                    <Button variant="outline" size="sm" asChild>
+                                        <Link href={route('library.quizzes.edit', quiz.id)}>
                                             Edit
                                         </Link>
                                     </Button>
@@ -315,8 +320,7 @@ export default function QuizIndex({ quizzes, categories = [], filters }: Props) 
                                         className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
                                         onClick={() => handleDelete(quiz.id)}
                                     >
-                                        <Trash2 className="mr-2 h-4 w-4" />
-                                        Delete
+                                        <Trash2 className="h-4 w-4" />
                                     </Button>
                                 </CardFooter>
                             </Card>
@@ -327,7 +331,7 @@ export default function QuizIndex({ quizzes, categories = [], filters }: Props) 
                 {/* Lazy loading trigger */}
                 {quizzes.current_page < quizzes.last_page && (
                     <div ref={observerTarget} className="py-4 text-center text-sm text-muted-foreground">
-                        {loading ? 'Loading more...' : 'Scroll for more'}
+                        {loading ? 'Memuat lebih banyak...' : 'Gulir untuk lebih banyak'}
                     </div>
                 )}
             </div>

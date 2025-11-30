@@ -131,7 +131,7 @@ export function FileUploader({
                 <input {...getInputProps()} />
                 
                 {(preview || currentFile) ? (
-                    <div className="relative h-full w-full max-h-[300px]">
+                    <div className="relative w-full h-[300px]">
                         {renderPreview()}
                         <div className="absolute -right-2 -top-2">
                             <Button

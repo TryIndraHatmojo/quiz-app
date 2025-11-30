@@ -23,6 +23,7 @@ class Quiz extends Model
         'time_per_question',
         'starts_at',
         'ends_at',
+        'quiz_background_id',
         'settings',
     ];
 
@@ -51,5 +52,10 @@ class Quiz extends Model
     public function attempts(): HasMany
     {
         return $this->hasMany(QuizAttempt::class);
+    }
+
+    public function background(): BelongsTo
+    {
+        return $this->belongsTo(QuizBackground::class, 'quiz_background_id');
     }
 }

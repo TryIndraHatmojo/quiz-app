@@ -9,6 +9,11 @@ export interface Role {
     created_at: string;
 }
 
+export interface QuizCategory {
+    id: number;
+    name: string;
+}
+
 export interface QuizBackground {
     id: number;
     name: string;

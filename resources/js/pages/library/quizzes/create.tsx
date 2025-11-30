@@ -10,17 +10,16 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import AppSidebarLayout from '@/layouts/app/app-sidebar-layout';
-import { type BreadcrumbItem } from '@/types';
+import { type BreadcrumbItem, type QuizBackground, type QuizCategory } from '@/types';
+import { FileUploader } from '@/components/file-uploader';
 import { Head, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
-interface QuizCategory {
-    id: number;
-    name: string;
-}
+
 
 interface Props {
     categories: QuizCategory[];
+    backgrounds: QuizBackground[];
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -38,11 +37,13 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function QuizCreate({ categories = [] }: Props) {
+export default function QuizCreate({ categories = [], backgrounds = [] }: Props) {
     const { data, setData, post, processing, errors } = useForm({
         title: '',
         description: '',
         quiz_category_id: '',
+        quiz_background_id: '',
+        background_file: null as File | null,
     });
 
 
@@ -119,6 +120,71 @@ export default function QuizCreate({ categories = [] }: Props) {
                             />
                             {errors.description && (
                                 <p className="text-sm text-destructive">{errors.description}</p>
+                            )}
+                        </div>
+
+                        <div className="space-y-4">
+                            <Label>Background</Label>
+                            
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                <div className="space-y-2">
+                                    <Label className="text-xs text-muted-foreground">Pilih dari Galeri</Label>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {backgrounds.map((bg) => (
+                                            <div 
+                                                key={bg.id}
+                                                className={`relative cursor-pointer overflow-hidden rounded-md border-2 ${
+                                                    data.quiz_background_id === bg.id.toString() 
+                                                        ? 'border-primary' 
+                                                        : 'border-transparent'
+                                                }`}
+                                                onClick={() => {
+                                                    setData(data => ({
+                                                        ...data,
+                                                        quiz_background_id: bg.id.toString(),
+                                                        background_file: null
+                                                    }));
+                                                }}
+                                            >
+                                                <img 
+                                                    src={bg.image_path} 
+                                                    alt={bg.name} 
+                                                    className="h-20 w-full object-cover"
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label className="text-xs text-muted-foreground">Atau Upload Baru</Label>
+                                    <FileUploader
+                                        onFileSelect={(file: File | null) => {
+                                            setData(data => ({
+                                                ...data,
+                                                background_file: file,
+                                                quiz_background_id: ''
+                                            }));
+                                        }}
+                                        label="Upload Background"
+                                        description="Drag & drop atau klik untuk upload"
+                                        maxSize={10 * 1024 * 1024}
+                                        accept={{
+                                            'image/*': ['.jpeg', '.png', '.jpg', '.gif']
+                                        }}
+                                    />
+                                    {data.background_file && (
+                                        <p className="text-sm text-muted-foreground">
+                                            File terpilih: {data.background_file.name}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                            {errors.quiz_background_id && (
+                                <p className="text-sm text-destructive">{errors.quiz_background_id}</p>
+                            )}
+                            {errors.background_file && (
+                                <p className="text-sm text-destructive">{errors.background_file}</p>
                             )}
                         </div>
 

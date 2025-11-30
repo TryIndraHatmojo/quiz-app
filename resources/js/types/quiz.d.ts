@@ -1,3 +1,5 @@
+import { QuizBackground } from './index';
+
 export interface QuizQuestionOption {
     id?: number;
     quiz_question_id?: number;
@@ -24,5 +26,7 @@ export interface Quiz {
     description: string;
     quiz_category_id: number;
     status: string;
+    quiz_background_id?: number | null;
+    background?: QuizBackground;
     questions?: QuizQuestion[];
 }

@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Library;
 use App\Http\Controllers\Controller;
 use App\Models\Quiz;
 use App\Models\QuizCategory;
+use App\Models\QuizBackground;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
 use Inertia\Inertia;
 use Illuminate\Support\Str;
 
@@ -48,9 +50,14 @@ class QuizController extends Controller
     public function create()
     {
         $categories = QuizCategory::all();
+        $backgrounds = QuizBackground::where('is_public', true)
+            ->orWhere('user_id', auth()->id())
+            ->latest()
+            ->get();
         
         return Inertia::render('library/quizzes/create', [
             'categories' => $categories,
+            'backgrounds' => $backgrounds,
         ]);
     }
 
@@ -60,7 +67,33 @@ class QuizController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'quiz_category_id' => 'required|exists:quiz_categories,id',
+            'quiz_background_id' => 'nullable|exists:quiz_backgrounds,id',
+            'background_file' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:10240',
         ]);
+
+        $backgroundId = $request->quiz_background_id;
+
+        if ($request->hasFile('background_file')) {
+            $file = $request->file('background_file');
+            $fileName = time() . '_' . Str::slug($request->title) . '_bg.' . $file->getClientOriginalExtension();
+            
+            $destinationPath = public_path('uploads/backgrounds');
+            if (!File::exists($destinationPath)) {
+                File::makeDirectory($destinationPath, 0755, true);
+            }
+            
+            $file->move($destinationPath, $fileName);
+            $filePath = '/uploads/backgrounds/' . $fileName;
+
+            $background = QuizBackground::create([
+                'user_id' => auth()->id(),
+                'name' => 'Background for ' . $request->title,
+                'image_path' => $filePath,
+                'is_public' => false,
+            ]);
+
+            $backgroundId = $background->id;
+        }
 
         Quiz::create([
             'user_id' => auth()->id(),
@@ -69,6 +102,7 @@ class QuizController extends Controller
             'join_code' => strtoupper(Str::random(6)),
             'description' => $request->description,
             'quiz_category_id' => $request->quiz_category_id,
+            'quiz_background_id' => $backgroundId,
             'status' => 'draft',
         ]);
 
@@ -83,10 +117,15 @@ class QuizController extends Controller
         }
 
         $categories = QuizCategory::all();
+        $backgrounds = QuizBackground::where('is_public', true)
+            ->orWhere('user_id', auth()->id())
+            ->latest()
+            ->get();
 
         return Inertia::render('library/quizzes/edit', [
-            'quiz' => $quiz->load('category'),
+            'quiz' => $quiz->load(['category', 'background']),
             'categories' => $categories,
+            'backgrounds' => $backgrounds,
         ]);
     }
 
@@ -100,13 +139,40 @@ class QuizController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'quiz_category_id' => 'nullable|exists:quiz_categories,id',
+            'quiz_background_id' => 'nullable|exists:quiz_backgrounds,id',
+            'background_file' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:10240',
             'status' => 'required|in:draft,live,finished,archived',
         ]);
+
+        $backgroundId = $request->quiz_background_id;
+
+        if ($request->hasFile('background_file')) {
+            $file = $request->file('background_file');
+            $fileName = time() . '_' . Str::slug($request->title) . '_bg.' . $file->getClientOriginalExtension();
+            
+            $destinationPath = public_path('uploads/backgrounds');
+            if (!File::exists($destinationPath)) {
+                File::makeDirectory($destinationPath, 0755, true);
+            }
+            
+            $file->move($destinationPath, $fileName);
+            $filePath = '/uploads/backgrounds/' . $fileName;
+
+            $background = QuizBackground::create([
+                'user_id' => auth()->id(),
+                'name' => 'Background for ' . $request->title,
+                'image_path' => $filePath,
+                'is_public' => false,
+            ]);
+
+            $backgroundId = $background->id;
+        }
 
         $quiz->update([
             'title' => $request->title,
             'description' => $request->description,
             'quiz_category_id' => $request->quiz_category_id,
+            'quiz_background_id' => $backgroundId,
             'status' => $request->status,
         ]);
 

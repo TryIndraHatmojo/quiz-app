@@ -10,28 +10,11 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import AppSidebarLayout from '@/layouts/app/app-sidebar-layout';
-import { type BreadcrumbItem } from '@/types';
+import { type BreadcrumbItem, type QuizBackground, type QuizCategory } from '@/types';
+import { type Quiz } from '@/types/quiz';
+import { FileUploader } from '@/components/file-uploader';
 import { Head, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
-
-interface QuizCategory {
-    id: number;
-    name: string;
-}
-
-interface Quiz {
-    id: number;
-    title: string;
-    description: string;
-    quiz_category_id: number | null;
-    status: string;
-}
-
-interface Props {
-    quiz: Quiz;
-    categories: QuizCategory[];
-}
-
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Library',
@@ -47,17 +30,20 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function QuizEdit({ quiz, categories = [] }: Props) {
-    const { data, setData, put, processing, errors } = useForm({
+export default function QuizEdit({ quiz, categories = [], backgrounds = [] }: Props) {
+    const { data, setData, post, processing, errors } = useForm({
+        _method: 'PUT',
         title: quiz.title || '',
         description: quiz.description || '',
         quiz_category_id: quiz.quiz_category_id?.toString() || '',
+        quiz_background_id: quiz.quiz_background_id?.toString() || '',
+        background_file: null as File | null,
         status: quiz.status || 'draft',
     });
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        put(route('library.quizzes.update', quiz.id));
+        post(route('library.quizzes.update', quiz.id));
     };
 
     return (
@@ -93,12 +79,78 @@ export default function QuizEdit({ quiz, categories = [] }: Props) {
                             <Textarea
                                 id="description"
                                 value={data.description}
-                                onChange={(e) => setData('description', e.target.value)}
+                                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setData('description', e.target.value)}
                                 placeholder="Deskripsi opsional untuk aktivitas ini..."
                                 className="h-32"
                             />
                             {errors.description && (
                                 <p className="text-sm text-destructive">{errors.description}</p>
+                            )}
+                        </div>
+
+                        <div className="space-y-4">
+                            <Label>Background</Label>
+                            
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                <div className="space-y-2">
+                                    <Label className="text-xs text-muted-foreground">Pilih dari Galeri</Label>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {backgrounds.map((bg) => (
+                                            <div 
+                                                key={bg.id}
+                                                className={`relative cursor-pointer overflow-hidden rounded-md border-2 ${
+                                                    data.quiz_background_id === bg.id.toString() 
+                                                        ? 'border-primary' 
+                                                        : 'border-transparent'
+                                                }`}
+                                                onClick={() => {
+                                                    setData(data => ({
+                                                        ...data,
+                                                        quiz_background_id: bg.id.toString(),
+                                                        background_file: null
+                                                    }));
+                                                }}
+                                            >
+                                                <img 
+                                                    src={bg.image_path} 
+                                                    alt={bg.name} 
+                                                    className="h-20 w-full object-cover"
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label className="text-xs text-muted-foreground">Atau Upload Baru</Label>
+                                    <FileUploader
+                                        onFileSelect={(file: File | null) => {
+                                            setData(data => ({
+                                                ...data,
+                                                background_file: file,
+                                                quiz_background_id: ''
+                                            }));
+                                        }}
+                                        label="Upload Background"
+                                        description="Drag & drop atau klik untuk upload"
+                                        maxSize={10 * 1024 * 1024}
+                                        accept={{
+                                            'image/*': ['.jpeg', '.png', '.jpg', '.gif']
+                                        }}
+                                        currentFile={quiz.background?.image_path}
+                                    />
+                                    {data.background_file && (
+                                        <p className="text-sm text-muted-foreground">
+                                            File terpilih: {data.background_file.name}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                            {errors.quiz_background_id && (
+                                <p className="text-sm text-destructive">{errors.quiz_background_id}</p>
+                            )}
+                            {errors.background_file && (
+                                <p className="text-sm text-destructive">{errors.background_file}</p>
                             )}
                         </div>
 

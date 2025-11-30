@@ -1,5 +1,5 @@
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem, type SharedData } from '@/types';
+import { type BreadcrumbItem, type SharedData, type Role } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -16,18 +16,16 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-interface Role {
-    id: number;
-    name: string;
-    slug: string;
-    description: string;
-    created_at: string;
-}
+
 
 interface Props {
     roles: {
         data: Role[];
-        links: any[];
+        links: Array<{
+            url: string | null;
+            label: string;
+            active: boolean;
+        }>;
     };
 }
 

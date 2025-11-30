@@ -19,7 +19,11 @@ const breadcrumbs: BreadcrumbItem[] = [
 interface Props {
     users: {
         data: User[];
-        links: any[];
+        links: Array<{
+            url: string | null;
+            label: string;
+            active: boolean;
+        }>;
     };
 }
 
@@ -94,7 +98,7 @@ export default function UserIndex({ users }: Props) {
                                     </td>
                                     <td className="px-6 py-4">{user.email}</td>
                                     <td className="px-6 py-4">
-                                        {(user as any).roles?.map((role: any) => (
+                                        {user.roles?.map((role) => (
                                             <span
                                                 key={role.id}
                                                 className="mr-2 rounded bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-300"

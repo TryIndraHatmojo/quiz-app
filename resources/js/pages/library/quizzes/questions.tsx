@@ -64,14 +64,14 @@ export default function QuizQuestions({ quiz }: Props) {
     );
     const [currentIndex, setCurrentIndex] = useState(0);
 
-    const { data, setData, post, processing } = useForm({
+    const { setData, post, processing } = useForm({
         questions: questions,
     });
 
     // Sync local state with form data whenever questions change
     useEffect(() => {
         setData('questions', questions);
-    }, [questions]);
+    }, [questions, setData]);
 
     const currentQuestion = questions[currentIndex];
 
@@ -115,7 +115,7 @@ export default function QuizQuestions({ quiz }: Props) {
         setCurrentIndex(questions.length);
     };
 
-    const updateCurrentQuestion = (field: keyof QuizQuestion, value: any) => {
+    const updateCurrentQuestion = (field: keyof QuizQuestion, value: string | number | boolean | QuizQuestionOption[]) => {
         const newQuestions = [...questions];
         newQuestions[currentIndex] = {
             ...newQuestions[currentIndex],
@@ -124,7 +124,7 @@ export default function QuizQuestions({ quiz }: Props) {
         setQuestions(newQuestions);
     };
 
-    const updateOption = (optionIndex: number, field: keyof QuizQuestionOption, value: any) => {
+    const updateOption = (optionIndex: number, field: keyof QuizQuestionOption, value: string | boolean) => {
         const newQuestions = [...questions];
         const newOptions = [...newQuestions[currentIndex].options];
         newOptions[optionIndex] = {

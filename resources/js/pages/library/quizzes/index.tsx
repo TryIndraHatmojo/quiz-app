@@ -74,11 +74,9 @@ export default function QuizIndex({ quizzes, categories = [], filters }: Props) 
 
     useEffect(() => {
         if (quizzes.current_page === 1) {
-            console.log(quizzes.data);
             setLocalQuizzes(quizzes.data);
         } else {
             setLocalQuizzes(prev => {
-                console.log(quizzes.data);
                 const newIds = new Set(quizzes.data.map(q => q.id));
                 const existing = prev.filter(q => !newIds.has(q.id));
                 return [...existing, ...quizzes.data];
@@ -167,7 +165,7 @@ export default function QuizIndex({ quizzes, categories = [], filters }: Props) 
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight">Library</h1>
                         <p className="text-muted-foreground">
-                            Kelola kuis dan aktivitas Anda.
+                            Kelola kuis dan aktivitas.
                         </p>
                     </div>
                     <Button asChild>

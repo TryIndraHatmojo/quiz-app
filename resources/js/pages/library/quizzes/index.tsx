@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import AppSidebarLayout from '@/layouts/app/app-sidebar-layout';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { CheckCircle2, Pencil, Plus, Search, Trash2, XCircle } from 'lucide-react';
+import { CheckCircle2, Eye, Pencil, Plus, Search, Trash2, XCircle } from 'lucide-react';
 import { FormEventHandler, useEffect, useRef, useState } from 'react';
 
 interface QuizCategory {
@@ -305,6 +305,11 @@ export default function QuizIndex({ quizzes, categories = [], filters }: Props) 
                                         <Link href={route('library.quizzes.questions', quiz.id)}>
                                             <Pencil className="mr-2 h-4 w-4" />
                                             Pertanyaan
+                                        </Link>
+                                    </Button>
+                                    <Button variant="outline" size="sm" asChild>
+                                        <Link href={route('library.quizzes.preview', quiz.id)}>
+                                            <Eye className="h-4 w-4" />
                                         </Link>
                                     </Button>
                                     <Button variant="outline" size="sm" asChild>

@@ -7,11 +7,12 @@ import { FileUploader } from '@/components/file-uploader';
 import AppSidebarLayout from '@/layouts/app/app-sidebar-layout';
 import { BreadcrumbItem, Gallery } from '@/types';
 import { Quiz, QuizQuestion, QuizQuestionOption } from '@/types/quiz';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, Link } from '@inertiajs/react';
 import {
     Check,
     ChevronLeft,
     Copy,
+    Eye,
     Image as ImageIcon,
     Plus,
     Save,
@@ -291,6 +292,11 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                             </Button>
                         </div>
                         <div className="flex items-center gap-2">
+                            <Button variant="outline" size="sm" asChild>
+                                <Link href={route('library.quizzes.preview', quiz.id)}>
+                                    <Eye className="mr-2 h-4 w-4" /> Preview
+                                </Link>
+                            </Button>
                             <Button onClick={save} disabled={processing}>
                                 <Save className="mr-2 h-4 w-4" /> Simpan Perubahan
                             </Button>

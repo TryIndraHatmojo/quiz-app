@@ -207,6 +207,17 @@ class QuizController extends Controller
         ]);
     }
 
+    public function preview(Quiz $quiz)
+    {
+        if ($quiz->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        return Inertia::render('library/quizzes/preview', [
+            'quiz' => $quiz->load(['questions.options', 'background']),
+        ]);
+    }
+
     public function storeQuestions(Request $request, Quiz $quiz)
     {
         if ($quiz->user_id !== auth()->id()) {

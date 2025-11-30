@@ -27,6 +27,7 @@ Route::middleware(['auth', 'verified'])->prefix('library')->name('library.')->gr
     Route::resource('quizzes', App\Http\Controllers\Library\QuizController::class);
     Route::get('quizzes/{quiz}/questions', [App\Http\Controllers\Library\QuizController::class, 'questions'])->name('quizzes.questions');
     Route::post('quizzes/{quiz}/questions', [App\Http\Controllers\Library\QuizController::class, 'storeQuestions'])->name('quizzes.questions.store');
+    Route::get('quizzes/{quiz}/preview', [App\Http\Controllers\Library\QuizController::class, 'preview'])->name('quizzes.preview');
 });
 
 require __DIR__.'/settings.php';

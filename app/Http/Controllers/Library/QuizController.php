@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Quiz;
 use App\Models\QuizCategory;
 use App\Models\QuizBackground;
+use App\Models\Gallery;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Inertia\Inertia;
@@ -198,8 +199,11 @@ class QuizController extends Controller
             abort(403);
         }
 
+        $galleries = Gallery::latest()->get();
+
         return Inertia::render('library/quizzes/questions', [
             'quiz' => $quiz->load(['questions.options']),
+            'galleries' => $galleries,
         ]);
     }
 
@@ -214,6 +218,7 @@ class QuizController extends Controller
             'questions.*.id' => 'nullable|integer',
             'questions.*.question_text' => 'required|string',
             'questions.*.question_type' => 'required|string',
+            'questions.*.media_path' => 'nullable|string',
             'questions.*.time_limit' => 'required|integer',
             'questions.*.points' => 'required|integer',
             'questions.*.options' => 'array',
@@ -239,6 +244,7 @@ class QuizController extends Controller
                 [
                     'question_text' => $qData['question_text'],
                     'question_type' => $qData['question_type'],
+                    'media_path' => $qData['media_path'] ?? null,
                     'time_limit' => $qData['time_limit'],
                     'points' => $qData['points'],
                     'order' => $index,

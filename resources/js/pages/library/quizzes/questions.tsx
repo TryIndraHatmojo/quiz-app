@@ -2,8 +2,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { FileUploader } from '@/components/file-uploader';
 import AppSidebarLayout from '@/layouts/app/app-sidebar-layout';
-import { BreadcrumbItem } from '@/types';
+import { BreadcrumbItem, Gallery } from '@/types';
 import { Quiz, QuizQuestion, QuizQuestionOption } from '@/types/quiz';
 import { Head, useForm } from '@inertiajs/react';
 import {
@@ -14,11 +16,13 @@ import {
     Plus,
     Save,
     Trash2,
+    X,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface Props {
     quiz: Quiz;
+    galleries: Gallery[];
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -56,13 +60,17 @@ const defaultQuestion: QuizQuestion = {
     ],
 };
 
-export default function QuizQuestions({ quiz }: Props) {
+export default function QuizQuestions({ quiz, galleries }: Props) {
     const [questions, setQuestions] = useState<QuizQuestion[]>(
         quiz.questions && quiz.questions.length > 0
             ? quiz.questions
             : [{ ...defaultQuestion }]
     );
     const [currentIndex, setCurrentIndex] = useState(0);
+    const [mediaDialogOpen, setMediaDialogOpen] = useState(false);
+    const [galleryList, setGalleryList] = useState<Gallery[]>(galleries);
+    const [isUploading, setIsUploading] = useState(false);
+    const [activeTab, setActiveTab] = useState<'gallery' | 'upload'>('gallery');
 
     const { setData, post, processing } = useForm({
         questions: questions,
@@ -145,6 +153,54 @@ export default function QuizQuestions({ quiz }: Props) {
                 // Optional: show toast
             },
         });
+    };
+
+    const handleSelectGalleryItem = (gallery: Gallery) => {
+        updateCurrentQuestion('media_path', gallery.file_path);
+        setMediaDialogOpen(false);
+    };
+
+    const handleFileUpload = async (file: File | null) => {
+        if (!file) return;
+
+        setIsUploading(true);
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('title', `Question ${currentIndex + 1} Media`);
+
+        try {
+            const response = await fetch(route('master.galleries.store'), {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+                body: formData,
+            });
+
+            if (!response.ok) {
+                throw new Error('Upload failed');
+            }
+
+            const data = await response.json();
+            const newGallery = data.gallery;
+
+            // Add to gallery list
+            setGalleryList([newGallery, ...galleryList]);
+
+            // Set as current question media
+            updateCurrentQuestion('media_path', newGallery.file_path);
+
+            // Close dialog
+            setMediaDialogOpen(false);
+            setActiveTab('gallery');
+        } catch (error) {
+            console.error('Upload error:', error);
+            alert('Gagal mengunggah file');
+        } finally {
+            setIsUploading(false);
+        }
     };
 
     return (
@@ -257,14 +313,112 @@ export default function QuizQuestions({ quiz }: Props) {
                             </div>
 
                             {/* Media Area */}
-                            <div className="flex aspect-video w-full items-center justify-center rounded-xl bg-purple-100/50 border-2 border-dashed border-purple-200">
-                                <div className="flex flex-col items-center gap-4 text-purple-900/50">
-                                    <div className="rounded-full bg-white p-4 shadow-sm">
-                                        <Plus className="h-8 w-8" />
+                            <div className="relative">
+                                {currentQuestion.media_path ? (
+                                    <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-gray-100">
+                                        <img 
+                                            src={currentQuestion.media_path} 
+                                            alt="Question media" 
+                                            className="w-full h-full object-contain"
+                                        />
+                                        <button
+                                            onClick={() => updateCurrentQuestion('media_path', '')}
+                                            className="absolute top-2 right-2 p-2 bg-red-500 hover:bg-red-600 text-white rounded-full transition-colors"
+                                        >
+                                            <X className="h-4 w-4" />
+                                        </button>
                                     </div>
-                                    <span className="font-medium">Sisipkan media</span>
-                                    <span className="text-sm">Unggah file atau tarik ke sini untuk mengunggah</span>
-                                </div>
+                                ) : (
+                                    <Dialog open={mediaDialogOpen} onOpenChange={setMediaDialogOpen}>
+                                        <DialogTrigger asChild>
+                                            <button className="flex aspect-video w-full items-center justify-center rounded-xl bg-blue-100/50 border-2 border-dashed border-blue-200 hover:bg-blue-100 transition-colors">
+                                                <div className="flex flex-col items-center gap-4 Text-blue-900/50">
+                                                    <div className="rounded-full bg-white p-4 shadow-sm">
+                                                        <Plus className="h-8 w-8" />
+                                                    </div>
+                                                    <span className="font-medium">Sisipkan media</span>
+                                                    <span className="text-sm">Klik untuk memilih dari galeri atau unggah baru</span>
+                                                </div>
+                                            </button>
+                                        </DialogTrigger>
+                                        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                                            <DialogHeader>
+                                                <DialogTitle>Pilih Media</DialogTitle>
+                                            </DialogHeader>
+                                            <div className="space-y-4">
+                                                {/* Tabs */}
+                                                <div className="flex gap-2 border-b">
+                                                    <button
+                                                        onClick={() => setActiveTab('gallery')}
+                                                        className={`px-4 py-2 font-medium transition-colors ${
+                                                            activeTab === 'gallery'
+                                                                ? 'border-b-2 border-primary text-primary'
+                                                                : 'text-muted-foreground hover:text-foreground'
+                                                        }`}
+                                                    >
+                                                        Galeri
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setActiveTab('upload')}
+                                                        className={`px-4 py-2 font-medium transition-colors ${
+                                                            activeTab === 'upload'
+                                                                ? 'border-b-2 border-primary text-primary'
+                                                                : 'text-muted-foreground hover:text-foreground'
+                                                        }`}
+                                                    >
+                                                        Upload Baru
+                                                    </button>
+                                                </div>
+
+                                                {/* Gallery Tab */}
+                                                {activeTab === 'gallery' && (
+                                                    <div className="grid grid-cols-3 gap-4">
+                                                        {galleryList.filter(g => g.file_type === 'image').map((gallery) => (
+                                                            <button
+                                                                key={gallery.id}
+                                                                onClick={() => handleSelectGalleryItem(gallery)}
+                                                                className="relative aspect-video rounded-lg overflow-hidden border-2 border-gray-200 hover:border-primary transition-colors group"
+                                                            >
+                                                                <img 
+                                                                    src={gallery.file_path} 
+                                                                    alt={gallery.title} 
+                                                                    className="w-full h-full object-cover"
+                                                                />
+                                                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                                    <span className="text-white font-medium">Pilih</span>
+                                                                </div>
+                                                            </button>
+                                                        ))}
+                                                        {galleryList.filter(g => g.file_type === 'image').length === 0 && (
+                                                            <div className="col-span-3 py-12 text-center text-muted-foreground">
+                                                                Belum ada gambar di galeri
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+
+                                                {/* Upload Tab */}
+                                                {activeTab === 'upload' && (
+                                                    <div>
+                                                        <FileUploader
+                                                            onFileSelect={handleFileUpload}
+                                                            accept={{ 'image/*': [] }}
+                                                            label="Upload Gambar"
+                                                            description="Format: JPG, PNG, GIF. Maksimal 10MB."
+                                                            maxSize={10 * 1024 * 1024}
+                                                            fileType="image"
+                                                        />
+                                                        {isUploading && (
+                                                            <div className="mt-4 text-center text-muted-foreground">
+                                                                Mengunggah...
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </DialogContent>
+                                    </Dialog>
+                                )}
                             </div>
 
                             {/* Options Grid */}

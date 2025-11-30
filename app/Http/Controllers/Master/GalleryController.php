@@ -50,7 +50,7 @@ class GalleryController extends Controller
         $mimeType = $file->getClientMimeType();
         $fileType = str_starts_with($mimeType, 'video') ? 'video' : 'image';
 
-        Gallery::create([
+        $gallery = Gallery::create([
             'user_id' => Auth::id(),
             'title' => $request->title ?? $file->getClientOriginalName(),
             'file_path' => $filePath,
@@ -58,6 +58,15 @@ class GalleryController extends Controller
             'mime_type' => $mimeType,
             'size' => $file->getSize(),
         ]);
+
+        // Return JSON for API requests (async uploads from question editor)
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'gallery' => $gallery,
+                'message' => 'Galeri berhasil ditambahkan.',
+            ], 201);
+        }
 
         return redirect()->route('master.galleries.index')
             ->with('success', 'Galeri berhasil ditambahkan.');

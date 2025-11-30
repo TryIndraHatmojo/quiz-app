@@ -33,4 +33,9 @@ class QuizQuestion extends Model
     {
         return $this->hasMany(QuizQuestionOption::class)->orderBy('order');
     }
+
+    public function matchingPairs(): HasMany
+    {
+        return $this->hasMany(QuizMatchingPair::class)->orderBy('order');
+    }
 }

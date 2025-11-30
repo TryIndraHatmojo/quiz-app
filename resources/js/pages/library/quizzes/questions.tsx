@@ -262,7 +262,7 @@ export default function QuizQuestions({ quiz }: Props) {
                                     <div className="rounded-full bg-white p-4 shadow-sm">
                                         <Plus className="h-8 w-8" />
                                     </div>
-                                    <span className="font-medium">Cari dan sisipkan media</span>
+                                    <span className="font-medium">Sisipkan media</span>
                                     <span className="text-sm">Unggah file atau tarik ke sini untuk mengunggah</span>
                                 </div>
                             </div>
@@ -272,7 +272,7 @@ export default function QuizQuestions({ quiz }: Props) {
                                 {/* Option 1 - Red Triangle */}
                                 <div className="group relative flex items-center rounded-lg bg-white p-2 shadow-sm ring-1 ring-gray-200 focus-within:ring-2 focus-within:ring-red-500">
                                     <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded bg-red-600 text-white">
-                                        <svg viewBox="0 0 32 32" className="h-6 w-6 fill-current"><path d="M16,4L2,28h28L16,4z" /></svg>
+                                        <svg viewBox="0 0 32 32" className="h-6 w-6 fill-current"></svg>
                                     </div>
                                     <Textarea
                                         value={currentQuestion.options[0]?.option_text || ''}
@@ -297,7 +297,7 @@ export default function QuizQuestions({ quiz }: Props) {
                                 {/* Option 2 - Blue Diamond */}
                                 <div className="group relative flex items-center rounded-lg bg-white p-2 shadow-sm ring-1 ring-gray-200 focus-within:ring-2 focus-within:ring-blue-500">
                                     <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded bg-blue-600 text-white">
-                                        <svg viewBox="0 0 32 32" className="h-6 w-6 fill-current"><path d="M16,2l14,14L16,30L2,16L16,2z" /></svg>
+                                        <svg viewBox="0 0 32 32" className="h-6 w-6 fill-current"></svg>
                                     </div>
                                     <Textarea
                                         value={currentQuestion.options[1]?.option_text || ''}
@@ -322,7 +322,7 @@ export default function QuizQuestions({ quiz }: Props) {
                                 {/* Option 3 - Yellow Circle */}
                                 <div className="group relative flex items-center rounded-lg bg-white p-2 shadow-sm ring-1 ring-gray-200 focus-within:ring-2 focus-within:ring-yellow-500">
                                     <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded bg-yellow-500 text-white">
-                                        <svg viewBox="0 0 32 32" className="h-6 w-6 fill-current"><circle cx="16" cy="16" r="14" /></svg>
+                                        <svg viewBox="0 0 32 32" className="h-6 w-6 fill-current"></svg>
                                     </div>
                                     <Textarea
                                         value={currentQuestion.options[2]?.option_text || ''}
@@ -347,7 +347,7 @@ export default function QuizQuestions({ quiz }: Props) {
                                 {/* Option 4 - Green Square */}
                                 <div className="group relative flex items-center rounded-lg bg-white p-2 shadow-sm ring-1 ring-gray-200 focus-within:ring-2 focus-within:ring-green-500">
                                     <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded bg-green-600 text-white">
-                                        <svg viewBox="0 0 32 32" className="h-6 w-6 fill-current"><rect x="4" y="4" width="24" height="24" /></svg>
+                                        <svg viewBox="0 0 32 32" className="h-6 w-6 fill-current"></svg>
                                     </div>
                                     <Textarea
                                         value={currentQuestion.options[3]?.option_text || ''}

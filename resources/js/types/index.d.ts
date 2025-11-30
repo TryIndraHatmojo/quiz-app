@@ -9,6 +9,26 @@ export interface Role {
     created_at: string;
 }
 
+export interface QuizBackground {
+    id: number;
+    name: string;
+    image_path: string;
+    is_public: boolean;
+    created_at: string;
+    user?: User;
+}
+
+export interface Gallery {
+    id: number;
+    title: string;
+    file_path: string;
+    file_type: string;
+    mime_type: string;
+    size: number;
+    created_at: string;
+    user?: User;
+}
+
 export interface Auth {
     user: User;
 }

@@ -19,6 +19,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::middleware(['auth', 'verified'])->prefix('master')->name('master.')->group(function () {
     Route::resource('users', App\Http\Controllers\Master\UserController::class);
     Route::resource('roles', App\Http\Controllers\Master\RoleController::class);
+    Route::resource('backgrounds', App\Http\Controllers\Master\QuizBackgroundController::class);
+    Route::resource('galleries', App\Http\Controllers\Master\GalleryController::class);
 });
 
 Route::middleware(['auth', 'verified'])->prefix('library')->name('library.')->group(function () {

@@ -14,7 +14,7 @@ import {
 import { dashboard } from '@/routes';
 import { type NavGroup, type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { BookOpen, Database, LayoutGrid, Plus, Shield, Users } from 'lucide-react';
+import { BookOpen, Database, LayoutGrid, Plus, Shield, Users, FileImage } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavGroups: NavGroup[] = [
@@ -60,6 +60,17 @@ const mainNavGroups: NavGroup[] = [
                         title: 'Peran',
                         href: '/master/roles',
                         icon: Shield,
+                    },
+
+                    {
+                        title: 'Backgrounds',
+                        href: '/master/backgrounds',
+                        icon: LayoutGrid,
+                    },
+                    {
+                        title: 'Galeri',
+                        href: '/master/galleries',
+                        icon: FileImage,
                     },
                 ],
             },

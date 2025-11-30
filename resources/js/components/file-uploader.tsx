@@ -34,6 +34,8 @@ export function FileUploader({
     useEffect(() => {
         if (previewUrl) {
             setPreview(previewUrl);
+        } else {
+            setPreview(null);
         }
     }, [previewUrl]);
 

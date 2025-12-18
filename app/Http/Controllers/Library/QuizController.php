@@ -202,7 +202,7 @@ class QuizController extends Controller
         $galleries = Gallery::latest()->get();
 
         return Inertia::render('library/quizzes/questions', [
-            'quiz' => $quiz->load(['questions.options']),
+            'quiz' => $quiz->load(['questions.options', 'questions.matchingPairs', 'questions.shortAnswerFields']),
             'galleries' => $galleries,
         ]);
     }
@@ -214,7 +214,7 @@ class QuizController extends Controller
         }
 
         return Inertia::render('library/quizzes/preview', [
-            'quiz' => $quiz->load(['questions.options', 'background']),
+            'quiz' => $quiz->load(['questions.options', 'questions.matchingPairs', 'questions.shortAnswerFields', 'background']),
         ]);
     }
 
@@ -224,27 +224,30 @@ class QuizController extends Controller
             abort(403);
         }
 
-        $data = $request->validate([
+        $request->validate([
             'questions' => 'array',
             'questions.*.id' => 'nullable|integer',
             'questions.*.question_text' => 'required|string',
-            'questions.*.question_type' => 'required|string',
+            'questions.*.question_type' => 'required|in:multiple_choice,long_answer,short_answer,matching_pairs,true_false',
             'questions.*.media_path' => 'nullable|string',
             'questions.*.time_limit' => 'required|integer',
             'questions.*.points' => 'required|integer',
-            'questions.*.options' => 'array',
-            'questions.*.options.*.option_text' => 'required|string',
+            'questions.*.options' => 'nullable|array',
+            'questions.*.options.*.option_text' => 'nullable|string',
             'questions.*.options.*.is_correct' => 'boolean',
+            'questions.*.matching_pairs' => 'nullable|array',
+            'questions.*.matching_pairs.*.left_text' => 'nullable|string',
+            'questions.*.matching_pairs.*.right_text' => 'nullable|string',
+            'questions.*.matching_pairs.*.left_media_path' => 'nullable|string',
+            'questions.*.matching_pairs.*.right_media_path' => 'nullable|string',
+            'questions.*.short_answer_fields' => 'nullable|array',
+            'questions.*.short_answer_fields.*.label' => 'nullable|string',
+            'questions.*.short_answer_fields.*.placeholder' => 'nullable|string',
+            'questions.*.short_answer_fields.*.character_limit' => 'nullable|integer',
+            'questions.*.short_answer_fields.*.expected_answer' => 'nullable|string',
+            'questions.*.short_answer_fields.*.case_sensitive' => 'boolean',
+            'questions.*.short_answer_fields.*.trim_whitespace' => 'boolean',
         ]);
-
-        // Simple sync strategy: delete all and recreate (or update existing)
-        // For a better UX, we might want to be smarter here, but for now let's iterate and update/create
-        
-        // This is a simplified implementation. In a real app, we'd handle IDs to update existing records.
-        // For this MVP, let's assume we receive the full state.
-        
-        // Note: A proper sync would be more complex. 
-        // Let's implement a basic "update or create" loop.
 
         $existingQuestionIds = collect($request->questions)->pluck('id')->filter()->toArray();
         $quiz->questions()->whereNotIn('id', $existingQuestionIds)->delete();
@@ -262,14 +265,55 @@ class QuizController extends Controller
                 ]
             );
 
-            // Handle options
-            $question->options()->delete(); // Simplest way for options for now
-            foreach ($qData['options'] as $oIndex => $oData) {
-                $question->options()->create([
-                    'option_text' => $oData['option_text'],
-                    'is_correct' => $oData['is_correct'],
-                    'order' => $oIndex,
-                ]);
+            // Clear existing related data
+            $question->options()->delete();
+            $question->matchingPairs()->delete();
+            $question->shortAnswerFields()->delete();
+
+            // Handle options for multiple_choice and true_false
+            if (in_array($qData['question_type'], ['multiple_choice', 'true_false'])) {
+                $options = $qData['options'] ?? [];
+                foreach ($options as $oIndex => $oData) {
+                    if (!empty($oData['option_text'])) {
+                        $question->options()->create([
+                            'option_text' => $oData['option_text'],
+                            'is_correct' => $oData['is_correct'] ?? false,
+                            'order' => $oIndex,
+                        ]);
+                    }
+                }
+            }
+
+            // Handle matching pairs
+            if ($qData['question_type'] === 'matching_pairs') {
+                $pairs = $qData['matching_pairs'] ?? [];
+                foreach ($pairs as $pIndex => $pData) {
+                    if (!empty($pData['left_text']) || !empty($pData['right_text'])) {
+                        $question->matchingPairs()->create([
+                            'left_text' => $pData['left_text'] ?? '',
+                            'right_text' => $pData['right_text'] ?? '',
+                            'left_media_path' => $pData['left_media_path'] ?? null,
+                            'right_media_path' => $pData['right_media_path'] ?? null,
+                            'order' => $pIndex,
+                        ]);
+                    }
+                }
+            }
+
+            // Handle short answer fields
+            if (in_array($qData['question_type'], ['short_answer', 'long_answer'])) {
+                $fields = $qData['short_answer_fields'] ?? [];
+                foreach ($fields as $fIndex => $fData) {
+                    $question->shortAnswerFields()->create([
+                        'label' => $fData['label'] ?? null,
+                        'placeholder' => $fData['placeholder'] ?? null,
+                        'character_limit' => $fData['character_limit'] ?? null,
+                        'expected_answer' => $fData['expected_answer'] ?? '',
+                        'case_sensitive' => $fData['case_sensitive'] ?? false,
+                        'trim_whitespace' => $fData['trim_whitespace'] ?? true,
+                        'order' => $fIndex,
+                    ]);
+                }
             }
         }
 

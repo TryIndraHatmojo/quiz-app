@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('quiz_questions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('quiz_id')->constrained('quizzes')->cascadeOnDelete();
-            $table->string('question_type')->default('multiple_choice'); // multiple_choice|true_false|short_answer
+            $table->enum('question_type', ['multiple_choice', 'long_answer', 'short_answer', 'matching_pairs', 'true_false'])->default('multiple_choice');
             $table->text('question_text');
             $table->string('media_path')->nullable(); // path gambar/audio/video
             $table->integer('time_limit')->default(30); // detik

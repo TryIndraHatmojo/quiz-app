@@ -57,6 +57,11 @@ Jika setup otomatis gagal atau Anda ingin melakukannya langkah demi langkah:
    npm run build
    ```
 
+6. **Seed Database (Data Dummy)**
+   ```bash
+   php artisan db:seed
+   ```
+
 ## Cara Menjalankan Aplikasi
 
 Untuk menjalankan aplikasi dalam mode development, gunakan perintah:

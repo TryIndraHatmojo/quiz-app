@@ -11,6 +11,14 @@ class Quiz extends Model
 {
     use HasFactory;
 
+    public const TIME_MODE_PER_QUESTION = 'per_question';
+    public const TIME_MODE_TOTAL = 'total';
+
+    public const TIME_MODES = [
+        self::TIME_MODE_PER_QUESTION,
+        self::TIME_MODE_TOTAL,
+    ];
+
     protected $fillable = [
         'user_id',
         'quiz_category_id',
@@ -19,19 +27,13 @@ class Quiz extends Model
         'join_code',
         'description',
         'status',
-        'is_public',
-        'time_per_question',
-        'starts_at',
-        'ends_at',
+        'time_mode',
+        'duration',
         'quiz_background_id',
-        'settings',
     ];
 
     protected $casts = [
-        'is_public' => 'boolean',
-        'starts_at' => 'datetime',
-        'ends_at' => 'datetime',
-        'settings' => 'array',
+        'duration' => 'integer',
     ];
 
     public function user(): BelongsTo

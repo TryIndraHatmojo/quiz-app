@@ -44,12 +44,16 @@ export interface QuizQuestion {
     short_answer_fields?: QuizShortAnswerField[];
 }
 
+export type TimeMode = 'per_question' | 'total';
+
 export interface Quiz {
     id: number;
     title: string;
     description: string;
     quiz_category_id: number;
     status: string;
+    time_mode: TimeMode;
+    duration: number | null;
     quiz_background_id?: number | null;
     background?: QuizBackground;
     questions?: QuizQuestion[];

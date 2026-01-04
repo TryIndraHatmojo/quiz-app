@@ -70,6 +70,8 @@ class QuizController extends Controller
             'quiz_category_id' => 'required|exists:quiz_categories,id',
             'quiz_background_id' => 'nullable|exists:quiz_backgrounds,id',
             'background_file' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:10240',
+            'time_mode' => 'required|in:per_question,total',
+            'duration' => 'nullable|integer|min:1',
         ]);
 
         $backgroundId = $request->quiz_background_id;
@@ -104,6 +106,8 @@ class QuizController extends Controller
             'description' => $request->description,
             'quiz_category_id' => $request->quiz_category_id,
             'quiz_background_id' => $backgroundId,
+            'time_mode' => $request->time_mode,
+            'duration' => $request->duration,
             'status' => 'draft',
         ]);
 
@@ -143,6 +147,8 @@ class QuizController extends Controller
             'quiz_background_id' => 'nullable|exists:quiz_backgrounds,id',
             'background_file' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:10240',
             'status' => 'required|in:draft,live,finished,archived',
+            'time_mode' => 'required|in:per_question,total',
+            'duration' => 'nullable|integer|min:1',
         ]);
 
         $backgroundId = $request->quiz_background_id;
@@ -174,6 +180,8 @@ class QuizController extends Controller
             'description' => $request->description,
             'quiz_category_id' => $request->quiz_category_id,
             'quiz_background_id' => $backgroundId,
+            'time_mode' => $request->time_mode,
+            'duration' => $request->duration,
             'status' => $request->status,
         ]);
 

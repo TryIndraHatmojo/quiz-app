@@ -11,10 +11,18 @@ import {
 } from '@/components/ui/select';
 import AppSidebarLayout from '@/layouts/app/app-sidebar-layout';
 import { type BreadcrumbItem, type QuizBackground, type QuizCategory } from '@/types';
-import { type Quiz } from '@/types/quiz';
+import { type Quiz, type TimeMode } from '@/types/quiz';
 import { FileUploader } from '@/components/file-uploader';
 import { Head, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
+import { Clock, Timer } from 'lucide-react';
+
+interface Props {
+    quiz: Quiz;
+    categories: QuizCategory[];
+    backgrounds: QuizBackground[];
+}
+
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Library',
@@ -39,6 +47,8 @@ export default function QuizEdit({ quiz, categories = [], backgrounds = [] }: Pr
         quiz_background_id: quiz.quiz_background_id?.toString() || '',
         background_file: null as File | null,
         status: quiz.status || 'draft',
+        time_mode: (quiz.time_mode || 'per_question') as TimeMode,
+        duration: quiz.duration || 30,
     });
 
     const submit: FormEventHandler = (e) => {
@@ -85,6 +95,81 @@ export default function QuizEdit({ quiz, categories = [], backgrounds = [] }: Pr
                             />
                             {errors.description && (
                                 <p className="text-sm text-destructive">{errors.description}</p>
+                            )}
+                        </div>
+
+                        {/* Time Settings */}
+                        <div className="space-y-4 rounded-lg border p-4">
+                            <div className="flex items-center gap-2">
+                                <Clock className="h-5 w-5 text-muted-foreground" />
+                                <Label className="text-base font-medium">Pengaturan Waktu</Label>
+                            </div>
+                            
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label>Mode Waktu</Label>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <button
+                                            type="button"
+                                            onClick={() => setData(d => ({ ...d, time_mode: 'per_question', duration: d.time_mode === 'per_question' ? d.duration : 30 }))}
+                                            className={`flex flex-col items-center gap-2 rounded-lg border-2 p-4 transition-all ${
+                                                data.time_mode === 'per_question'
+                                                    ? 'border-primary bg-primary/5'
+                                                    : 'border-gray-200 hover:border-gray-300'
+                                            }`}
+                                        >
+                                            <Timer className={`h-6 w-6 ${data.time_mode === 'per_question' ? 'text-primary' : 'text-muted-foreground'}`} />
+                                            <span className={`font-medium ${data.time_mode === 'per_question' ? 'text-primary' : ''}`}>
+                                                Per Pertanyaan
+                                            </span>
+                                            <span className="text-xs text-muted-foreground text-center">
+                                                Setiap pertanyaan memiliki batas waktu sendiri
+                                            </span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setData(d => ({ ...d, time_mode: 'total', duration: d.time_mode === 'total' ? d.duration : 15 }))}
+                                            className={`flex flex-col items-center gap-2 rounded-lg border-2 p-4 transition-all ${
+                                                data.time_mode === 'total'
+                                                    ? 'border-primary bg-primary/5'
+                                                    : 'border-gray-200 hover:border-gray-300'
+                                            }`}
+                                        >
+                                            <Clock className={`h-6 w-6 ${data.time_mode === 'total' ? 'text-primary' : 'text-muted-foreground'}`} />
+                                            <span className={`font-medium ${data.time_mode === 'total' ? 'text-primary' : ''}`}>
+                                                Total Waktu
+                                            </span>
+                                            <span className="text-xs text-muted-foreground text-center">
+                                                Waktu dihitung untuk seluruh kuis
+                                            </span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="duration">
+                                        {data.time_mode === 'per_question' ? 'Durasi per Pertanyaan (detik)' : 'Total Durasi (menit)'}
+                                    </Label>
+                                    <div className="flex items-center gap-2">
+                                        <Input
+                                            id="duration"
+                                            type="number"
+                                            min={1}
+                                            value={data.duration}
+                                            onChange={(e) => setData('duration', parseInt(e.target.value) || 0)}
+                                            className="w-32"
+                                        />
+                                        <span className="text-muted-foreground">
+                                            {data.time_mode === 'per_question' ? 'detik' : 'menit'}
+                                        </span>
+                                    </div>
+                                    {errors.duration && (
+                                        <p className="text-sm text-destructive">{errors.duration}</p>
+                                    )}
+                                </div>
+                            </div>
+                            {errors.time_mode && (
+                                <p className="text-sm text-destructive">{errors.time_mode}</p>
                             )}
                         </div>
 

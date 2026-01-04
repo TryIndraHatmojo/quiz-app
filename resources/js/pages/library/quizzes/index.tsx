@@ -27,6 +27,8 @@ interface Quiz {
     join_code: string;
     description: string;
     status: string;
+    time_mode: 'per_question' | 'total';
+    duration: number | null;
     category?: QuizCategory;
     created_at: string;
 }
@@ -297,6 +299,13 @@ export default function QuizIndex({ quizzes, categories = [], filters }: Props) 
                                         </p>
                                     )}
                                     <p className="mt-2 text-xs text-muted-foreground">
+                                        Waktu: {quiz.duration ? (
+                                            quiz.time_mode === 'per_question' 
+                                                ? `${quiz.duration} detik/pertanyaan` 
+                                                : `${quiz.duration} menit total`
+                                        ) : 'Tidak diatur'}
+                                    </p>
+                                    <p className="mt-1 text-xs text-muted-foreground">
                                         Dibuat: {new Date(quiz.created_at).toLocaleDateString()}
                                     </p>
                                 </CardContent>

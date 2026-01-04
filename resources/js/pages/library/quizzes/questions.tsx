@@ -25,8 +25,9 @@ import {
     ToggleLeft,
     ListChecks,
     AlignLeft,
+    GripVertical,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 interface Props {
     quiz: Quiz;
@@ -53,10 +54,22 @@ type QuestionType = 'multiple_choice' | 'long_answer' | 'short_answer' | 'matchi
 const questionTypeLabels: Record<QuestionType, { label: string; icon: React.ReactNode; color: string }> = {
     multiple_choice: { label: 'Pilihan Ganda', icon: <ListChecks className="h-4 w-4" />, color: 'bg-blue-500' },
     long_answer: { label: 'Jawaban Panjang', icon: <AlignLeft className="h-4 w-4" />, color: 'bg-purple-500' },
-    short_answer: { label: 'Jawaban Singkat', icon: <FileText className="h-4 w-4" />, color: 'bg-orange-500' },
+    short_answer: { label: 'Isian Singkat', icon: <FileText className="h-4 w-4" />, color: 'bg-orange-500' },
     matching_pairs: { label: 'Mencocokkan', icon: <Link2 className="h-4 w-4" />, color: 'bg-green-500' },
     true_false: { label: 'Benar/Salah', icon: <ToggleLeft className="h-4 w-4" />, color: 'bg-pink-500' },
 };
+
+// Extended color palette for options
+const optionColors = [
+    { bg: 'bg-red-600', ring: 'focus-within:ring-red-500', light: 'bg-red-50' },
+    { bg: 'bg-blue-600', ring: 'focus-within:ring-blue-500', light: 'bg-blue-50' },
+    { bg: 'bg-yellow-500', ring: 'focus-within:ring-yellow-500', light: 'bg-yellow-50' },
+    { bg: 'bg-green-600', ring: 'focus-within:ring-green-500', light: 'bg-green-50' },
+    { bg: 'bg-purple-600', ring: 'focus-within:ring-purple-500', light: 'bg-purple-50' },
+    { bg: 'bg-pink-600', ring: 'focus-within:ring-pink-500', light: 'bg-pink-50' },
+    { bg: 'bg-indigo-600', ring: 'focus-within:ring-indigo-500', light: 'bg-indigo-50' },
+    { bg: 'bg-teal-600', ring: 'focus-within:ring-teal-500', light: 'bg-teal-50' },
+];
 
 const defaultOption: QuizQuestionOption = {
     option_text: '',
@@ -121,6 +134,11 @@ const createDefaultQuestion = (type: QuestionType = 'multiple_choice'): QuizQues
                 ],
             };
         case 'short_answer':
+            return {
+                ...base,
+                question_text: 'Lengkapi kalimat: ___ adalah ibukota Indonesia',
+                short_answer_fields: [{ ...defaultShortAnswerField, label: '1', order: 0 }],
+            };
         case 'long_answer':
             return {
                 ...base,
@@ -129,6 +147,45 @@ const createDefaultQuestion = (type: QuestionType = 'multiple_choice'): QuizQues
         default:
             return base;
     }
+};
+
+// Helper to count blanks in question text
+const countBlanks = (text: string): number => {
+    const matches = text.match(/___/g);
+    return matches ? matches.length : 0;
+};
+
+// Helper to sync short answer fields with blanks count
+const syncFieldsWithBlanks = (
+    fields: QuizShortAnswerField[],
+    blankCount: number
+): QuizShortAnswerField[] => {
+    const newFields = [...fields];
+    
+    // Add more fields if needed
+    while (newFields.length < blankCount) {
+        newFields.push({
+            ...defaultShortAnswerField,
+            label: String(newFields.length + 1),
+            order: newFields.length,
+        });
+    }
+    
+    // Remove extra fields if needed
+    while (newFields.length > blankCount && blankCount > 0) {
+        newFields.pop();
+    }
+    
+    // Ensure at least one field if there are blanks
+    if (blankCount > 0 && newFields.length === 0) {
+        newFields.push({
+            ...defaultShortAnswerField,
+            label: '1',
+            order: 0,
+        });
+    }
+    
+    return newFields;
 };
 
 export default function QuizQuestions({ quiz, galleries }: Props) {
@@ -142,6 +199,7 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
     const [galleryList, setGalleryList] = useState<Gallery[]>(galleries);
     const [isUploading, setIsUploading] = useState(false);
     const [activeTab, setActiveTab] = useState<'gallery' | 'upload'>('gallery');
+    const questionTextRef = useRef<HTMLTextAreaElement>(null);
 
     const { setData, post, processing } = useForm({
         questions: questions,
@@ -215,6 +273,17 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
             ...newQuestions[currentIndex],
             [field]: value,
         };
+        
+        // For short_answer, sync fields with blanks count
+        if (field === 'question_text' && currentQuestion.question_type === 'short_answer') {
+            const blankCount = countBlanks(value as string);
+            const syncedFields = syncFieldsWithBlanks(
+                newQuestions[currentIndex].short_answer_fields || [],
+                blankCount
+            );
+            newQuestions[currentIndex].short_answer_fields = syncedFields;
+        }
+        
         setQuestions(newQuestions);
     };
 
@@ -230,6 +299,36 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
             options: newOptions,
         };
         setQuestions(newQuestions);
+    };
+
+    const addOption = () => {
+        const newQuestions = [...questions];
+        const newOptions = [...newQuestions[currentIndex].options];
+        if (newOptions.length < 8) { // Max 8 options
+            newOptions.push({ ...defaultOption, order: newOptions.length });
+            newQuestions[currentIndex] = {
+                ...newQuestions[currentIndex],
+                options: newOptions,
+            };
+            setQuestions(newQuestions);
+        }
+    };
+
+    const removeOption = (optionIndex: number) => {
+        const newQuestions = [...questions];
+        const newOptions = [...newQuestions[currentIndex].options];
+        if (newOptions.length > 2) { // Minimum 2 options
+            newOptions.splice(optionIndex, 1);
+            // Re-order remaining options
+            newOptions.forEach((opt, idx) => {
+                opt.order = idx;
+            });
+            newQuestions[currentIndex] = {
+                ...newQuestions[currentIndex],
+                options: newOptions,
+            };
+            setQuestions(newQuestions);
+        }
     };
 
     const updateMatchingPair = (pairIndex: number, field: keyof QuizMatchingPair, value: string) => {
@@ -282,6 +381,24 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
             short_answer_fields: newFields,
         };
         setQuestions(newQuestions);
+    };
+
+    const insertBlankAtCursor = () => {
+        const textarea = questionTextRef.current;
+        if (!textarea) return;
+        
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const text = currentQuestion.question_text;
+        const newText = text.substring(0, start) + '___' + text.substring(end);
+        
+        updateCurrentQuestion('question_text', newText);
+        
+        // Set cursor position after the inserted blank
+        setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(start + 3, start + 3);
+        }, 0);
     };
 
     const save = () => {
@@ -354,43 +471,60 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
     };
 
     const renderMultipleChoiceEditor = () => {
-        const optionColors = [
-            { bg: 'bg-red-600', ring: 'focus-within:ring-red-500' },
-            { bg: 'bg-blue-600', ring: 'focus-within:ring-blue-500' },
-            { bg: 'bg-yellow-500', ring: 'focus-within:ring-yellow-500' },
-            { bg: 'bg-green-600', ring: 'focus-within:ring-green-500' },
-        ];
+        const options = currentQuestion.options;
+        const canAddMore = options.length < 8;
+        const canRemove = options.length > 2;
 
         return (
-            <div className="grid grid-cols-2 gap-4">
-                {currentQuestion.options.map((option, idx) => (
-                    <div
-                        key={idx}
-                        className={`group relative flex items-center rounded-lg bg-white p-2 shadow-sm ring-1 ring-gray-200 ${optionColors[idx]?.ring || 'focus-within:ring-primary'}`}
+            <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                    {options.map((option, idx) => (
+                        <div
+                            key={idx}
+                            className={`group relative flex items-center rounded-lg bg-white p-2 shadow-sm ring-1 ring-gray-200 ${optionColors[idx % optionColors.length]?.ring || 'focus-within:ring-primary'}`}
+                        >
+                            <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded ${optionColors[idx % optionColors.length]?.bg || 'bg-gray-500'} text-white`}>
+                                <span className="text-lg font-bold">{String.fromCharCode(65 + idx)}</span>
+                            </div>
+                            <Textarea
+                                value={option.option_text || ''}
+                                onChange={(e) => updateOption(idx, 'option_text', e.target.value)}
+                                placeholder={`Tambah jawaban ${idx + 1}`}
+                                className="min-h-[60px] resize-none border-none bg-transparent focus-visible:ring-0"
+                            />
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                                {canRemove && (
+                                    <button
+                                        onClick={() => removeOption(idx)}
+                                        className="opacity-0 group-hover:opacity-100 flex h-7 w-7 items-center justify-center rounded-full text-red-500 hover:bg-red-50 transition-all"
+                                        title="Hapus opsi"
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </button>
+                                )}
+                                <button
+                                    onClick={() => updateOption(idx, 'is_correct', !option.is_correct)}
+                                    className={`flex h-8 w-8 items-center justify-center rounded-full border-2 transition-colors ${
+                                        option.is_correct
+                                            ? 'border-green-500 bg-green-500 text-white'
+                                            : 'border-gray-300 text-transparent hover:border-green-500'
+                                    }`}
+                                >
+                                    <Check className="h-5 w-5" />
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+                {canAddMore && (
+                    <Button
+                        variant="outline"
+                        onClick={addOption}
+                        className="w-full"
                     >
-                        <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded ${optionColors[idx]?.bg || 'bg-gray-500'} text-white`}>
-                            <span className="text-lg font-bold">{String.fromCharCode(65 + idx)}</span>
-                        </div>
-                        <Textarea
-                            value={option.option_text || ''}
-                            onChange={(e) => updateOption(idx, 'option_text', e.target.value)}
-                            placeholder={`Tambah jawaban ${idx + 1}${idx > 1 ? ' (opsional)' : ''}`}
-                            className="min-h-[60px] resize-none border-none bg-transparent focus-visible:ring-0"
-                        />
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                            <button
-                                onClick={() => updateOption(idx, 'is_correct', !option.is_correct)}
-                                className={`flex h-8 w-8 items-center justify-center rounded-full border-2 transition-colors ${
-                                    option.is_correct
-                                        ? 'border-green-500 bg-green-500 text-white'
-                                        : 'border-gray-300 text-transparent hover:border-green-500'
-                                }`}
-                            >
-                                <Check className="h-5 w-5" />
-                            </button>
-                        </div>
-                    </div>
-                ))}
+                        <Plus className="mr-2 h-4 w-4" /> Tambah Opsi ({options.length}/8)
+                    </Button>
+                )}
             </div>
         );
     };
@@ -488,57 +622,113 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
     };
 
     const renderShortAnswerEditor = () => {
-        const field = currentQuestion.short_answer_fields?.[0] || defaultShortAnswerField;
+        const fields = currentQuestion.short_answer_fields || [];
+        const blankCount = countBlanks(currentQuestion.question_text);
+
+        // Render question with interactive blanks
+        const renderQuestionPreview = () => {
+            const text = currentQuestion.question_text;
+            const parts = text.split('___');
+            
+            return (
+                <div className="flex flex-wrap items-center gap-1 text-lg">
+                    {parts.map((part, idx) => (
+                        <span key={idx} className="flex items-center">
+                            <span>{part}</span>
+                            {idx < parts.length - 1 && (
+                                <span className="inline-flex items-center mx-1">
+                                    <span className="inline-block min-w-[80px] border-b-2 border-orange-400 bg-orange-50 px-2 py-1 text-center text-orange-600 font-medium rounded-t">
+                                        {fields[idx]?.expected_answer || `___`}
+                                    </span>
+                                    <span className="ml-1 text-xs text-orange-500 font-bold">({idx + 1})</span>
+                                </span>
+                            )}
+                        </span>
+                    ))}
+                </div>
+            );
+        };
+
         return (
-            <div className="space-y-6 rounded-xl bg-white p-6 shadow-sm">
-                <div className="space-y-4">
-                    <div>
-                        <Label>Jawaban yang Diharapkan</Label>
-                        <Input
-                            value={field.expected_answer}
-                            onChange={(e) => updateShortAnswerField(0, 'expected_answer', e.target.value)}
-                            placeholder="Masukkan jawaban yang benar"
-                            className="mt-1"
-                        />
-                    </div>
-                    <div>
-                        <Label>Placeholder (Opsional)</Label>
-                        <Input
-                            value={field.placeholder || ''}
-                            onChange={(e) => updateShortAnswerField(0, 'placeholder', e.target.value)}
-                            placeholder="Teks placeholder untuk input"
-                            className="mt-1"
-                        />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="flex items-center justify-between rounded-lg border p-4">
-                            <Label htmlFor="case-sensitive" className="cursor-pointer">Case Sensitive</Label>
-                            <Switch
-                                id="case-sensitive"
-                                checked={field.case_sensitive}
-                                onCheckedChange={(checked) => updateShortAnswerField(0, 'case_sensitive', checked)}
-                            />
-                        </div>
+            <div className="space-y-6">
+                {/* Instructions & Insert Button */}
+                <div className="rounded-xl bg-orange-50 border border-orange-200 p-4">
+                    <div className="flex items-center justify-between mb-3">
                         <div>
-                            <Label>Batas Karakter (Opsional)</Label>
-                            <Input
-                                type="number"
-                                value={field.character_limit || ''}
-                                onChange={(e) => updateShortAnswerField(0, 'character_limit', e.target.value ? parseInt(e.target.value) : null)}
-                                placeholder="Tidak ada batas"
-                                className="mt-1"
-                            />
+                            <h4 className="font-medium text-orange-800">Soal Isian Singkat</h4>
+                            <p className="text-sm text-orange-600">
+                                Gunakan tanda <code className="bg-orange-100 px-1 rounded">___</code> (3 underscore) untuk menandai bagian yang harus diisi.
+                            </p>
+                        </div>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={insertBlankAtCursor}
+                            className="border-orange-300 text-orange-700 hover:bg-orange-100"
+                        >
+                            <Plus className="mr-1 h-4 w-4" /> Sisipkan Isian
+                        </Button>
+                    </div>
+                    <p className="text-xs text-orange-500">
+                        Contoh: "Andi ___ ke sekolah setiap ___ pagi"
+                    </p>
+                </div>
+
+                {/* Preview */}
+                {blankCount > 0 && (
+                    <div className="rounded-xl bg-white p-6 shadow-sm">
+                        <p className="text-sm text-gray-500 mb-3">Preview Soal:</p>
+                        {renderQuestionPreview()}
+                    </div>
+                )}
+
+                {/* Answer Fields */}
+                {blankCount > 0 && (
+                    <div className="rounded-xl bg-white p-6 shadow-sm">
+                        <h4 className="font-medium mb-4">Jawaban untuk setiap isian ({blankCount} isian)</h4>
+                        <div className="space-y-4">
+                            {fields.slice(0, blankCount).map((field, idx) => (
+                                <div key={idx} className="flex items-start gap-4 p-4 rounded-lg bg-gray-50">
+                                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-orange-500 text-white font-bold">
+                                        {idx + 1}
+                                    </div>
+                                    <div className="flex-1 space-y-3">
+                                        <div>
+                                            <Label className="text-sm">Jawaban yang Benar</Label>
+                                            <Input
+                                                value={field.expected_answer}
+                                                onChange={(e) => updateShortAnswerField(idx, 'expected_answer', e.target.value)}
+                                                placeholder="Masukkan jawaban yang benar"
+                                                className="mt-1"
+                                            />
+                                        </div>
+                                        <div className="flex items-center gap-4">
+                                            <div className="flex items-center gap-2">
+                                                <Switch
+                                                    id={`case-sensitive-${idx}`}
+                                                    checked={field.case_sensitive}
+                                                    onCheckedChange={(checked) => updateShortAnswerField(idx, 'case_sensitive', checked)}
+                                                />
+                                                <Label htmlFor={`case-sensitive-${idx}`} className="text-sm cursor-pointer">
+                                                    Case Sensitive
+                                                </Label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
-                </div>
-                <div className="rounded-lg border-2 border-dashed border-gray-200 p-4 bg-gray-50">
-                    <p className="text-sm text-gray-500 mb-2">Preview:</p>
-                    <Input
-                        disabled
-                        placeholder={field.placeholder || 'Jawaban peserta akan muncul di sini...'}
-                        className="bg-white"
-                    />
-                </div>
+                )}
+
+                {blankCount === 0 && (
+                    <div className="rounded-xl bg-gray-50 border-2 border-dashed border-gray-200 p-8 text-center">
+                        <FileText className="h-12 w-12 mx-auto text-gray-300 mb-3" />
+                        <p className="text-gray-500">
+                            Belum ada isian. Tambahkan <code className="bg-gray-200 px-1 rounded">___</code> pada pertanyaan di atas.
+                        </p>
+                    </div>
+                )}
             </div>
         );
     };
@@ -585,6 +775,34 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                         className="bg-white min-h-[120px]"
                     />
                 </div>
+            </div>
+        );
+    };
+
+    // Render question input based on type
+    const renderQuestionInput = () => {
+        if (currentQuestion.question_type === 'short_answer') {
+            return (
+                <div className="rounded-xl bg-white p-6 shadow-sm">
+                    <Textarea
+                        ref={questionTextRef}
+                        value={currentQuestion.question_text}
+                        onChange={(e) => updateCurrentQuestion('question_text', e.target.value)}
+                        className="text-center text-xl font-medium placeholder:text-gray-300 border-none shadow-none focus-visible:ring-0 min-h-[80px] resize-none"
+                        placeholder="Ketik pertanyaan dengan ___ untuk bagian isian. Contoh: Andi ___ ke sekolah"
+                    />
+                </div>
+            );
+        }
+
+        return (
+            <div className="rounded-xl bg-white p-6 shadow-sm">
+                <Input
+                    value={currentQuestion.question_text}
+                    onChange={(e) => updateCurrentQuestion('question_text', e.target.value)}
+                    className="text-center text-xl font-medium placeholder:text-gray-300 border-none shadow-none focus-visible:ring-0"
+                    placeholder="Mulai ketik pertanyaan Anda"
+                />
             </div>
         );
     };
@@ -747,22 +965,29 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                         <div className="mx-auto max-w-5xl space-y-6">
                             {/* Question Settings Row */}
                             <div className="flex items-center justify-end gap-4">
-                                <div className="flex items-center gap-2">
-                                    <Label className="text-sm">Waktu:</Label>
-                                    <Select
-                                        value={String(currentQuestion.time_limit)}
-                                        onValueChange={(value) => updateCurrentQuestion('time_limit', parseInt(value))}
-                                    >
-                                        <SelectTrigger className="w-24">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {[10, 20, 30, 45, 60, 90, 120].map((sec) => (
-                                                <SelectItem key={sec} value={String(sec)}>{sec} dtk</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
+                                {quiz.time_mode === 'per_question' && (
+                                    <div className="flex items-center gap-2">
+                                        <Label className="text-sm">Waktu:</Label>
+                                        <Select
+                                            value={String(currentQuestion.time_limit)}
+                                            onValueChange={(value) => updateCurrentQuestion('time_limit', parseInt(value))}
+                                        >
+                                            <SelectTrigger className="w-24">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {[10, 20, 30, 45, 60, 90, 120].map((sec) => (
+                                                    <SelectItem key={sec} value={String(sec)}>{sec} dtk</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                )}
+                                {quiz.time_mode === 'total' && (
+                                    <div className="flex items-center gap-2 rounded-md bg-blue-50 px-3 py-1.5 text-sm text-blue-700">
+                                        <span>Total waktu: {quiz.duration} menit</span>
+                                    </div>
+                                )}
                                 <div className="flex items-center gap-2">
                                     <Label className="text-sm">Poin:</Label>
                                     <Select
@@ -782,16 +1007,7 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                             </div>
 
                             {/* Question Input */}
-                            <div className="rounded-xl bg-white p-6 shadow-sm">
-                                <Input
-                                    value={currentQuestion.question_text}
-                                    onChange={(e) =>
-                                        updateCurrentQuestion('question_text', e.target.value)
-                                    }
-                                    className="text-center text-xl font-medium placeholder:text-gray-300 border-none shadow-none focus-visible:ring-0"
-                                    placeholder="Mulai ketik pertanyaan Anda"
-                                />
-                            </div>
+                            {renderQuestionInput()}
 
                             {/* Media Area */}
                             <div className="relative">

@@ -4,13 +4,18 @@ import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem, SharedData, QuizBackground } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { CheckCircle2, Pencil, Plus, Trash2, XCircle } from 'lucide-react';
+import Pagination from '@/components/pagination';
 
 
 
 interface Props {
     backgrounds: {
         data: QuizBackground[];
-        links: any[];
+        links: Array<{
+            url: string | null;
+            label: string;
+            active: boolean;
+        }>;
     };
 }
 
@@ -139,6 +144,8 @@ export default function BackgroundIndex({ backgrounds }: Props) {
                         </tbody>
                     </table>
                 </div>
+
+                <Pagination links={backgrounds.links} />
             </div>
         </AppLayout>
     );

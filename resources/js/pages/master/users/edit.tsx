@@ -34,25 +34,35 @@ interface Role {
     name: string;
 }
 
+interface Jenjang {
+    id: number;
+    jenjang: string;
+    nama_sekolah: string;
+}
+
 interface User {
     id: number;
     name: string;
     email: string;
     roles: Role[];
+    jenjang?: Jenjang | null;
+    jenjang_id?: number | null;
 }
 
 interface Props {
     user: User;
     roles: Role[];
+    jenjangs: Jenjang[];
 }
 
-export default function UserEdit({ user, roles }: Props) {
+export default function UserEdit({ user, roles, jenjangs }: Props) {
     const { data, setData, put, processing, errors } = useForm({
         name: user.name,
         email: user.email,
         password: '',
         password_confirmation: '',
         role_id: user.roles.length > 0 ? user.roles[0].id.toString() : '',
+        jenjang_id: user.jenjang_id ? user.jenjang_id.toString() : '',
     });
 
     const submit = (e: React.FormEvent) => {
@@ -121,6 +131,29 @@ export default function UserEdit({ user, roles }: Props) {
                                 </Select>
                             </div>
                             <InputError message={errors.role_id} />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="jenjang_id">Jenjang (Opsional)</Label>
+                            <div className="max-w-md">
+                                <Select
+                                    value={data.jenjang_id}
+                                    onValueChange={(value) => setData('jenjang_id', value)}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Pilih Jenjang" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="">Tidak Ada</SelectItem>
+                                        {jenjangs.map((jenjang) => (
+                                            <SelectItem key={jenjang.id} value={jenjang.id.toString()}>
+                                                {jenjang.jenjang} - {jenjang.nama_sekolah}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <InputError message={errors.jenjang_id} />
                         </div>
 
                         <div className="space-y-2">

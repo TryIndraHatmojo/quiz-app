@@ -4,6 +4,7 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Trash2, Pencil, Plus, CheckCircle2, XCircle } from 'lucide-react';
+import Pagination from '@/components/pagination';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -80,8 +81,11 @@ export default function UserIndex({ users }: Props) {
                                     Peran
                                 </th>
                                 <th scope="col" className="px-6 py-3">
-                                    Bergabung
+                                    Jenjang
                                 </th>
+                                {/* <th scope="col" className="px-6 py-3">
+                                    Bergabung
+                                </th> */}
                                 <th scope="col" className="px-6 py-3 text-right">
                                     Aksi
                                 </th>
@@ -108,8 +112,17 @@ export default function UserIndex({ users }: Props) {
                                         ))}
                                     </td>
                                     <td className="px-6 py-4">
-                                        {new Date(user.created_at).toLocaleDateString('id-ID')}
+                                        {user.jenjang ? (
+                                            <span className="text-sm">
+                                                {user.jenjang.jenjang} - {user.jenjang.nama_sekolah}
+                                            </span>
+                                        ) : (
+                                            <span className="text-sm text-muted-foreground">-</span>
+                                        )}
                                     </td>
+                                    {/* <td className="px-6 py-4">
+                                        {new Date(user.created_at).toLocaleDateString('id-ID')}
+                                    </td> */}
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex justify-end gap-2">
                                             <Button variant="ghost" size="icon" asChild>
@@ -132,6 +145,8 @@ export default function UserIndex({ users }: Props) {
                         </tbody>
                     </table>
                 </div>
+
+                <Pagination links={users.links} />
             </div>
         </AppLayout>
     );

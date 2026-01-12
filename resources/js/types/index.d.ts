@@ -23,6 +23,14 @@ export interface QuizBackground {
     user?: User;
 }
 
+export interface Jenjang {
+    id: number;
+    jenjang: string;
+    nama_sekolah: string;
+    created_at: string;
+    updated_at: string;
+}
+
 export interface Gallery {
     id: number;
     title: string;
@@ -78,5 +86,7 @@ export interface User {
     created_at: string;
     updated_at: string;
     roles?: Role[];
+    jenjang?: Jenjang | null;
+    jenjang_id?: number | null;
     [key: string]: unknown; // This allows for additional properties...
 }

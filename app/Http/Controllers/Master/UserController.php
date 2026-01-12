@@ -11,7 +11,7 @@ class UserController extends Controller
 {
     public function index()
     {
-        $users = User::with('roles')
+        $users = User::with('roles', 'jenjang')
             ->latest()
             ->paginate(10);
 
@@ -23,9 +23,11 @@ class UserController extends Controller
     public function create()
     {
         $roles = \App\Models\Role::all();
+        $jenjangs = \App\Models\Jenjang::all();
 
         return Inertia::render('master/users/create', [
             'roles' => $roles,
+            'jenjangs' => $jenjangs,
         ]);
     }
 
@@ -36,12 +38,14 @@ class UserController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'role_id' => ['required', 'exists:roles,id'],
+            'jenjang_id' => ['nullable', 'exists:jenjangs,id'],
         ]);
 
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => \Illuminate\Support\Facades\Hash::make($validated['password']),
+            'jenjang_id' => $validated['jenjang_id'] ?? null,
         ]);
 
         $user->roles()->attach($validated['role_id']);
@@ -52,12 +56,14 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        $user->load('roles');
+        $user->load('roles', 'jenjang');
         $roles = \App\Models\Role::all();
+        $jenjangs = \App\Models\Jenjang::all();
 
         return Inertia::render('master/users/edit', [
             'user' => $user,
             'roles' => $roles,
+            'jenjangs' => $jenjangs,
         ]);
     }
 
@@ -68,11 +74,13 @@ class UserController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', \Illuminate\Validation\Rule::unique('users')->ignore($user->id)],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
             'role_id' => ['required', 'exists:roles,id'],
+            'jenjang_id' => ['nullable', 'exists:jenjangs,id'],
         ]);
 
         $user->update([
             'name' => $validated['name'],
             'email' => $validated['email'],
+            'jenjang_id' => $validated['jenjang_id'] ?? null,
         ]);
 
         if (!empty($validated['password'])) {

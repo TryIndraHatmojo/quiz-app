@@ -21,6 +21,7 @@ Route::middleware(['auth', 'verified'])->prefix('master')->name('master.')->grou
     Route::resource('roles', App\Http\Controllers\Master\RoleController::class);
     Route::resource('backgrounds', App\Http\Controllers\Master\QuizBackgroundController::class);
     Route::resource('galleries', App\Http\Controllers\Master\GalleryController::class);
+    Route::resource('jenjang', App\Http\Controllers\Master\JenjangController::class);
 });
 
 Route::middleware(['auth', 'verified'])->prefix('library')->name('library.')->group(function () {

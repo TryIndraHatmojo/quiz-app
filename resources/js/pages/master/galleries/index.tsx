@@ -4,11 +4,16 @@ import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem, SharedData, Gallery } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { CheckCircle2, Pencil, Plus, Trash2, XCircle, FileVideo, FileImage } from 'lucide-react';
+import Pagination from '@/components/pagination';
 
 interface Props {
     galleries: {
         data: Gallery[];
-        links: any[];
+        links: Array<{
+            url: string | null;
+            label: string;
+            active: boolean;
+        }>;
     };
 }
 
@@ -155,6 +160,8 @@ export default function GalleryIndex({ galleries }: Props) {
                         </tbody>
                     </table>
                 </div>
+
+                <Pagination links={galleries.links} />
             </div>
         </AppLayout>
     );

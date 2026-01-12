@@ -34,17 +34,25 @@ interface Role {
     name: string;
 }
 
-interface Props {
-    roles: Role[];
+interface Jenjang {
+    id: number;
+    jenjang: string;
+    nama_sekolah: string;
 }
 
-export default function UserCreate({ roles }: Props) {
+interface Props {
+    roles: Role[];
+    jenjangs: Jenjang[];
+}
+
+export default function UserCreate({ roles, jenjangs }: Props) {
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         email: '',
         password: '',
         password_confirmation: '',
         role_id: '',
+        jenjang_id: '',
     });
 
     const submit = (e: React.FormEvent) => {
@@ -113,6 +121,29 @@ export default function UserCreate({ roles }: Props) {
                                 </Select>
                             </div>
                             <InputError message={errors.role_id} />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="jenjang_id">Jenjang (Opsional)</Label>
+                            <div className="max-w-md">
+                                <Select
+                                    value={data.jenjang_id}
+                                    onValueChange={(value) => setData('jenjang_id', value)}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Pilih Jenjang" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="">Tidak Ada</SelectItem>
+                                        {jenjangs.map((jenjang) => (
+                                            <SelectItem key={jenjang.id} value={jenjang.id.toString()}>
+                                                {jenjang.jenjang} - {jenjang.nama_sekolah}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <InputError message={errors.jenjang_id} />
                         </div>
 
                         <div className="space-y-2">

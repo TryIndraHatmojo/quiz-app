@@ -327,4 +327,167 @@ class QuizController extends Controller
 
         return back()->with('success', 'Questions saved successfully.');
     }
+
+    /**
+     * Show quiz access management page.
+     */
+    public function access(Quiz $quiz)
+    {
+        if ($quiz->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $quiz->load([
+            'teacherAccess.user.roles',
+            'studentAccess.user.jenjang',
+        ]);
+
+        // Get available teachers (users with role_id 2 or 3)
+        // Query the pivot table 'role_user' where role_id is 2 or 3
+        $teachers = \App\Models\User::whereHas('roles', function ($q) {
+            $q->whereIn('roles.id', [2, 3]); // Guru Telaah Soal (id=2) dan Guru Mata Pelajaran (id=3)
+        })
+        ->where('id', '!=', auth()->id())
+        ->with('roles')
+        ->get();
+
+        // Get available students (users with role_id 4)
+        $students = \App\Models\User::whereHas('roles', function ($q) {
+            $q->where('roles.id', 4); // Siswa (id=4)
+        })
+        ->with('jenjang')
+        ->get();
+
+        // Get all jenjangs for bulk student access
+        $jenjangs = \App\Models\Jenjang::orderBy('jenjang')->get();
+
+        // Ensure studentAccess has user.jenjang loaded
+        $studentAccessList = $quiz->studentAccess()->with('user.jenjang')->get();
+        $teacherAccessList = $quiz->teacherAccess()->with('user.roles')->get();
+
+        return Inertia::render('library/quizzes/access', [
+            'quiz' => $quiz,
+            'teachers' => $teachers,
+            'students' => $students,
+            'teacherAccess' => $teacherAccessList,
+            'studentAccess' => $studentAccessList,
+            'jenjangs' => $jenjangs,
+        ]);
+    }
+
+    /**
+     * Grant teacher access to quiz.
+     */
+    public function grantTeacherAccess(Request $request, Quiz $quiz)
+    {
+        if ($quiz->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'permission' => 'required|in:view,edit',
+        ]);
+
+        \App\Models\QuizTeacherAccess::updateOrCreate(
+            ['quiz_id' => $quiz->id, 'user_id' => $request->user_id],
+            [
+                'permission' => $request->permission,
+                'granted_by' => auth()->id(),
+                'granted_at' => now(),
+            ]
+        );
+
+        return back()->with('success', 'Akses guru berhasil diberikan.');
+    }
+
+    /**
+     * Revoke teacher access from quiz.
+     */
+    public function revokeTeacherAccess(Quiz $quiz, $userId)
+    {
+        if ($quiz->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        \App\Models\QuizTeacherAccess::where('quiz_id', $quiz->id)
+            ->where('user_id', $userId)
+            ->delete();
+
+        return back()->with('success', 'Akses guru berhasil dicabut.');
+    }
+
+    /**
+     * Grant student access to quiz.
+     */
+    public function grantStudentAccess(Request $request, Quiz $quiz)
+    {
+        if ($quiz->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $request->validate([
+            'user_ids' => 'required|array',
+            'user_ids.*' => 'exists:users,id',
+        ]);
+
+        foreach ($request->user_ids as $userId) {
+            \App\Models\QuizStudentAccess::updateOrCreate(
+                ['quiz_id' => $quiz->id, 'user_id' => $userId],
+                [
+                    'granted_by' => auth()->id(),
+                    'granted_at' => now(),
+                ]
+            );
+        }
+
+        return back()->with('success', 'Akses siswa berhasil diberikan.');
+    }
+
+    /**
+     * Revoke student access from quiz.
+     */
+    public function revokeStudentAccess(Quiz $quiz, $userId)
+    {
+        if ($quiz->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        \App\Models\QuizStudentAccess::where('quiz_id', $quiz->id)
+            ->where('user_id', $userId)
+            ->delete();
+
+        return back()->with('success', 'Akses siswa berhasil dicabut.');
+    }
+
+    /**
+     * Grant student access by jenjang.
+     */
+    public function grantStudentAccessByJenjang(Request $request, Quiz $quiz)
+    {
+        if ($quiz->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $request->validate([
+            'jenjang_id' => 'required|exists:jenjangs,id',
+        ]);
+
+        // Get all students with the specified jenjang
+        $students = \App\Models\User::whereHas('roles', function ($q) {
+            $q->where('roles.id', 4); // Siswa (id=4)
+        })->where('jenjang_id', $request->jenjang_id)->get();
+
+        foreach ($students as $student) {
+            \App\Models\QuizStudentAccess::updateOrCreate(
+                ['quiz_id' => $quiz->id, 'user_id' => $student->id],
+                [
+                    'granted_by' => auth()->id(),
+                    'granted_at' => now(),
+                ]
+            );
+        }
+
+        return back()->with('success', 'Akses berhasil diberikan ke ' . $students->count() . ' siswa.');
+    }
 }

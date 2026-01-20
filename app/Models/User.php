@@ -59,4 +59,24 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Jenjang::class);
     }
+
+    /**
+     * Get quizzes where this user has teacher access.
+     */
+    public function quizzesAsTeacher()
+    {
+        return $this->belongsToMany(Quiz::class, 'quiz_teacher_access')
+            ->withPivot(['permission', 'granted_at', 'granted_by'])
+            ->withTimestamps();
+    }
+
+    /**
+     * Get quizzes where this user has student access.
+     */
+    public function quizzesAsStudent()
+    {
+        return $this->belongsToMany(Quiz::class, 'quiz_student_access')
+            ->withPivot(['granted_at', 'granted_by', 'accessed_at', 'attempt_count'])
+            ->withTimestamps();
+    }
 }

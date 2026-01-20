@@ -1,0 +1,421 @@
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import AppSidebarLayout from '@/layouts/app/app-sidebar-layout';
+import { type BreadcrumbItem, type User, type Jenjang, type QuizTeacherAccess, type QuizStudentAccess, type SharedData } from '@/types';
+import { type Quiz } from '@/types/quiz';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { useState } from 'react';
+import { 
+    UserPlus, 
+    Users, 
+    GraduationCap, 
+    Shield, 
+    Trash2, 
+    Eye, 
+    Pencil, 
+    CheckCircle2, 
+    XCircle,
+    ArrowLeft,
+    School
+} from 'lucide-react';
+
+interface Props {
+    quiz: Quiz;
+    teachers: User[];
+    students: User[];
+    teacherAccess: QuizTeacherAccess[];
+    studentAccess: QuizStudentAccess[];
+    jenjangs: Jenjang[];
+}
+
+export default function QuizAccess({ quiz, teachers, students, teacherAccess, studentAccess, jenjangs }: Props) {
+    const { flash } = usePage<SharedData>().props;
+    const [selectedTeacher, setSelectedTeacher] = useState<string>('');
+    const [teacherPermission, setTeacherPermission] = useState<string>('edit');
+    const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
+    const [selectedJenjang, setSelectedJenjang] = useState<string>('');
+    const [studentSearchTerm, setStudentSearchTerm] = useState('');
+
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: 'Library', href: '#' },
+        { title: 'Semua Aktivitas', href: '/library/quizzes' },
+        { title: quiz.title, href: `/library/quizzes/${quiz.id}/edit` },
+        { title: 'Pengaturan Akses', href: '#' },
+    ];
+
+    // Filter students not already having access
+    const availableStudents = students.filter(
+        s => !studentAccess.find(sa => sa.user_id === s.id)
+    );
+
+    // Filter students by search term
+    const filteredStudents = availableStudents.filter(s => 
+        s.name.toLowerCase().includes(studentSearchTerm.toLowerCase()) ||
+        s.email.toLowerCase().includes(studentSearchTerm.toLowerCase())
+    );
+
+    // Filter teachers not already having access
+    const availableTeachers = teachers.filter(
+        t => !teacherAccess.find(ta => ta.user_id === t.id)
+    );
+
+    const handleGrantTeacherAccess = () => {
+        if (!selectedTeacher) return;
+        router.post(route('library.quizzes.access.teacher.grant', quiz.id), {
+            user_id: selectedTeacher,
+            permission: teacherPermission,
+        }, {
+            onSuccess: () => {
+                setSelectedTeacher('');
+                setTeacherPermission('edit');
+            }
+        });
+    };
+
+    const handleRevokeTeacherAccess = (userId: number) => {
+        if (confirm('Apakah Anda yakin ingin mencabut akses guru ini?')) {
+            router.delete(route('library.quizzes.access.teacher.revoke', [quiz.id, userId]));
+        }
+    };
+
+    const handleGrantStudentAccess = () => {
+        if (selectedStudents.length === 0) return;
+        router.post(route('library.quizzes.access.student.grant', quiz.id), {
+            user_ids: selectedStudents.map(Number),
+        }, {
+            onSuccess: () => {
+                setSelectedStudents([]);
+            }
+        });
+    };
+
+    const handleRevokeStudentAccess = (userId: number) => {
+        if (confirm('Apakah Anda yakin ingin mencabut akses siswa ini?')) {
+            router.delete(route('library.quizzes.access.student.revoke', [quiz.id, userId]));
+        }
+    };
+
+    const handleGrantByJenjang = () => {
+        if (!selectedJenjang) return;
+        router.post(route('library.quizzes.access.student.jenjang', quiz.id), {
+            jenjang_id: selectedJenjang,
+        }, {
+            onSuccess: () => {
+                setSelectedJenjang('');
+            }
+        });
+    };
+
+    const toggleStudentSelection = (studentId: string) => {
+        setSelectedStudents(prev => 
+            prev.includes(studentId)
+                ? prev.filter(id => id !== studentId)
+                : [...prev, studentId]
+        );
+    };
+
+    return (
+        <AppSidebarLayout breadcrumbs={breadcrumbs}>
+            <Head title={`Pengaturan Akses - ${quiz.title}`} />
+
+            <div className="flex h-full flex-1 flex-col gap-6 p-4">
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-2xl font-bold tracking-tight">Pengaturan Akses</h1>
+                        <p className="text-muted-foreground">
+                            Kelola siapa saja yang dapat mengakses quiz "{quiz.title}"
+                        </p>
+                    </div>
+                    <Button variant="outline" asChild>
+                        <Link href={route('library.quizzes.edit', quiz.id)}>
+                            <ArrowLeft className="mr-2 h-4 w-4" />
+                            Kembali
+                        </Link>
+                    </Button>
+                </div>
+
+                {/* Flash Messages */}
+                {flash.success && (
+                    <Alert variant="default" className="bg-green-50 text-green-900 border-green-200">
+                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                        <AlertTitle>Berhasil</AlertTitle>
+                        <AlertDescription>{flash.success}</AlertDescription>
+                    </Alert>
+                )}
+
+                {flash.error && (
+                    <Alert variant="destructive">
+                        <XCircle className="h-4 w-4" />
+                        <AlertTitle>Error</AlertTitle>
+                        <AlertDescription>{flash.error}</AlertDescription>
+                    </Alert>
+                )}
+
+                <div className="grid gap-6 lg:grid-cols-2">
+                    {/* Teacher Access Section */}
+                    <div className="rounded-xl border border-sidebar-border bg-sidebar p-6 shadow-sm">
+                        <div className="mb-4 flex items-center gap-2">
+                            <Shield className="h-5 w-5 text-blue-600" />
+                            <h2 className="text-lg font-semibold">Akses Guru</h2>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-4">
+                            Berikan akses kepada guru lain untuk melihat atau mengedit quiz ini.
+                        </p>
+
+                        {/* Add Teacher Form */}
+                        <div className="space-y-4 mb-6 p-4 bg-muted/50 rounded-lg">
+                            <div className="space-y-2">
+                                <Label>Pilih Guru</Label>
+                                <Select value={selectedTeacher} onValueChange={setSelectedTeacher}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Pilih guru..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {availableTeachers.map((teacher) => (
+                                            <SelectItem key={teacher.id} value={teacher.id.toString()}>
+                                                {teacher.name} ({teacher.roles?.[0]?.name || 'No Role'})
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label>Permission</Label>
+                                <Select value={teacherPermission} onValueChange={setTeacherPermission}>
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="view">
+                                            <div className="flex items-center gap-2">
+                                                <Eye className="h-4 w-4" />
+                                                <span>View Only</span>
+                                            </div>
+                                        </SelectItem>
+                                        <SelectItem value="edit">
+                                            <div className="flex items-center gap-2">
+                                                <Pencil className="h-4 w-4" />
+                                                <span>Edit</span>
+                                            </div>
+                                        </SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <Button 
+                                onClick={handleGrantTeacherAccess} 
+                                disabled={!selectedTeacher}
+                                className="w-full"
+                            >
+                                <UserPlus className="mr-2 h-4 w-4" />
+                                Tambah Akses Guru
+                            </Button>
+                        </div>
+
+                        {/* Teacher Access List */}
+                        <div className="space-y-2">
+                            <Label className="text-sm text-muted-foreground">
+                                Guru dengan akses ({teacherAccess.length})
+                            </Label>
+                            {teacherAccess.length === 0 ? (
+                                <p className="text-sm text-muted-foreground italic py-4 text-center">
+                                    Belum ada guru yang diberi akses
+                                </p>
+                            ) : (
+                                <div className="space-y-2 max-h-64 overflow-y-auto">
+                                    {teacherAccess.map((access) => (
+                                        <div 
+                                            key={access.id}
+                                            className="flex items-center justify-between p-3 rounded-lg border bg-background"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+                                                    <Shield className="h-4 w-4 text-blue-600" />
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium text-sm">{access.user?.name}</p>
+                                                    <p className="text-xs text-muted-foreground">{access.user?.email}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className={`text-xs px-2 py-1 rounded ${
+                                                    access.permission === 'edit' 
+                                                        ? 'bg-green-100 text-green-700'
+                                                        : 'bg-gray-100 text-gray-700'
+                                                }`}>
+                                                    {access.permission === 'edit' ? 'Edit' : 'View'}
+                                                </span>
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="icon"
+                                                    className="text-destructive hover:text-destructive"
+                                                    onClick={() => handleRevokeTeacherAccess(access.user_id)}
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Student Access Section */}
+                    <div className="rounded-xl border border-sidebar-border bg-sidebar p-6 shadow-sm">
+                        <div className="mb-4 flex items-center gap-2">
+                            <GraduationCap className="h-5 w-5 text-green-600" />
+                            <h2 className="text-lg font-semibold">Akses Siswa</h2>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-4">
+                            Berikan akses kepada siswa untuk mengerjakan quiz ini.
+                        </p>
+
+                        {/* Add by Jenjang */}
+                        <div className="space-y-4 mb-4 p-4 bg-muted/50 rounded-lg">
+                            <div className="flex items-center gap-2 mb-2">
+                                <School className="h-4 w-4" />
+                                <Label className="font-medium">Tambah Berdasarkan Jenjang</Label>
+                            </div>
+                            <div className="flex gap-2">
+                                <Select value={selectedJenjang} onValueChange={setSelectedJenjang}>
+                                    <SelectTrigger className="flex-1">
+                                        <SelectValue placeholder="Pilih jenjang..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {jenjangs.map((jenjang) => (
+                                            <SelectItem key={jenjang.id} value={jenjang.id.toString()}>
+                                                {jenjang.jenjang} - {jenjang.nama_sekolah}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <Button 
+                                    onClick={handleGrantByJenjang} 
+                                    disabled={!selectedJenjang}
+                                >
+                                    Tambah
+                                </Button>
+                            </div>
+                        </div>
+
+                        {/* Add Individual Students */}
+                        <div className="space-y-4 mb-6 p-4 bg-muted/50 rounded-lg">
+                            <div className="flex items-center gap-2 mb-2">
+                                <Users className="h-4 w-4" />
+                                <Label className="font-medium">Tambah Siswa Individual</Label>
+                            </div>
+                            
+                            <Input
+                                placeholder="Cari siswa..."
+                                value={studentSearchTerm}
+                                onChange={(e) => setStudentSearchTerm(e.target.value)}
+                            />
+
+                            <div className="max-h-40 overflow-y-auto space-y-1 border rounded-lg p-2">
+                                {filteredStudents.length === 0 ? (
+                                    <p className="text-sm text-muted-foreground text-center py-2">
+                                        Tidak ada siswa ditemukan
+                                    </p>
+                                ) : (
+                                    filteredStudents.slice(0, 20).map((student) => (
+                                        <label
+                                            key={student.id}
+                                            className="flex items-center gap-2 p-2 rounded hover:bg-muted cursor-pointer"
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedStudents.includes(student.id.toString())}
+                                                onChange={() => toggleStudentSelection(student.id.toString())}
+                                                className="rounded"
+                                            />
+                                            <div className="flex-1">
+                                                <p className="text-sm font-medium">{student.name}</p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {student.email}
+                                                    {student.jenjang && ` • ${student.jenjang.jenjang}`}
+                                                </p>
+                                            </div>
+                                        </label>
+                                    ))
+                                )}
+                            </div>
+
+                            {selectedStudents.length > 0 && (
+                                <Button onClick={handleGrantStudentAccess} className="w-full">
+                                    <UserPlus className="mr-2 h-4 w-4" />
+                                    Tambah {selectedStudents.length} Siswa
+                                </Button>
+                            )}
+                        </div>
+
+                        {/* Student Access List */}
+                        <div className="space-y-2">
+                            <Label className="text-sm text-muted-foreground">
+                                Siswa dengan akses ({studentAccess.length})
+                            </Label>
+                            {studentAccess.length === 0 ? (
+                                <p className="text-sm text-muted-foreground italic py-4 text-center">
+                                    Belum ada siswa yang diberi akses
+                                </p>
+                            ) : (
+                                <div className="space-y-2 max-h-64 overflow-y-auto">
+                                    {studentAccess.map((access) => (
+                                        <div 
+                                            key={access.id}
+                                            className="flex items-center justify-between p-3 rounded-lg border bg-background"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
+                                                    <GraduationCap className="h-4 w-4 text-green-600" />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <p className="font-medium text-sm">{access.user?.name}</p>
+                                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                                        <span>{access.user?.email}</span>
+                                                        {access.user?.jenjang && (
+                                                            <>
+                                                                <span>•</span>
+                                                                <span>{access.user.jenjang.jenjang} - {access.user.jenjang.nama_sekolah}</span>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                {access.attempt_count > 0 && (
+                                                    <span className="text-xs px-2 py-1 rounded bg-blue-100 text-blue-700">
+                                                        {access.attempt_count}x dikerjakan
+                                                    </span>
+                                                )}
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="icon"
+                                                    className="text-destructive hover:text-destructive"
+                                                    onClick={() => handleRevokeStudentAccess(access.user_id)}
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </AppSidebarLayout>
+    );
+}

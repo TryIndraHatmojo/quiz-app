@@ -29,6 +29,14 @@ Route::middleware(['auth', 'verified'])->prefix('library')->name('library.')->gr
     Route::get('quizzes/{quiz}/questions', [App\Http\Controllers\Library\QuizController::class, 'questions'])->name('quizzes.questions');
     Route::post('quizzes/{quiz}/questions', [App\Http\Controllers\Library\QuizController::class, 'storeQuestions'])->name('quizzes.questions.store');
     Route::get('quizzes/{quiz}/preview', [App\Http\Controllers\Library\QuizController::class, 'preview'])->name('quizzes.preview');
+    
+    // Quiz Access Management
+    Route::get('quizzes/{quiz}/access', [App\Http\Controllers\Library\QuizController::class, 'access'])->name('quizzes.access');
+    Route::post('quizzes/{quiz}/access/teacher', [App\Http\Controllers\Library\QuizController::class, 'grantTeacherAccess'])->name('quizzes.access.teacher.grant');
+    Route::delete('quizzes/{quiz}/access/teacher/{user}', [App\Http\Controllers\Library\QuizController::class, 'revokeTeacherAccess'])->name('quizzes.access.teacher.revoke');
+    Route::post('quizzes/{quiz}/access/student', [App\Http\Controllers\Library\QuizController::class, 'grantStudentAccess'])->name('quizzes.access.student.grant');
+    Route::delete('quizzes/{quiz}/access/student/{user}', [App\Http\Controllers\Library\QuizController::class, 'revokeStudentAccess'])->name('quizzes.access.student.revoke');
+    Route::post('quizzes/{quiz}/access/student/jenjang', [App\Http\Controllers\Library\QuizController::class, 'grantStudentAccessByJenjang'])->name('quizzes.access.student.jenjang');
 });
 
 require __DIR__.'/settings.php';

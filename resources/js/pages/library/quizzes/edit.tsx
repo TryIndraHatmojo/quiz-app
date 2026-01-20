@@ -13,9 +13,9 @@ import AppSidebarLayout from '@/layouts/app/app-sidebar-layout';
 import { type BreadcrumbItem, type QuizBackground, type QuizCategory } from '@/types';
 import { type Quiz, type TimeMode } from '@/types/quiz';
 import { FileUploader } from '@/components/file-uploader';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
-import { Clock, Timer } from 'lucide-react';
+import { Clock, Timer, UserCog } from 'lucide-react';
 
 interface Props {
     quiz: Quiz;
@@ -62,11 +62,19 @@ export default function QuizEdit({ quiz, categories = [], backgrounds = [] }: Pr
 
             <div className="flex h-full flex-1 flex-col gap-4 p-4">
                 <div className="max-w-2xl">
-                    <div className="mb-6">
-                        <h1 className="text-2xl font-bold tracking-tight">Edit Aktivitas</h1>
-                        <p className="text-muted-foreground">
-                            Perbarui detail kuis atau aktivitas Anda.
-                        </p>
+                    <div className="mb-6 flex items-center justify-between">
+                        <div>
+                            <h1 className="text-2xl font-bold tracking-tight">Edit Aktivitas</h1>
+                            <p className="text-muted-foreground">
+                                Perbarui detail kuis atau aktivitas Anda.
+                            </p>
+                        </div>
+                        <Button variant="outline" asChild>
+                            <Link href={route('library.quizzes.access', quiz.id)}>
+                                <UserCog className="mr-2 h-4 w-4" />
+                                Pengaturan Akses
+                            </Link>
+                        </Button>
                     </div>
 
                     <form onSubmit={submit} className="space-y-6">

@@ -60,4 +60,90 @@ class Quiz extends Model
     {
         return $this->belongsTo(QuizBackground::class, 'quiz_background_id');
     }
+
+    /**
+     * Get teachers who have access to this quiz.
+     */
+    public function teacherAccess(): HasMany
+    {
+        return $this->hasMany(QuizTeacherAccess::class);
+    }
+
+    /**
+     * Get teachers who can edit this quiz.
+     */
+    public function teachersWithAccess()
+    {
+        return $this->belongsToMany(User::class, 'quiz_teacher_access')
+            ->withPivot(['permission', 'granted_at', 'granted_by'])
+            ->withTimestamps();
+    }
+
+    /**
+     * Get students who have access to this quiz.
+     */
+    public function studentAccess(): HasMany
+    {
+        return $this->hasMany(QuizStudentAccess::class);
+    }
+
+    /**
+     * Get students who can work on this quiz.
+     */
+    public function studentsWithAccess()
+    {
+        return $this->belongsToMany(User::class, 'quiz_student_access')
+            ->withPivot(['granted_at', 'granted_by', 'accessed_at', 'attempt_count'])
+            ->withTimestamps();
+    }
+
+    /**
+     * Check if a teacher has access to edit this quiz.
+     */
+    public function hasTeacherAccess(int $userId, string $permission = 'edit'): bool
+    {
+        return $this->teacherAccess()
+            ->where('user_id', $userId)
+            ->where('permission', $permission)
+            ->exists();
+    }
+
+    /**
+     * Check if a student has access to this quiz.
+     */
+    public function hasStudentAccess(int $userId): bool
+    {
+        return $this->studentAccess()
+            ->where('user_id', $userId)
+            ->exists();
+    }
+
+    /**
+     * Grant teacher access to this quiz.
+     */
+    public function grantTeacherAccess(int $userId, string $permission = 'edit', ?int $grantedBy = null): void
+    {
+        QuizTeacherAccess::updateOrCreate(
+            ['quiz_id' => $this->id, 'user_id' => $userId],
+            [
+                'permission' => $permission,
+                'granted_by' => $grantedBy ?? auth()->id(),
+                'granted_at' => now(),
+            ]
+        );
+    }
+
+    /**
+     * Grant student access to this quiz.
+     */
+    public function grantStudentAccess(int $userId, ?int $grantedBy = null): void
+    {
+        QuizStudentAccess::updateOrCreate(
+            ['quiz_id' => $this->id, 'user_id' => $userId],
+            [
+                'granted_by' => $grantedBy ?? auth()->id(),
+                'granted_at' => now(),
+            ]
+        );
+    }
 }

@@ -90,3 +90,26 @@ export interface User {
     jenjang_id?: number | null;
     [key: string]: unknown; // This allows for additional properties...
 }
+
+export interface QuizTeacherAccess {
+    id: number;
+    quiz_id: number;
+    user_id: number;
+    permission: 'view' | 'edit';
+    granted_at: string;
+    granted_by: number | null;
+    user?: User;
+    granter?: User;
+}
+
+export interface QuizStudentAccess {
+    id: number;
+    quiz_id: number;
+    user_id: number;
+    granted_at: string;
+    granted_by: number | null;
+    accessed_at: string | null;
+    attempt_count: number;
+    user?: User;
+    granter?: User;
+}

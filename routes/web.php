@@ -37,4 +37,12 @@ Route::middleware(['auth', 'verified'])->prefix('library')->name('library.')->gr
     Route::post('quizzes/{quiz}/access/student/jenjang', [App\Http\Controllers\Library\QuizController::class, 'grantStudentAccessByJenjang'])->name('quizzes.access.student.jenjang');
 });
 
+// Quiz Attempt Routes (for students taking quizzes)
+Route::middleware(['auth', 'verified'])->prefix('quiz')->name('quiz.')->group(function () {
+    Route::get('{quiz}/start', [App\Http\Controllers\QuizAttemptController::class, 'start'])->name('start');
+    Route::post('attempt/{attempt}/answer', [App\Http\Controllers\QuizAttemptController::class, 'saveAnswer'])->name('answer');
+    Route::post('attempt/{attempt}/complete', [App\Http\Controllers\QuizAttemptController::class, 'complete'])->name('complete');
+    Route::get('attempt/{attempt}/result', [App\Http\Controllers\QuizAttemptController::class, 'result'])->name('result');
+});
+
 require __DIR__.'/settings.php';

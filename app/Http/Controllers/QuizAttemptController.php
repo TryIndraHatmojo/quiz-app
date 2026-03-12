@@ -7,6 +7,7 @@ use App\Models\QuizAttempt;
 use App\Models\QuizAnswer;
 use App\Models\QuizStudentAccess;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class QuizAttemptController extends Controller
@@ -83,15 +84,25 @@ class QuizAttemptController extends Controller
      */
     public function saveAnswer(Request $request, QuizAttempt $attempt)
     {
+        Log::info('saveAnswer: Method called', [
+            'attempt_id' => $attempt->id,
+            'request_data' => $request->all()
+        ]);
+        
         $user = auth()->user();
         
         // Verify attempt ownership
         if ($attempt->user_id !== $user->id) {
+            Log::warning('saveAnswer: Attempt ownership verification failed', [
+                'attempt_user_id' => $attempt->user_id,
+                'current_user_id' => $user->id
+            ]);
             abort(403);
         }
         
         // Verify attempt is not completed
         if ($attempt->isCompleted()) {
+            Log::warning('saveAnswer: Attempt already completed', ['attempt_id' => $attempt->id]);
             return response()->json(['error' => 'Attempt sudah selesai.'], 400);
         }
         
@@ -102,11 +113,20 @@ class QuizAttemptController extends Controller
             'answer_text' => 'nullable|string',
         ]);
         
+        Log::info('saveAnswer: Validation passed');
+        
         // Get the question to check correct answer
         $question = $attempt->quiz->questions()->find($request->quiz_question_id);
         if (!$question) {
+            Log::error('saveAnswer: Question not found', ['quiz_question_id' => $request->quiz_question_id]);
             return response()->json(['error' => 'Question not found.'], 404);
         }
+        
+        Log::info('saveAnswer: Question loaded', [
+            'question_id' => $question->id,
+            'question_type' => $question->question_type,
+            'points' => $question->points
+        ]);
         
         // Calculate if answer is correct and points
         $isCorrect = false;
@@ -119,6 +139,12 @@ class QuizAttemptController extends Controller
                     $selectedOption = $question->options()->find($request->quiz_question_option_id);
                     $isCorrect = $selectedOption && $selectedOption->is_correct;
                     $awardedPoints = $isCorrect ? $question->points : 0;
+                    
+                    Log::info('saveAnswer: Multiple choice/True-False answer processed', [
+                        'selected_option_id' => $request->quiz_question_option_id,
+                        'is_correct' => $isCorrect,
+                        'awarded_points' => $awardedPoints
+                    ]);
                 }
                 break;
                 
@@ -139,6 +165,13 @@ class QuizAttemptController extends Controller
                     
                     $isCorrect = $expectedAnswer === $givenAnswer;
                     $awardedPoints = $isCorrect ? $question->points : 0;
+                    
+                    Log::info('saveAnswer: Short answer processed', [
+                        'expected_answer' => $expectedAnswer,
+                        'given_answer' => $givenAnswer,
+                        'is_correct' => $isCorrect,
+                        'awarded_points' => $awardedPoints
+                    ]);
                 }
                 break;
                 
@@ -150,6 +183,14 @@ class QuizAttemptController extends Controller
                     // Points are awarded per pair, divide by number of pairs
                     $pairsCount = $question->matchingPairs()->count();
                     $awardedPoints = $isCorrect ? round($question->points / $pairsCount) : 0;
+                    
+                    Log::info('saveAnswer: Matching pairs processed', [
+                        'pair_id' => $request->quiz_matching_pair_id,
+                        'selected_answer' => $request->answer_text,
+                        'is_correct' => $isCorrect,
+                        'pairs_count' => $pairsCount,
+                        'awarded_points' => $awardedPoints
+                    ]);
                 }
                 break;
                 
@@ -157,10 +198,16 @@ class QuizAttemptController extends Controller
                 // Long answers need manual grading
                 $isCorrect = false;
                 $awardedPoints = 0;
+                Log::info('saveAnswer: Long answer saved (needs manual grading)');
                 break;
         }
         
         // Save or update answer
+        Log::info('saveAnswer: Saving answer to database', [
+            'is_correct' => $isCorrect,
+            'awarded_points' => $awardedPoints
+        ]);
+        
         $answer = QuizAnswer::updateOrCreate(
             [
                 'quiz_attempt_id' => $attempt->id,
@@ -176,6 +223,8 @@ class QuizAttemptController extends Controller
             ]
         );
         
+        Log::info('saveAnswer: Answer saved successfully', ['answer_id' => $answer->id]);
+        
         return response()->json([
             'success' => true,
             'answer' => $answer,
@@ -187,20 +236,32 @@ class QuizAttemptController extends Controller
      */
     public function complete(QuizAttempt $attempt)
     {
+        Log::info('complete: Completing quiz attempt', ['attempt_id' => $attempt->id]);
+        
         $user = auth()->user();
         
         // Verify attempt ownership
         if ($attempt->user_id !== $user->id) {
+            Log::warning('complete: Ownership verification failed', [
+                'attempt_user_id' => $attempt->user_id,
+                'current_user_id' => $user->id
+            ]);
             abort(403);
         }
         
         // Verify attempt is not already completed
         if ($attempt->isCompleted()) {
+            Log::info('complete: Attempt already completed, redirecting to result', ['attempt_id' => $attempt->id]);
             return redirect()->route('quiz.result', $attempt->id);
         }
         
         // Complete the attempt
         $attempt->complete();
+        
+        Log::info('complete: Attempt completed successfully', [
+            'attempt_id' => $attempt->id,
+            'completed_at' => $attempt->completed_at
+        ]);
         
         return redirect()->route('quiz.result', $attempt->id);
     }
@@ -210,10 +271,16 @@ class QuizAttemptController extends Controller
      */
     public function result(QuizAttempt $attempt)
     {
+        Log::info('result: Displaying quiz result', ['attempt_id' => $attempt->id]);
+        
         $user = auth()->user();
         
         // Verify attempt ownership
         if ($attempt->user_id !== $user->id) {
+            Log::warning('result: Ownership verification failed', [
+                'attempt_user_id' => $attempt->user_id,
+                'current_user_id' => $user->id
+            ]);
             abort(403);
         }
         
@@ -223,6 +290,12 @@ class QuizAttemptController extends Controller
             'quiz.questions.shortAnswerFields',
             'quiz.background',
             'answers.selectedOption',
+        ]);
+        
+        Log::info('result: Data loaded for result page', [
+            'quiz_id' => $attempt->quiz->id,
+            'total_score' => $attempt->total_score,
+            'answers_count' => $attempt->answers->count()
         ]);
         
         return Inertia::render('quiz/result', [

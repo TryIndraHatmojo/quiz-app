@@ -12,29 +12,29 @@ class QuizCategorySeeder extends Seeder
     {
         $categories = [
             [
-                'name' => 'Mathematics',
-                'slug' => 'mathematics',
-                'description' => 'Math quizzes and assessments',
+                'name' => 'Matematika',
+                'slug' => 'Matematika',
+                'description' => 'Kuis dan penilaian matematika',
             ],
             [
-                'name' => 'Science',
-                'slug' => 'science',
-                'description' => 'Science quizzes covering physics, chemistry, and biology',
+                'name' => 'Ilmu Pengetahuan Alam',
+                'slug' => 'Ilmu Pengetahuan Alam',
+                'description' => 'Kuis IPA mencakup fisika, kimia, dan biologi',
             ],
             [
-                'name' => 'English',
-                'slug' => 'english',
-                'description' => 'English language and literature quizzes',
+                'name' => 'Bahasa Inggris',
+                'slug' => 'Bahasa Inggris',
+                'description' => 'Kuis bahasa dan sastra Inggris',
             ],
             [
-                'name' => 'History',
-                'slug' => 'history',
-                'description' => 'Historical events and facts',
+                'name' => 'Sejarah',
+                'slug' => 'Sejarah',
+                'description' => 'Kejadian dan fakta sejarah',
             ],
             [
-                'name' => 'General Knowledge',
+                'name' => 'Pengetahuan Umum',
                 'slug' => 'general-knowledge',
-                'description' => 'General knowledge and trivia',
+                'description' => 'Pengetahuan umum dan trivia',
             ],
         ];
 

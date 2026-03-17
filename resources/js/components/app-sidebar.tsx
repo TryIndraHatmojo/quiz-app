@@ -1,5 +1,3 @@
-import { NavFooter } from '@/components/nav-footer';
-import { NavMain } from '@/components/nav-main';
 import { NavMainWithDropdown } from '@/components/nav-main-with-dropdown';
 import { NavUser } from '@/components/nav-user';
 import {
@@ -12,9 +10,18 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
-import { type NavGroup, type NavItem } from '@/types';
+import { type NavGroup } from '@/types';
 import { Link } from '@inertiajs/react';
-import { BookOpen, Database, LayoutGrid, Plus, Shield, Users, FileImage, GraduationCap } from 'lucide-react';
+import {
+    BookOpen,
+    Database,
+    FileImage,
+    GraduationCap,
+    LayoutGrid,
+    Plus,
+    Shield,
+    Users,
+} from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavGroups: NavGroup[] = [
@@ -29,15 +36,15 @@ const mainNavGroups: NavGroup[] = [
         ],
     },
     {
-        title: 'Library',
+        title: 'Koleksi',
         items: [
             {
-                title: 'Create',
+                title: 'Buat Baru',
                 href: '/library/quizzes/create',
                 icon: Plus,
             },
             {
-                title: 'All Activities',
+                title: 'Semua Kuis',
                 href: '/library/quizzes',
                 icon: BookOpen,
             },
@@ -81,8 +88,6 @@ const mainNavGroups: NavGroup[] = [
         ],
     },
 ];
-
-
 
 export function AppSidebar() {
     return (

@@ -1,5 +1,13 @@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
     Select,
@@ -8,11 +16,18 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import AppSidebarLayout from '@/layouts/app/app-sidebar-layout';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { CheckCircle2, Eye, Pencil, Plus, Search, Trash2, XCircle } from 'lucide-react';
+import {
+    CheckCircle2,
+    Eye,
+    Pencil,
+    Plus,
+    Search,
+    Trash2,
+    XCircle,
+} from 'lucide-react';
 import { FormEventHandler, useEffect, useRef, useState } from 'react';
 
 interface QuizCategory {
@@ -55,19 +70,25 @@ interface Props {
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Library',
+        title: 'Koleksi',
         href: '#',
     },
     {
-        title: 'Semua Aktivitas',
+        title: 'Semua Kuis',
         href: '/library/quizzes',
     },
 ];
 
-export default function QuizIndex({ quizzes, categories = [], filters }: Props) {
+export default function QuizIndex({
+    quizzes,
+    categories = [],
+    filters,
+}: Props) {
     const { flash } = usePage<SharedData>().props;
     const [statusFilter, setStatusFilter] = useState(filters.status || '');
-    const [categoryFilter, setCategoryFilter] = useState(filters.category ? filters.category : '');
+    const [categoryFilter, setCategoryFilter] = useState(
+        filters.category ? filters.category : '',
+    );
     const [search, setSearch] = useState(filters.search || '');
     const [loading, setLoading] = useState(false);
     const observerTarget = useRef(null);
@@ -78,9 +99,9 @@ export default function QuizIndex({ quizzes, categories = [], filters }: Props) 
         if (quizzes.current_page === 1) {
             setLocalQuizzes(quizzes.data);
         } else {
-            setLocalQuizzes(prev => {
-                const newIds = new Set(quizzes.data.map(q => q.id));
-                const existing = prev.filter(q => !newIds.has(q.id));
+            setLocalQuizzes((prev) => {
+                const newIds = new Set(quizzes.data.map((q) => q.id));
+                const existing = prev.filter((q) => !newIds.has(q.id));
                 return [...existing, ...quizzes.data];
             });
         }
@@ -97,7 +118,7 @@ export default function QuizIndex({ quizzes, categories = [], filters }: Props) 
             preserveScroll: true,
             onSuccess: () => {
                 // Reset local state on filter change is handled by useEffect with current_page === 1
-            }
+            },
         });
     };
 
@@ -113,21 +134,31 @@ export default function QuizIndex({ quizzes, categories = [], filters }: Props) 
     useEffect(() => {
         const observer = new IntersectionObserver(
             (entries) => {
-                if (entries[0].isIntersecting && quizzes.current_page < quizzes.last_page && !loading) {
+                if (
+                    entries[0].isIntersecting &&
+                    quizzes.current_page < quizzes.last_page &&
+                    !loading
+                ) {
                     setLoading(true);
-                    const nextPageUrl = quizzes.links.find(link => link.label === '&raquo;')?.url;
+                    const nextPageUrl = quizzes.links.find(
+                        (link) => link.label === '&raquo;',
+                    )?.url;
                     if (nextPageUrl) {
-                        router.get(nextPageUrl, {}, {
-                            preserveState: true,
-                            preserveScroll: true,
-                            only: ['quizzes'],
-                            onSuccess: () => setLoading(false),
-                            onError: () => setLoading(false),
-                        });
+                        router.get(
+                            nextPageUrl,
+                            {},
+                            {
+                                preserveState: true,
+                                preserveScroll: true,
+                                only: ['quizzes'],
+                                onSuccess: () => setLoading(false),
+                                onError: () => setLoading(false),
+                            },
+                        );
                     }
                 }
             },
-            { threshold: 0.1 }
+            { threshold: 0.1 },
         );
 
         if (observerTarget.current) {
@@ -144,11 +175,14 @@ export default function QuizIndex({ quizzes, categories = [], filters }: Props) 
 
     return (
         <AppSidebarLayout breadcrumbs={breadcrumbs}>
-            <Head title="Library - Semua Aktivitas" />
+            <Head title="Koleksi - Semua Kuis" />
 
             <div className="flex h-full flex-1 flex-col gap-4 p-4">
                 {flash.success && (
-                    <Alert variant="default" className="border-green-500 bg-green-50 text-green-900 dark:bg-green-900/20 dark:text-green-300">
+                    <Alert
+                        variant="default"
+                        className="border-green-500 bg-green-50 text-green-900 dark:bg-green-900/20 dark:text-green-300"
+                    >
                         <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
                         <AlertTitle>Berhasil</AlertTitle>
                         <AlertDescription>{flash.success}</AlertDescription>
@@ -165,15 +199,13 @@ export default function QuizIndex({ quizzes, categories = [], filters }: Props) 
 
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">Library</h1>
-                        <p className="text-muted-foreground">
-                            Kelola kuis dan aktivitas.
-                        </p>
+                        <h1>Koleksi</h1>
+                        <p className="text-muted-foreground">Kelola kuis.</p>
                     </div>
                     <Button asChild>
                         <Link href={route('library.quizzes.create')}>
                             <Plus className="mr-2 h-4 w-4" />
-                            Buat Aktivitas
+                            Buat Kuis
                         </Link>
                     </Button>
                 </div>
@@ -183,39 +215,66 @@ export default function QuizIndex({ quizzes, categories = [], filters }: Props) 
                     {/* Status Filter */}
                     <div className="flex gap-2">
                         <Button
-                            variant={statusFilter === '' ? 'default' : 'outline'}
+                            variant={
+                                statusFilter === '' ? 'default' : 'outline'
+                            }
                             onClick={() => {
                                 setStatusFilter('');
-                                router.get(route('library.quizzes.index'), {
-                                    category: categoryFilter,
-                                    search,
-                                }, { preserveState: true, preserveScroll: true });
+                                router.get(
+                                    route('library.quizzes.index'),
+                                    {
+                                        category: categoryFilter,
+                                        search,
+                                    },
+                                    {
+                                        preserveState: true,
+                                        preserveScroll: true,
+                                    },
+                                );
                             }}
                         >
                             Semua
                         </Button>
                         <Button
-                            variant={statusFilter === 'live' ? 'default' : 'outline'}
+                            variant={
+                                statusFilter === 'live' ? 'default' : 'outline'
+                            }
                             onClick={() => {
                                 setStatusFilter('live');
-                                router.get(route('library.quizzes.index'), {
-                                    status: 'live',
-                                    category: categoryFilter,
-                                    search,
-                                }, { preserveState: true, preserveScroll: true });
+                                router.get(
+                                    route('library.quizzes.index'),
+                                    {
+                                        status: 'live',
+                                        category: categoryFilter,
+                                        search,
+                                    },
+                                    {
+                                        preserveState: true,
+                                        preserveScroll: true,
+                                    },
+                                );
                             }}
                         >
                             Live
                         </Button>
                         <Button
-                            variant={statusFilter === 'draft' ? 'default' : 'outline'}
+                            variant={
+                                statusFilter === 'draft' ? 'default' : 'outline'
+                            }
                             onClick={() => {
                                 setStatusFilter('draft');
-                                router.get(route('library.quizzes.index'), {
-                                    status: 'draft',
-                                    category: categoryFilter,
-                                    search,
-                                }, { preserveState: true, preserveScroll: true });
+                                router.get(
+                                    route('library.quizzes.index'),
+                                    {
+                                        status: 'draft',
+                                        category: categoryFilter,
+                                        search,
+                                    },
+                                    {
+                                        preserveState: true,
+                                        preserveScroll: true,
+                                    },
+                                );
                             }}
                         >
                             Draft
@@ -229,27 +288,42 @@ export default function QuizIndex({ quizzes, categories = [], filters }: Props) 
                             onValueChange={(value) => {
                                 const newValue = value === 'all' ? '' : value;
                                 setCategoryFilter(newValue);
-                                router.get(route('library.quizzes.index'), {
-                                    status: statusFilter,
-                                    category: newValue,
-                                    search,
-                                }, { preserveState: true, preserveScroll: true });
+                                router.get(
+                                    route('library.quizzes.index'),
+                                    {
+                                        status: statusFilter,
+                                        category: newValue,
+                                        search,
+                                    },
+                                    {
+                                        preserveState: true,
+                                        preserveScroll: true,
+                                    },
+                                );
                             }}
                         >
                             <SelectTrigger className="w-[200px]">
                                 <SelectValue placeholder="Semua Kategori" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">Semua Kategori</SelectItem>
+                                <SelectItem value="all">
+                                    Semua Kategori
+                                </SelectItem>
                                 {categories.map((cat) => (
-                                    <SelectItem key={cat.id} value={cat.id.toString()}>
+                                    <SelectItem
+                                        key={cat.id}
+                                        value={cat.id.toString()}
+                                    >
                                         {cat.name}
                                     </SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
 
-                        <form onSubmit={handleSearchSubmit} className="flex flex-1 gap-2">
+                        <form
+                            onSubmit={handleSearchSubmit}
+                            className="flex flex-1 gap-2"
+                        >
                             <Input
                                 placeholder="Cari kuis..."
                                 value={search}
@@ -267,7 +341,8 @@ export default function QuizIndex({ quizzes, categories = [], filters }: Props) 
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {localQuizzes.length === 0 ? (
                         <div className="col-span-full py-12 text-center text-muted-foreground">
-                            Tidak ada aktivitas ditemukan. Klik "Buat Aktivitas" untuk memulai.
+                            Tidak ada kuis ditemukan. Klik "Buat Kuis" untuk
+                            memulai.
                         </div>
                     ) : (
                         localQuizzes.map((quiz) => (
@@ -275,23 +350,31 @@ export default function QuizIndex({ quizzes, categories = [], filters }: Props) 
                                 <CardHeader>
                                     <div className="flex items-start justify-between">
                                         <div className="flex-1">
-                                            <CardTitle className="line-clamp-1">{quiz.title}</CardTitle>
+                                            <CardTitle className="line-clamp-1">
+                                                {quiz.title}
+                                            </CardTitle>
                                             <CardDescription className="mt-1">
-                                                Kode: <span className="font-mono">{quiz.join_code}</span>
+                                                Kode:{' '}
+                                                <span className="font-mono">
+                                                    {quiz.join_code}
+                                                </span>
                                             </CardDescription>
                                         </div>
-                                        <span className={`ml-2 rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                                            quiz.status === 'live'
-                                                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-                                                : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
-                                        }`}>
+                                        <span
+                                            className={`ml-2 rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                                                quiz.status === 'live'
+                                                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                                                    : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
+                                            }`}
+                                        >
                                             {quiz.status.toUpperCase()}
                                         </span>
                                     </div>
                                 </CardHeader>
                                 <CardContent className="flex-1">
                                     <p className="line-clamp-3 text-sm text-muted-foreground">
-                                        {quiz.description || 'Tidak ada deskripsi.'}
+                                        {quiz.description ||
+                                            'Tidak ada deskripsi.'}
                                     </p>
                                     {quiz.category && (
                                         <p className="mt-2 text-xs text-muted-foreground">
@@ -299,30 +382,54 @@ export default function QuizIndex({ quizzes, categories = [], filters }: Props) 
                                         </p>
                                     )}
                                     <p className="mt-2 text-xs text-muted-foreground">
-                                        Waktu: {quiz.duration ? (
-                                            quiz.time_mode === 'per_question' 
-                                                ? `${quiz.duration} detik/pertanyaan` 
+                                        Waktu:{' '}
+                                        {quiz.duration
+                                            ? quiz.time_mode === 'per_question'
+                                                ? `${quiz.duration} detik/pertanyaan`
                                                 : `${quiz.duration} menit total`
-                                        ) : 'Tidak diatur'}
+                                            : 'Tidak diatur'}
                                     </p>
                                     <p className="mt-1 text-xs text-muted-foreground">
-                                        Dibuat: {new Date(quiz.created_at).toLocaleDateString()}
+                                        Dibuat:{' '}
+                                        {new Date(
+                                            quiz.created_at,
+                                        ).toLocaleDateString()}
                                     </p>
                                 </CardContent>
                                 <CardFooter className="flex gap-2">
-                                    <Button variant="outline" size="sm" className="flex-1" asChild>
-                                        <Link href={route('library.quizzes.questions', quiz.id)}>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="flex-1"
+                                        asChild
+                                    >
+                                        <Link
+                                            href={route(
+                                                'library.quizzes.questions',
+                                                quiz.id,
+                                            )}
+                                        >
                                             <Pencil className="mr-2 h-4 w-4" />
                                             Pertanyaan
                                         </Link>
                                     </Button>
                                     <Button variant="outline" size="sm" asChild>
-                                        <Link href={route('library.quizzes.preview', quiz.id)}>
+                                        <Link
+                                            href={route(
+                                                'library.quizzes.preview',
+                                                quiz.id,
+                                            )}
+                                        >
                                             <Eye className="h-4 w-4" />
                                         </Link>
                                     </Button>
                                     <Button variant="outline" size="sm" asChild>
-                                        <Link href={route('library.quizzes.edit', quiz.id)}>
+                                        <Link
+                                            href={route(
+                                                'library.quizzes.edit',
+                                                quiz.id,
+                                            )}
+                                        >
                                             Edit
                                         </Link>
                                     </Button>
@@ -342,8 +449,13 @@ export default function QuizIndex({ quizzes, categories = [], filters }: Props) 
 
                 {/* Lazy loading trigger */}
                 {quizzes.current_page < quizzes.last_page && (
-                    <div ref={observerTarget} className="py-4 text-center text-sm text-muted-foreground">
-                        {loading ? 'Memuat lebih banyak...' : 'Gulir untuk lebih banyak'}
+                    <div
+                        ref={observerTarget}
+                        className="py-4 text-center text-sm text-muted-foreground"
+                    >
+                        {loading
+                            ? 'Memuat lebih banyak...'
+                            : 'Gulir untuk lebih banyak'}
                     </div>
                 )}
             </div>

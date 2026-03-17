@@ -112,7 +112,7 @@ class QuizController extends Controller
         ]);
 
         return redirect()->route('library.quizzes.index')
-            ->with('success', 'Quiz created successfully.');
+            ->with('success', 'Kuis berhasil dibuat.');
     }
 
     public function edit(Quiz $quiz)
@@ -186,7 +186,7 @@ class QuizController extends Controller
         ]);
 
         return redirect()->route('library.quizzes.index')
-            ->with('success', 'Quiz updated successfully.');
+            ->with('success', 'Kuis berhasil diperbarui.');
     }
 
     public function destroy(Quiz $quiz)
@@ -198,7 +198,7 @@ class QuizController extends Controller
         $quiz->delete();
 
         return redirect()->route('library.quizzes.index')
-            ->with('success', 'Quiz deleted successfully.');
+            ->with('success', 'Kuis berhasil dihapus.');
     }
 
     public function questions(Quiz $quiz)
@@ -325,7 +325,7 @@ class QuizController extends Controller
             }
         }
 
-        return back()->with('success', 'Questions saved successfully.');
+        return back()->with('success', 'Pertanyaan berhasil disimpan.');
     }
 
     /**

@@ -119,7 +119,7 @@ class QuizAttemptController extends Controller
         $question = $attempt->quiz->questions()->find($request->quiz_question_id);
         if (!$question) {
             Log::error('saveAnswer: Question not found', ['quiz_question_id' => $request->quiz_question_id]);
-            return response()->json(['error' => 'Question not found.'], 404);
+            return response()->json(['error' => 'Pertanyaan tidak ditemukan.'], 404);
         }
         
         Log::info('saveAnswer: Question loaded', [

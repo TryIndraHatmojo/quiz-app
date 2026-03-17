@@ -51,7 +51,7 @@ class UserController extends Controller
         $user->roles()->attach($validated['role_id']);
 
         return redirect()->route('master.users.index')
-            ->with('success', 'User created successfully.');
+            ->with('success', 'Pengguna berhasil dibuat.');
     }
 
     public function edit(User $user)
@@ -90,18 +90,18 @@ class UserController extends Controller
         $user->roles()->sync([$validated['role_id']]);
 
         return redirect()->route('master.users.index')
-            ->with('success', 'User updated successfully.');
+            ->with('success', 'Pengguna berhasil diperbarui.');
     }
 
     public function destroy(User $user)
     {
         if ($user->id === auth()->id()) {
-            return back()->with('error', 'Cannot delete yourself.');
+            return back()->with('error', 'Tidak dapat menghapus diri sendiri.');
         }
 
         $user->delete();
 
         return redirect()->route('master.users.index')
-            ->with('success', 'User deleted successfully.');
+            ->with('success', 'Pengguna berhasil dihapus.');
     }
 }

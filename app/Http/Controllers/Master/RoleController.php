@@ -33,7 +33,7 @@ class RoleController extends Controller
         Role::create($validated);
 
         return redirect()->route('master.roles.index')
-            ->with('success', 'Role created successfully.');
+            ->with('success', 'Peran berhasil dibuat.');
     }
 
     public function edit(Role $role)
@@ -52,24 +52,24 @@ class RoleController extends Controller
         $role->update($validated);
 
         return redirect()->route('master.roles.index')
-            ->with('success', 'Role updated successfully.');
+            ->with('success', 'Peran berhasil diperbarui.');
     }
 
     public function destroy(Role $role)
     {
         if ($role->name === 'Super Admin') {
-            return back()->with('error', 'Cannot delete Super Admin role.');
+            return back()->with('error', 'Tidak dapat menghapus peran Super Admin.');
         }
 
         $cek = $role->users;
 
         if ($cek->count() > 0) {
-            return back()->with('error', 'Cannot delete role that has users.');
+            return back()->with('error', 'Tidak dapat menghapus peran yang memiliki pengguna.');
         }
 
         $role->delete();
 
         return redirect()->route('master.roles.index')
-            ->with('success', 'Role deleted successfully.');
+            ->with('success', 'Peran berhasil dihapus.');
     }
 }

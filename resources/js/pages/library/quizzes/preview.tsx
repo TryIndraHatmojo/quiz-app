@@ -13,11 +13,11 @@ interface Props {
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Library',
+        title: 'Koleksi',
         href: '#',
     },
     {
-        title: 'Semua Aktivitas',
+        title: 'Semua Kuis',
         href: '/library/quizzes',
     },
     {

@@ -1,10 +1,12 @@
+import Pagination from '@/components/pagination';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, type SharedData, type User } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Trash2, Pencil, Plus, CheckCircle2, XCircle } from 'lucide-react';
-import Pagination from '@/components/pagination';
+import { CheckCircle2, Pencil, Plus, Trash2, XCircle } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -26,10 +28,41 @@ interface Props {
             active: boolean;
         }>;
     };
+    filters?: {
+        name?: string;
+        email?: string;
+        role?: string;
+        jenjang?: string;
+    };
 }
 
-export default function UserIndex({ users }: Props) {
+export default function UserIndex({ users, filters }: Props) {
     const { flash } = usePage<SharedData>().props;
+
+    const [searchFilters, setSearchFilters] = useState({
+        name: filters?.name || '',
+        email: filters?.email || '',
+        role: filters?.role || '',
+        jenjang: filters?.jenjang || '',
+    });
+
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            router.get(route('master.users.index'), searchFilters as any, {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            });
+        }, 500);
+        return () => clearTimeout(timeout);
+    }, [searchFilters]);
+
+    const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchFilters((prev) => ({
+            ...prev,
+            [e.target.name]: e.target.value,
+        }));
+    };
 
     const handleDelete = (id: number) => {
         if (confirm('Apakah Anda yakin ingin menghapus pengguna ini?')) {
@@ -42,7 +75,9 @@ export default function UserIndex({ users }: Props) {
             <Head title="Data Pengguna" />
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
                 <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-bold text-foreground">Data Pengguna</h1>
+                    <h1 className="text-2xl font-bold text-foreground">
+                        Data Pengguna
+                    </h1>
                     <Button asChild>
                         <Link href={route('master.users.create')}>
                             <Plus className="mr-2 h-4 w-4" />
@@ -52,7 +87,10 @@ export default function UserIndex({ users }: Props) {
                 </div>
 
                 {flash.success && (
-                    <Alert variant="default" className="bg-green-50 text-green-900 border-green-200">
+                    <Alert
+                        variant="default"
+                        className="border-green-200 bg-green-50 text-green-900"
+                    >
                         <CheckCircle2 className="h-4 w-4 text-green-600" />
                         <AlertTitle>Berhasil</AlertTitle>
                         <AlertDescription>{flash.success}</AlertDescription>
@@ -69,24 +107,56 @@ export default function UserIndex({ users }: Props) {
 
                 <div className="relative overflow-x-auto rounded-lg border border-sidebar-border">
                     <table className="w-full text-left text-sm text-foreground">
-                        <thead className="bg-sidebar text-xs uppercase text-sidebar-foreground">
+                        <thead className="bg-sidebar text-xs text-sidebar-foreground uppercase">
                             <tr>
                                 <th scope="col" className="px-6 py-3">
-                                    Nama
+                                    <div className="mb-2">Nama</div>
+                                    <Input
+                                        type="text"
+                                        name="name"
+                                        value={searchFilters.name}
+                                        onChange={handleFilterChange}
+                                        placeholder="Cari..."
+                                        className="h-8 max-w-[150px] text-xs font-normal"
+                                    />
                                 </th>
                                 <th scope="col" className="px-6 py-3">
-                                    Email
+                                    <div className="mb-2">Email</div>
+                                    <Input
+                                        type="text"
+                                        name="email"
+                                        value={searchFilters.email}
+                                        onChange={handleFilterChange}
+                                        placeholder="Cari..."
+                                        className="h-8 max-w-[150px] text-xs font-normal"
+                                    />
                                 </th>
                                 <th scope="col" className="px-6 py-3">
-                                    Peran
+                                    <div className="mb-2">Peran</div>
+                                    <Input
+                                        type="text"
+                                        name="role"
+                                        value={searchFilters.role}
+                                        onChange={handleFilterChange}
+                                        placeholder="Cari..."
+                                        className="h-8 max-w-[150px] text-xs font-normal"
+                                    />
                                 </th>
                                 <th scope="col" className="px-6 py-3">
-                                    Jenjang
+                                    <div className="mb-2">Jenjang</div>
+                                    <Input
+                                        type="text"
+                                        name="jenjang"
+                                        value={searchFilters.jenjang}
+                                        onChange={handleFilterChange}
+                                        placeholder="Cari..."
+                                        className="h-8 max-w-[150px] text-xs font-normal"
+                                    />
                                 </th>
-                                {/* <th scope="col" className="px-6 py-3">
-                                    Bergabung
-                                </th> */}
-                                <th scope="col" className="px-6 py-3 text-right">
+                                <th
+                                    scope="col"
+                                    className="px-6 py-3 text-right"
+                                >
                                     Aksi
                                 </th>
                             </tr>
@@ -114,10 +184,13 @@ export default function UserIndex({ users }: Props) {
                                     <td className="px-6 py-4">
                                         {user.jenjang ? (
                                             <span className="text-sm">
-                                                {user.jenjang.jenjang} - {user.jenjang.nama_sekolah}
+                                                {user.jenjang.jenjang} -{' '}
+                                                {user.jenjang.nama_sekolah}
                                             </span>
                                         ) : (
-                                            <span className="text-sm text-muted-foreground">-</span>
+                                            <span className="text-sm text-muted-foreground">
+                                                -
+                                            </span>
                                         )}
                                     </td>
                                     {/* <td className="px-6 py-4">
@@ -125,8 +198,17 @@ export default function UserIndex({ users }: Props) {
                                     </td> */}
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex justify-end gap-2">
-                                            <Button variant="ghost" size="icon" asChild>
-                                                <Link href={route('master.users.edit', user.id)}>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                asChild
+                                            >
+                                                <Link
+                                                    href={route(
+                                                        'master.users.edit',
+                                                        user.id,
+                                                    )}
+                                                >
                                                     <Pencil className="h-4 w-4" />
                                                 </Link>
                                             </Button>
@@ -134,7 +216,9 @@ export default function UserIndex({ users }: Props) {
                                                 variant="ghost"
                                                 size="icon"
                                                 className="text-destructive hover:text-destructive"
-                                                onClick={() => handleDelete(user.id)}
+                                                onClick={() =>
+                                                    handleDelete(user.id)
+                                                }
                                             >
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>

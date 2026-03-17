@@ -9,14 +9,33 @@ use Inertia\Inertia;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $users = User::with('roles', 'jenjang')
+            ->when($request->name, function ($query, $name) {
+                $query->where('name', 'like', "%{$name}%");
+            })
+            ->when($request->email, function ($query, $email) {
+                $query->where('email', 'like', "%{$email}%");
+            })
+            ->when($request->role, function ($query, $role) {
+                $query->whereHas('roles', function ($q) use ($role) {
+                    $q->where('name', 'like', "%{$role}%");
+                });
+            })
+            ->when($request->jenjang, function ($query, $jenjang) {
+                $query->whereHas('jenjang', function ($q) use ($jenjang) {
+                    $q->where('jenjang', 'like', "%{$jenjang}%")
+                      ->orWhere('nama_sekolah', 'like', "%{$jenjang}%");
+                });
+            })
             ->latest()
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
 
         return Inertia::render('master/users/index', [
             'users' => $users,
+            'filters' => $request->only(['name', 'email', 'role', 'jenjang']),
         ]);
     }
 

@@ -69,6 +69,11 @@ const mainNavGroups: NavGroup[] = [
                         icon: Shield,
                     },
                     {
+                        title: 'Mata Pelajaran',
+                        href: '/master/categories',
+                        icon: BookOpen,
+                    },
+                    {
                         title: 'Jenjang',
                         href: '/master/jenjang',
                         icon: GraduationCap,

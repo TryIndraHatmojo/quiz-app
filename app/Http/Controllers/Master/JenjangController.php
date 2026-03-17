@@ -9,13 +9,21 @@ use Inertia\Inertia;
 
 class JenjangController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $jenjangs = Jenjang::latest()
-            ->paginate(10);
+        $jenjangs = Jenjang::when($request->jenjang, function ($query, $jenjang) {
+                $query->where('jenjang', 'like', "%{$jenjang}%");
+            })
+            ->when($request->nama_sekolah, function ($query, $nama_sekolah) {
+                $query->where('nama_sekolah', 'like', "%{$nama_sekolah}%");
+            })
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
 
         return Inertia::render('master/jenjang/index', [
             'jenjangs' => $jenjangs,
+            'filters' => $request->only(['jenjang', 'nama_sekolah']),
         ]);
     }
 

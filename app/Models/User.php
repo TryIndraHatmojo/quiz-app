@@ -24,6 +24,7 @@ class User extends Authenticatable
         'password',
         'jenjang_id',
         'kelas_id',
+        'orang_tua_id',
     ];
 
     /**
@@ -64,6 +65,16 @@ class User extends Authenticatable
     public function kelas()
     {
         return $this->belongsTo(Kelas::class);
+    }
+
+    public function orangTua()
+    {
+        return $this->belongsTo(User::class, 'orang_tua_id');
+    }
+
+    public function anak()
+    {
+        return $this->hasMany(User::class, 'orang_tua_id');
     }
 
     /**

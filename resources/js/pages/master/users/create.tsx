@@ -46,13 +46,24 @@ interface Kelas {
     jenjang_id: number;
 }
 
+interface UserData {
+    id: number;
+    name: string;
+}
+
 interface Props {
     roles: Role[];
     jenjangs: Jenjang[];
     kelases: Kelas[];
+    orangTuas: UserData[];
 }
 
-export default function UserCreate({ roles, jenjangs, kelases }: Props) {
+export default function UserCreate({
+    roles,
+    jenjangs,
+    kelases,
+    orangTuas,
+}: Props) {
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         email: '',
@@ -61,6 +72,7 @@ export default function UserCreate({ roles, jenjangs, kelases }: Props) {
         role_id: '',
         jenjang_id: '',
         kelas_id: '',
+        orang_tua_id: '',
     });
 
     const submit = (e: React.FormEvent) => {
@@ -216,6 +228,38 @@ export default function UserCreate({ roles, jenjangs, kelases }: Props) {
                                 </Select>
                             </div>
                             <InputError message={errors.kelas_id} />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="orang_tua_id">
+                                Orang Tua (Opsional)
+                            </Label>
+                            <div className="max-w-md">
+                                <Select
+                                    value={data.orang_tua_id}
+                                    onValueChange={(value) =>
+                                        setData('orang_tua_id', value)
+                                    }
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Pilih Orang Tua" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="">
+                                            Tidak Ada
+                                        </SelectItem>
+                                        {orangTuas?.map((ot) => (
+                                            <SelectItem
+                                                key={ot.id}
+                                                value={ot.id.toString()}
+                                            >
+                                                {ot.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <InputError message={errors.orang_tua_id} />
                         </div>
 
                         <div className="space-y-2">

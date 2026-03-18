@@ -55,6 +55,12 @@ interface User {
     jenjang_id?: number | null;
     kelas?: Kelas | null;
     kelas_id?: number | null;
+    orang_tua_id?: number | null;
+}
+
+interface UserData {
+    id: number;
+    name: string;
 }
 
 interface Props {
@@ -62,9 +68,16 @@ interface Props {
     roles: Role[];
     jenjangs: Jenjang[];
     kelases: Kelas[];
+    orangTuas: UserData[];
 }
 
-export default function UserEdit({ user, roles, jenjangs, kelases }: Props) {
+export default function UserEdit({
+    user,
+    roles,
+    jenjangs,
+    kelases,
+    orangTuas,
+}: Props) {
     const { data, setData, put, processing, errors } = useForm({
         name: user.name,
         email: user.email,
@@ -73,6 +86,7 @@ export default function UserEdit({ user, roles, jenjangs, kelases }: Props) {
         role_id: user.roles.length > 0 ? user.roles[0].id.toString() : '',
         jenjang_id: user.jenjang_id ? user.jenjang_id.toString() : '',
         kelas_id: user.kelas_id ? user.kelas_id.toString() : '',
+        orang_tua_id: user.orang_tua_id ? user.orang_tua_id.toString() : '',
     });
 
     const submit = (e: React.FormEvent) => {
@@ -228,6 +242,38 @@ export default function UserEdit({ user, roles, jenjangs, kelases }: Props) {
                                 </Select>
                             </div>
                             <InputError message={errors.kelas_id} />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="orang_tua_id">
+                                Orang Tua (Opsional)
+                            </Label>
+                            <div className="max-w-md">
+                                <Select
+                                    value={data.orang_tua_id}
+                                    onValueChange={(value) =>
+                                        setData('orang_tua_id', value)
+                                    }
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Pilih Orang Tua" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="">
+                                            Tidak Ada
+                                        </SelectItem>
+                                        {orangTuas?.map((ot) => (
+                                            <SelectItem
+                                                key={ot.id}
+                                                value={ot.id.toString()}
+                                            >
+                                                {ot.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <InputError message={errors.orang_tua_id} />
                         </div>
 
                         <div className="space-y-2">

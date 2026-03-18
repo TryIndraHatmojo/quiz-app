@@ -156,5 +156,16 @@ class UserSeeder extends Seeder
                 ]);
             }
         }
+
+        // Hubungkan Siswa dengan Orang Tua
+        $bapakAndi = DB::table('users')->where('email', 'ortu.andi@example.com')->first();
+        if ($bapakAndi) {
+            DB::table('users')->where('email', 'andi.siswa@example.com')->update(['orang_tua_id' => $bapakAndi->id]);
+        }
+
+        $ibuLina = DB::table('users')->where('email', 'ortu.lina@example.com')->first();
+        if ($ibuLina) {
+            DB::table('users')->where('email', 'lina.siswa@example.com')->update(['orang_tua_id' => $ibuLina->id]);
+        }
     }
 }

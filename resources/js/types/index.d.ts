@@ -88,6 +88,10 @@ export interface User {
     roles?: Role[];
     jenjang?: Jenjang | null;
     jenjang_id?: number | null;
+    kelas?: Record<string, any> | null;
+    kelas_id?: number | null;
+    orang_tua?: User | null;
+    orang_tua_id?: number | null;
     [key: string]: unknown; // This allows for additional properties...
 }
 

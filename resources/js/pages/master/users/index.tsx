@@ -34,6 +34,7 @@ interface Props {
         role?: string;
         jenjang?: string;
         kelas?: string;
+        orangTua?: string;
     };
 }
 
@@ -46,6 +47,7 @@ export default function UserIndex({ users, filters }: Props) {
         role: filters?.role || '',
         jenjang: filters?.jenjang || '',
         kelas: filters?.kelas || '',
+        orangTua: filters?.orangTua || '',
     });
 
     useEffect(() => {
@@ -166,6 +168,17 @@ export default function UserIndex({ users, filters }: Props) {
                                         className="h-8 max-w-[150px] text-xs font-normal"
                                     />
                                 </th>
+                                <th scope="col" className="px-6 py-3">
+                                    <div className="mb-2">Orang Tua</div>
+                                    <Input
+                                        type="text"
+                                        name="orangTua"
+                                        value={searchFilters.orangTua}
+                                        onChange={handleFilterChange}
+                                        placeholder="Cari..."
+                                        className="h-8 max-w-[150px] text-xs font-normal"
+                                    />
+                                </th>
                                 <th
                                     scope="col"
                                     className="px-6 py-3 text-right"
@@ -210,6 +223,17 @@ export default function UserIndex({ users, filters }: Props) {
                                         {user.kelas ? (
                                             <span className="text-sm">
                                                 {user.kelas.nama_kelas}
+                                            </span>
+                                        ) : (
+                                            <span className="text-sm text-muted-foreground">
+                                                -
+                                            </span>
+                                        )}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        {user.orang_tua ? (
+                                            <span className="text-sm">
+                                                {user.orang_tua.name}
                                             </span>
                                         ) : (
                                             <span className="text-sm text-muted-foreground">

@@ -7,6 +7,8 @@ use App\Models\Quiz;
 use App\Models\QuizCategory;
 use App\Models\QuizBackground;
 use App\Models\Gallery;
+use App\Models\Jenjang;
+use App\Models\Kelas;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Inertia\Inertia;
@@ -29,6 +31,16 @@ class QuizController extends Controller
             $query->where('quiz_category_id', $request->category);
         }
 
+        // Filter by jenjang
+        if ($request->filled('jenjang_id')) {
+            $query->where('jenjang_id', $request->jenjang_id);
+        }
+
+        // Filter by kelas
+        if ($request->filled('kelas_id')) {
+            $query->where('kelas_id', $request->kelas_id);
+        }
+
         // Search
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
@@ -44,7 +56,9 @@ class QuizController extends Controller
         return Inertia::render('library/quizzes/index', [
             'quizzes' => $quizzes,
             'categories' => $categories,
-            'filters' => $request->only(['status', 'category', 'search']),
+            'jenjangs' => Jenjang::all(),
+            'kelases' => Kelas::all(),
+            'filters' => $request->only(['status', 'category', 'jenjang_id', 'kelas_id', 'search']),
         ]);
     }
 
@@ -59,6 +73,8 @@ class QuizController extends Controller
         return Inertia::render('library/quizzes/create', [
             'categories' => $categories,
             'backgrounds' => $backgrounds,
+            'jenjangs' => Jenjang::all(),
+            'kelases' => Kelas::all(),
         ]);
     }
 
@@ -68,6 +84,8 @@ class QuizController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'quiz_category_id' => 'required|exists:quiz_categories,id',
+            'jenjang_id' => 'nullable|exists:jenjangs,id',
+            'kelas_id' => 'nullable|exists:kelas,id',
             'quiz_background_id' => 'nullable|exists:quiz_backgrounds,id',
             'background_file' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:10240',
             'time_mode' => 'required|in:per_question,total',
@@ -105,6 +123,8 @@ class QuizController extends Controller
             'join_code' => strtoupper(Str::random(6)),
             'description' => $request->description,
             'quiz_category_id' => $request->quiz_category_id,
+            'jenjang_id' => $request->jenjang_id,
+            'kelas_id' => $request->kelas_id,
             'quiz_background_id' => $backgroundId,
             'time_mode' => $request->time_mode,
             'duration' => $request->duration,
@@ -128,9 +148,11 @@ class QuizController extends Controller
             ->get();
 
         return Inertia::render('library/quizzes/edit', [
-            'quiz' => $quiz->load(['category', 'background']),
+            'quiz' => $quiz->load(['category', 'background', 'jenjang', 'kelas']),
             'categories' => $categories,
             'backgrounds' => $backgrounds,
+            'jenjangs' => Jenjang::all(),
+            'kelases' => Kelas::all(),
         ]);
     }
 
@@ -144,6 +166,8 @@ class QuizController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'quiz_category_id' => 'nullable|exists:quiz_categories,id',
+            'jenjang_id' => 'nullable|exists:jenjangs,id',
+            'kelas_id' => 'nullable|exists:kelas,id',
             'quiz_background_id' => 'nullable|exists:quiz_backgrounds,id',
             'background_file' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:10240',
             'status' => 'required|in:draft,live,finished,archived',
@@ -179,6 +203,8 @@ class QuizController extends Controller
             'title' => $request->title,
             'description' => $request->description,
             'quiz_category_id' => $request->quiz_category_id,
+            'jenjang_id' => $request->jenjang_id,
+            'kelas_id' => $request->kelas_id,
             'quiz_background_id' => $backgroundId,
             'time_mode' => $request->time_mode,
             'duration' => $request->duration,

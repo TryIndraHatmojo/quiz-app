@@ -22,6 +22,8 @@ class Quiz extends Model
     protected $fillable = [
         'user_id',
         'quiz_category_id',
+        'jenjang_id',
+        'kelas_id',
         'title',
         'slug',
         'join_code',
@@ -59,6 +61,16 @@ class Quiz extends Model
     public function background(): BelongsTo
     {
         return $this->belongsTo(QuizBackground::class, 'quiz_background_id');
+    }
+
+    public function jenjang(): BelongsTo
+    {
+        return $this->belongsTo(Jenjang::class);
+    }
+
+    public function kelas(): BelongsTo
+    {
+        return $this->belongsTo(Kelas::class);
     }
 
     /**

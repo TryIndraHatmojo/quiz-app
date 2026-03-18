@@ -35,6 +35,18 @@ interface QuizCategory {
     name: string;
 }
 
+interface Jenjang {
+    id: number;
+    jenjang: string;
+    nama_sekolah: string;
+}
+
+interface Kelas {
+    id: number;
+    jenjang_id: number;
+    nama_kelas: string;
+}
+
 interface Quiz {
     id: number;
     title: string;
@@ -45,6 +57,8 @@ interface Quiz {
     time_mode: 'per_question' | 'total';
     duration: number | null;
     category?: QuizCategory;
+    jenjang?: Jenjang;
+    kelas?: Kelas;
     created_at: string;
 }
 
@@ -61,9 +75,13 @@ interface Props {
         }>;
     };
     categories: QuizCategory[];
+    jenjangs: Jenjang[];
+    kelases: Kelas[];
     filters: {
         status?: string;
         category?: string;
+        jenjang_id?: string;
+        kelas_id?: string;
         search?: string;
     };
 }
@@ -82,6 +100,8 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function QuizIndex({
     quizzes,
     categories = [],
+    jenjangs = [],
+    kelases = [],
     filters,
 }: Props) {
     const { flash } = usePage<SharedData>().props;
@@ -89,6 +109,10 @@ export default function QuizIndex({
     const [categoryFilter, setCategoryFilter] = useState(
         filters.category ? filters.category : '',
     );
+    const [jenjangFilter, setJenjangFilter] = useState(
+        filters.jenjang_id || '',
+    );
+    const [kelasFilter, setKelasFilter] = useState(filters.kelas_id || '');
     const [search, setSearch] = useState(filters.search || '');
     const [loading, setLoading] = useState(false);
     const observerTarget = useRef(null);
@@ -111,6 +135,8 @@ export default function QuizIndex({
         const params: Record<string, string> = {};
         if (statusFilter) params.status = statusFilter;
         if (categoryFilter) params.category = categoryFilter;
+        if (jenjangFilter) params.jenjang_id = jenjangFilter;
+        if (kelasFilter) params.kelas_id = kelasFilter;
         if (search) params.search = search;
 
         router.get(route('library.quizzes.index'), params, {
@@ -281,59 +307,162 @@ export default function QuizIndex({
                         </Button>
                     </div>
 
-                    {/* Category and Search */}
-                    <div className="flex gap-4">
-                        <Select
-                            value={categoryFilter || 'all'}
-                            onValueChange={(value) => {
-                                const newValue = value === 'all' ? '' : value;
-                                setCategoryFilter(newValue);
-                                router.get(
-                                    route('library.quizzes.index'),
-                                    {
-                                        status: statusFilter,
-                                        category: newValue,
-                                        search,
-                                    },
-                                    {
-                                        preserveState: true,
-                                        preserveScroll: true,
-                                    },
-                                );
-                            }}
-                        >
-                            <SelectTrigger className="w-[200px]">
-                                <SelectValue placeholder="Semua Kategori" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">
-                                    Semua Kategori
-                                </SelectItem>
-                                {categories.map((cat) => (
-                                    <SelectItem
-                                        key={cat.id}
-                                        value={cat.id.toString()}
-                                    >
-                                        {cat.name}
+                    {/* Filters and Search */}
+                    <div className="flex flex-col gap-4">
+                        <div className="flex flex-wrap gap-4">
+                            <Select
+                                value={categoryFilter || 'all'}
+                                onValueChange={(value) => {
+                                    const newValue =
+                                        value === 'all' ? '' : value;
+                                    setCategoryFilter(newValue);
+                                    router.get(
+                                        route('library.quizzes.index'),
+                                        {
+                                            status: statusFilter,
+                                            category: newValue,
+                                            jenjang_id: jenjangFilter,
+                                            kelas_id: kelasFilter,
+                                            search,
+                                        },
+                                        {
+                                            preserveState: true,
+                                            preserveScroll: true,
+                                        },
+                                    );
+                                }}
+                            >
+                                <SelectTrigger className="w-[200px]">
+                                    <SelectValue placeholder="Semua Kategori" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">
+                                        Semua Kategori
                                     </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                                    {categories?.map((cat) => (
+                                        <SelectItem
+                                            key={cat.id}
+                                            value={cat.id.toString()}
+                                        >
+                                            {cat.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
 
-                        <form
-                            onSubmit={handleSearchSubmit}
-                            className="flex flex-1 gap-2"
-                        >
-                            <Input
-                                placeholder="Cari kuis..."
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                className="flex-1"
-                            />
-                            <Button type="submit" size="icon">
-                                <Search className="h-4 w-4" />
-                            </Button>
-                        </form>
+                            <Select
+                                value={jenjangFilter || 'all'}
+                                onValueChange={(value) => {
+                                    const newValue =
+                                        value === 'all' ? '' : value;
+                                    setJenjangFilter(newValue);
+                                    // Reset kelas filter when jenjang changes
+                                    setKelasFilter('');
+                                    router.get(
+                                        route('library.quizzes.index'),
+                                        {
+                                            status: statusFilter,
+                                            category: categoryFilter,
+                                            jenjang_id: newValue,
+                                            kelas_id: '',
+                                            search,
+                                        },
+                                        {
+                                            preserveState: true,
+                                            preserveScroll: true,
+                                        },
+                                    );
+                                }}
+                            >
+                                <SelectTrigger className="w-[200px]">
+                                    <SelectValue placeholder="Semua Jenjang" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">
+                                        Semua Jenjang
+                                    </SelectItem>
+                                    {jenjangs?.map((jenjang) => (
+                                        <SelectItem
+                                            key={jenjang.id}
+                                            value={jenjang.id.toString()}
+                                        >
+                                            {jenjang.jenjang} -{' '}
+                                            {jenjang.nama_sekolah}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+
+                            <Select
+                                value={kelasFilter || 'all'}
+                                onValueChange={(value) => {
+                                    const newValue =
+                                        value === 'all' ? '' : value;
+                                    setKelasFilter(newValue);
+                                    router.get(
+                                        route('library.quizzes.index'),
+                                        {
+                                            status: statusFilter,
+                                            category: categoryFilter,
+                                            jenjang_id: jenjangFilter,
+                                            kelas_id: newValue,
+                                            search,
+                                        },
+                                        {
+                                            preserveState: true,
+                                            preserveScroll: true,
+                                        },
+                                    );
+                                }}
+                                disabled={!jenjangFilter}
+                            >
+                                <SelectTrigger className="w-[200px]">
+                                    <SelectValue
+                                        placeholder={
+                                            jenjangFilter
+                                                ? 'Semua Kelas'
+                                                : 'Pilih Jenjang Dulu'
+                                        }
+                                    />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">
+                                        Semua Kelas
+                                    </SelectItem>
+                                    {kelases
+                                        ?.filter(
+                                            (k) =>
+                                                k.jenjang_id?.toString() ===
+                                                jenjangFilter,
+                                        )
+                                        ?.map((kelas) => (
+                                            <SelectItem
+                                                key={kelas.id}
+                                                value={kelas.id.toString()}
+                                            >
+                                                {kelas.nama_kelas}
+                                            </SelectItem>
+                                        ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="flex flex-1 items-center space-x-2">
+                            <form
+                                onSubmit={handleSearchSubmit}
+                                className="flex flex-1 gap-2"
+                            >
+                                <Input
+                                    placeholder="Cari kuis..."
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    className="flex-1"
+                                />
+                                <Button type="submit" size="icon">
+                                    <Search className="h-4 w-4" />
+                                </Button>
+                            </form>
+                        </div>
                     </div>
                 </div>
 

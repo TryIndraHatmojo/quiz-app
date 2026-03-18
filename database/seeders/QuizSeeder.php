@@ -23,6 +23,8 @@ class QuizSeeder extends Seeder
             [
                 'user_id' => 1,
                 'quiz_category_id' => $mathCategoryId,
+                'jenjang_id' => 3, // SMP
+                'kelas_id' => 8, // 7A
                 'title' => 'Matematika Dasar Kelas 7',
                 'slug' => Str::slug('Matematika Dasar Kelas 7') . '-' . Str::random(6),
                 'join_code' => 'MATH001',
@@ -36,6 +38,8 @@ class QuizSeeder extends Seeder
             [
                 'user_id' => 1,
                 'quiz_category_id' => $scienceCategoryId,
+                'jenjang_id' => 1, // SMK
+                'kelas_id' => 1, // X Farmasi 1
                 'title' => 'Sains dan Biologi',
                 'slug' => Str::slug('Sains dan Biologi') . '-' . Str::random(6),
                 'join_code' => 'SCI002',
@@ -49,6 +53,8 @@ class QuizSeeder extends Seeder
             [
                 'user_id' => 1,
                 'quiz_category_id' => $englishCategoryId,
+                'jenjang_id' => 2, // SMA
+                'kelas_id' => 5, // X MIPA 1
                 'title' => 'English Grammar Test',
                 'slug' => Str::slug('English Grammar Test') . '-' . Str::random(6),
                 'join_code' => 'ENG003',
@@ -62,6 +68,8 @@ class QuizSeeder extends Seeder
             [
                 'user_id' => 1,
                 'quiz_category_id' => $arabicCategoryId,
+                'jenjang_id' => null,
+                'kelas_id' => null,
                 'title' => 'Bahasa Arab Tingkat Pemula',
                 'slug' => Str::slug('Bahasa Arab Tingkat Pemula') . '-' . Str::random(6),
                 'join_code' => 'ARB004',
@@ -75,6 +83,8 @@ class QuizSeeder extends Seeder
             [
                 'user_id' => 1,
                 'quiz_category_id' => $mathCategoryId,
+                'jenjang_id' => 3, // SMP
+                'kelas_id' => 10, // 9A
                 'title' => 'Aljabar Lanjutan',
                 'slug' => Str::slug('Aljabar Lanjutan') . '-' . Str::random(6),
                 'join_code' => 'MATH005',

@@ -206,7 +206,7 @@ export default function QuizAttemptPage({ quiz, attempt, existingAnswers }: Prop
         
         setIsSaving(true);
         
-        let answerData: {
+        const answerData: {
             quiz_question_id: number;
             quiz_question_option_id?: number | null;
             quiz_matching_pair_id?: number | null;

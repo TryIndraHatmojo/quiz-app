@@ -33,7 +33,12 @@ export interface QuizShortAnswerField {
 export interface QuizQuestion {
     id?: number;
     quiz_id?: number;
-    question_type: 'multiple_choice' | 'long_answer' | 'short_answer' | 'matching_pairs' | 'true_false';
+    question_type:
+        | 'multiple_choice'
+        | 'long_answer'
+        | 'short_answer'
+        | 'matching_pairs'
+        | 'true_false';
     question_text: string;
     media_path?: string | null;
     time_limit: number;
@@ -54,6 +59,8 @@ export interface Quiz {
     status: string;
     time_mode: TimeMode;
     duration: number | null;
+    jenjang_id?: number | null;
+    kelas_id?: number | null;
     quiz_background_id?: number | null;
     background?: QuizBackground;
     questions?: QuizQuestion[];

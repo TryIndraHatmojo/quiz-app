@@ -21,10 +21,24 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { Clock, Timer, UserCog } from 'lucide-react';
 import { FormEventHandler } from 'react';
 
+interface Jenjang {
+    id: number;
+    jenjang: string;
+    nama_sekolah: string;
+}
+
+interface Kelas {
+    id: number;
+    jenjang_id: number;
+    nama_kelas: string;
+}
+
 interface Props {
     quiz: Quiz;
     categories: QuizCategory[];
     backgrounds: QuizBackground[];
+    jenjangs: Jenjang[];
+    kelases: Kelas[];
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -46,12 +60,16 @@ export default function QuizEdit({
     quiz,
     categories = [],
     backgrounds = [],
+    jenjangs = [],
+    kelases = [],
 }: Props) {
     const { data, setData, post, processing, errors } = useForm({
         _method: 'PUT',
         title: quiz.title || '',
         description: quiz.description || '',
         quiz_category_id: quiz.quiz_category_id?.toString() || '',
+        jenjang_id: quiz.jenjang_id?.toString() || '',
+        kelas_id: quiz.kelas_id?.toString() || '',
         quiz_background_id: quiz.quiz_background_id?.toString() || '',
         background_file: null as File | null,
         status: quiz.status || 'draft',
@@ -106,6 +124,94 @@ export default function QuizEdit({
                                     {errors.title}
                                 </p>
                             )}
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                            <div className="space-y-2">
+                                <Label htmlFor="jenjang">Jenjang</Label>
+                                <Select
+                                    value={data.jenjang_id || 'none'}
+                                    onValueChange={(value) => {
+                                        setData((d) => ({
+                                            ...d,
+                                            jenjang_id:
+                                                value === 'none' ? '' : value,
+                                            kelas_id: '', // reset kelas
+                                        }));
+                                    }}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Pilih jenjang (Opsional)" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="none">
+                                            Tidak Ada
+                                        </SelectItem>
+                                        {jenjangs.map((jenjang) => (
+                                            <SelectItem
+                                                key={jenjang.id}
+                                                value={jenjang.id.toString()}
+                                            >
+                                                {jenjang.jenjang} -{' '}
+                                                {jenjang.nama_sekolah}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                {errors.jenjang_id && (
+                                    <p className="text-sm text-destructive">
+                                        {errors.jenjang_id}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="kelas">Kelas</Label>
+                                <Select
+                                    value={data.kelas_id || 'none'}
+                                    onValueChange={(value) =>
+                                        setData(
+                                            'kelas_id',
+                                            value === 'none' ? '' : value,
+                                        )
+                                    }
+                                    disabled={!data.jenjang_id}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue
+                                            placeholder={
+                                                data.jenjang_id
+                                                    ? 'Pilih kelas (Opsional)'
+                                                    : 'Pilih jenjang dulu'
+                                            }
+                                        />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="none">
+                                            Tidak Ada
+                                        </SelectItem>
+                                        {kelases
+                                            .filter(
+                                                (k) =>
+                                                    k.jenjang_id.toString() ===
+                                                    data.jenjang_id,
+                                            )
+                                            .map((kelas) => (
+                                                <SelectItem
+                                                    key={kelas.id}
+                                                    value={kelas.id.toString()}
+                                                >
+                                                    {kelas.nama_kelas}
+                                                </SelectItem>
+                                            ))}
+                                    </SelectContent>
+                                </Select>
+                                {errors.kelas_id && (
+                                    <p className="text-sm text-destructive">
+                                        {errors.kelas_id}
+                                    </p>
+                                )}
+                            </div>
                         </div>
 
                         <div className="space-y-2">

@@ -79,6 +79,11 @@ const mainNavGroups: NavGroup[] = [
                         icon: GraduationCap,
                     },
                     {
+                        title: 'Kelas',
+                        href: '/master/kelas',
+                        icon: Users,
+                    },
+                    {
                         title: 'Backgrounds',
                         href: '/master/backgrounds',
                         icon: LayoutGrid,

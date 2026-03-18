@@ -11,7 +11,7 @@ class UserController extends Controller
 {
     public function index(Request $request)
     {
-        $users = User::with('roles', 'jenjang')
+        $users = User::with('roles', 'jenjang', 'kelas')
             ->when($request->name, function ($query, $name) {
                 $query->where('name', 'like', "%{$name}%");
             })
@@ -29,13 +29,18 @@ class UserController extends Controller
                       ->orWhere('nama_sekolah', 'like', "%{$jenjang}%");
                 });
             })
+            ->when($request->kelas, function ($query, $kelas) {
+                $query->whereHas('kelas', function ($q) use ($kelas) {
+                    $q->where('nama_kelas', 'like', "%{$kelas}%");
+                });
+            })
             ->latest()
             ->paginate(10)
             ->withQueryString();
 
         return Inertia::render('master/users/index', [
             'users' => $users,
-            'filters' => $request->only(['name', 'email', 'role', 'jenjang']),
+            'filters' => $request->only(['name', 'email', 'role', 'jenjang', 'kelas']),
         ]);
     }
 
@@ -43,10 +48,12 @@ class UserController extends Controller
     {
         $roles = \App\Models\Role::all();
         $jenjangs = \App\Models\Jenjang::all();
+        $kelases = \App\Models\Kelas::all();
 
         return Inertia::render('master/users/create', [
             'roles' => $roles,
             'jenjangs' => $jenjangs,
+            'kelases' => $kelases,
         ]);
     }
 
@@ -58,6 +65,7 @@ class UserController extends Controller
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'role_id' => ['required', 'exists:roles,id'],
             'jenjang_id' => ['nullable', 'exists:jenjangs,id'],
+            'kelas_id' => ['nullable', 'exists:kelas,id'],
         ]);
 
         $user = User::create([
@@ -65,6 +73,7 @@ class UserController extends Controller
             'email' => $validated['email'],
             'password' => \Illuminate\Support\Facades\Hash::make($validated['password']),
             'jenjang_id' => $validated['jenjang_id'] ?? null,
+            'kelas_id' => $validated['kelas_id'] ?? null,
         ]);
 
         $user->roles()->attach($validated['role_id']);
@@ -75,14 +84,16 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        $user->load('roles', 'jenjang');
+        $user->load('roles', 'jenjang', 'kelas');
         $roles = \App\Models\Role::all();
         $jenjangs = \App\Models\Jenjang::all();
+        $kelases = \App\Models\Kelas::all();
 
         return Inertia::render('master/users/edit', [
             'user' => $user,
             'roles' => $roles,
             'jenjangs' => $jenjangs,
+            'kelases' => $kelases,
         ]);
     }
 
@@ -94,12 +105,14 @@ class UserController extends Controller
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
             'role_id' => ['required', 'exists:roles,id'],
             'jenjang_id' => ['nullable', 'exists:jenjangs,id'],
+            'kelas_id' => ['nullable', 'exists:kelas,id'],
         ]);
 
         $user->update([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'jenjang_id' => $validated['jenjang_id'] ?? null,
+            'kelas_id' => $validated['kelas_id'] ?? null,
         ]);
 
         if (!empty($validated['password'])) {

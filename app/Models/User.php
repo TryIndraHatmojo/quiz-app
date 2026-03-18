@@ -23,6 +23,7 @@ class User extends Authenticatable
         'email',
         'password',
         'jenjang_id',
+        'kelas_id',
     ];
 
     /**
@@ -58,6 +59,11 @@ class User extends Authenticatable
     public function jenjang()
     {
         return $this->belongsTo(Jenjang::class);
+    }
+
+    public function kelas()
+    {
+        return $this->belongsTo(Kelas::class);
     }
 
     /**

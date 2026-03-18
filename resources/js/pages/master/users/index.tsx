@@ -33,6 +33,7 @@ interface Props {
         email?: string;
         role?: string;
         jenjang?: string;
+        kelas?: string;
     };
 }
 
@@ -44,6 +45,7 @@ export default function UserIndex({ users, filters }: Props) {
         email: filters?.email || '',
         role: filters?.role || '',
         jenjang: filters?.jenjang || '',
+        kelas: filters?.kelas || '',
     });
 
     useEffect(() => {
@@ -153,6 +155,17 @@ export default function UserIndex({ users, filters }: Props) {
                                         className="h-8 max-w-[150px] text-xs font-normal"
                                     />
                                 </th>
+                                <th scope="col" className="px-6 py-3">
+                                    <div className="mb-2">Kelas</div>
+                                    <Input
+                                        type="text"
+                                        name="kelas"
+                                        value={searchFilters.kelas}
+                                        onChange={handleFilterChange}
+                                        placeholder="Cari..."
+                                        className="h-8 max-w-[150px] text-xs font-normal"
+                                    />
+                                </th>
                                 <th
                                     scope="col"
                                     className="px-6 py-3 text-right"
@@ -186,6 +199,17 @@ export default function UserIndex({ users, filters }: Props) {
                                             <span className="text-sm">
                                                 {user.jenjang.jenjang} -{' '}
                                                 {user.jenjang.nama_sekolah}
+                                            </span>
+                                        ) : (
+                                            <span className="text-sm text-muted-foreground">
+                                                -
+                                            </span>
+                                        )}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        {user.kelas ? (
+                                            <span className="text-sm">
+                                                {user.kelas.nama_kelas}
                                             </span>
                                         ) : (
                                             <span className="text-sm text-muted-foreground">

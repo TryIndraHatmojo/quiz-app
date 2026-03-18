@@ -1,6 +1,4 @@
-import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem } from '@/types';
-import { Head, Link, useForm } from '@inertiajs/react';
+import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,8 +9,10 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import AppLayout from '@/layouts/app-layout';
+import { type BreadcrumbItem } from '@/types';
+import { Head, Link, useForm } from '@inertiajs/react';
 import { ArrowLeft, Save } from 'lucide-react';
-import InputError from '@/components/input-error';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -40,6 +40,12 @@ interface Jenjang {
     nama_sekolah: string;
 }
 
+interface Kelas {
+    id: number;
+    nama_kelas: string;
+    jenjang_id: number;
+}
+
 interface User {
     id: number;
     name: string;
@@ -47,15 +53,18 @@ interface User {
     roles: Role[];
     jenjang?: Jenjang | null;
     jenjang_id?: number | null;
+    kelas?: Kelas | null;
+    kelas_id?: number | null;
 }
 
 interface Props {
     user: User;
     roles: Role[];
     jenjangs: Jenjang[];
+    kelases: Kelas[];
 }
 
-export default function UserEdit({ user, roles, jenjangs }: Props) {
+export default function UserEdit({ user, roles, jenjangs, kelases }: Props) {
     const { data, setData, put, processing, errors } = useForm({
         name: user.name,
         email: user.email,
@@ -63,6 +72,7 @@ export default function UserEdit({ user, roles, jenjangs }: Props) {
         password_confirmation: '',
         role_id: user.roles.length > 0 ? user.roles[0].id.toString() : '',
         jenjang_id: user.jenjang_id ? user.jenjang_id.toString() : '',
+        kelas_id: user.kelas_id ? user.kelas_id.toString() : '',
     });
 
     const submit = (e: React.FormEvent) => {
@@ -75,7 +85,9 @@ export default function UserEdit({ user, roles, jenjangs }: Props) {
             <Head title="Edit Pengguna" />
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
                 <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-bold text-foreground">Edit Pengguna</h1>
+                    <h1 className="text-2xl font-bold text-foreground">
+                        Edit Pengguna
+                    </h1>
                     <Button variant="outline" asChild>
                         <Link href={route('master.users.index')}>
                             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -91,7 +103,9 @@ export default function UserEdit({ user, roles, jenjangs }: Props) {
                             <Input
                                 id="name"
                                 value={data.name}
-                                onChange={(e) => setData('name', e.target.value)}
+                                onChange={(e) =>
+                                    setData('name', e.target.value)
+                                }
                                 placeholder="Nama Lengkap"
                                 className="max-w-md"
                             />
@@ -104,7 +118,9 @@ export default function UserEdit({ user, roles, jenjangs }: Props) {
                                 id="email"
                                 type="email"
                                 value={data.email}
-                                onChange={(e) => setData('email', e.target.value)}
+                                onChange={(e) =>
+                                    setData('email', e.target.value)
+                                }
                                 placeholder="email@example.com"
                                 className="max-w-md"
                             />
@@ -116,14 +132,19 @@ export default function UserEdit({ user, roles, jenjangs }: Props) {
                             <div className="max-w-md">
                                 <Select
                                     value={data.role_id}
-                                    onValueChange={(value) => setData('role_id', value)}
+                                    onValueChange={(value) =>
+                                        setData('role_id', value)
+                                    }
                                 >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Pilih Peran" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {roles.map((role) => (
-                                            <SelectItem key={role.id} value={role.id.toString()}>
+                                            <SelectItem
+                                                key={role.id}
+                                                value={role.id.toString()}
+                                            >
                                                 {role.name}
                                             </SelectItem>
                                         ))}
@@ -134,20 +155,30 @@ export default function UserEdit({ user, roles, jenjangs }: Props) {
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="jenjang_id">Jenjang (Opsional)</Label>
+                            <Label htmlFor="jenjang_id">
+                                Jenjang (Opsional)
+                            </Label>
                             <div className="max-w-md">
                                 <Select
                                     value={data.jenjang_id}
-                                    onValueChange={(value) => setData('jenjang_id', value)}
+                                    onValueChange={(value) =>
+                                        setData('jenjang_id', value)
+                                    }
                                 >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Pilih Jenjang" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="">Tidak Ada</SelectItem>
+                                        <SelectItem value="">
+                                            Tidak Ada
+                                        </SelectItem>
                                         {jenjangs.map((jenjang) => (
-                                            <SelectItem key={jenjang.id} value={jenjang.id.toString()}>
-                                                {jenjang.jenjang} - {jenjang.nama_sekolah}
+                                            <SelectItem
+                                                key={jenjang.id}
+                                                value={jenjang.id.toString()}
+                                            >
+                                                {jenjang.jenjang} -{' '}
+                                                {jenjang.nama_sekolah}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
@@ -157,12 +188,59 @@ export default function UserEdit({ user, roles, jenjangs }: Props) {
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="password">Password (Opsional)</Label>
+                            <Label htmlFor="kelas_id">Kelas (Opsional)</Label>
+                            <div className="max-w-md">
+                                <Select
+                                    value={data.kelas_id}
+                                    onValueChange={(value) =>
+                                        setData('kelas_id', value)
+                                    }
+                                    disabled={!data.jenjang_id}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue
+                                            placeholder={
+                                                data.jenjang_id
+                                                    ? 'Pilih Kelas'
+                                                    : 'Pilih Jenjang Dulu'
+                                            }
+                                        />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="">
+                                            Tidak Ada
+                                        </SelectItem>
+                                        {kelases
+                                            ?.filter(
+                                                (k) =>
+                                                    k.jenjang_id.toString() ===
+                                                    data.jenjang_id,
+                                            )
+                                            .map((kelas) => (
+                                                <SelectItem
+                                                    key={kelas.id}
+                                                    value={kelas.id.toString()}
+                                                >
+                                                    {kelas.nama_kelas}
+                                                </SelectItem>
+                                            ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <InputError message={errors.kelas_id} />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="password">
+                                Password (Opsional)
+                            </Label>
                             <Input
                                 id="password"
                                 type="password"
                                 value={data.password}
-                                onChange={(e) => setData('password', e.target.value)}
+                                onChange={(e) =>
+                                    setData('password', e.target.value)
+                                }
                                 className="max-w-md"
                                 placeholder="Biarkan kosong jika tidak ingin mengubah"
                             />
@@ -170,16 +248,25 @@ export default function UserEdit({ user, roles, jenjangs }: Props) {
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="password_confirmation">Konfirmasi Password</Label>
+                            <Label htmlFor="password_confirmation">
+                                Konfirmasi Password
+                            </Label>
                             <Input
                                 id="password_confirmation"
                                 type="password"
                                 value={data.password_confirmation}
-                                onChange={(e) => setData('password_confirmation', e.target.value)}
+                                onChange={(e) =>
+                                    setData(
+                                        'password_confirmation',
+                                        e.target.value,
+                                    )
+                                }
                                 className="max-w-md"
                                 placeholder="Biarkan kosong jika tidak ingin mengubah"
                             />
-                            <InputError message={errors.password_confirmation} />
+                            <InputError
+                                message={errors.password_confirmation}
+                            />
                         </div>
 
                         <div className="flex items-center gap-4">

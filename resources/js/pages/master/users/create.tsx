@@ -160,22 +160,25 @@ export default function UserCreate({
                             </Label>
                             <div className="max-w-md">
                                 <Select
-                                    value={data.jenjang_id}
+                                    value={data.jenjang_id || 'none'}
                                     onValueChange={(value) =>
-                                        setData('jenjang_id', value)
+                                        setData(
+                                            'jenjang_id',
+                                            value === 'none' ? '' : value,
+                                        )
                                     }
                                 >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Pilih Jenjang" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="">
+                                        <SelectItem value="none">
                                             Tidak Ada
                                         </SelectItem>
-                                        {jenjangs.map((jenjang) => (
+                                        {jenjangs?.map((jenjang) => (
                                             <SelectItem
                                                 key={jenjang.id}
-                                                value={jenjang.id.toString()}
+                                                value={jenjang.id?.toString()}
                                             >
                                                 {jenjang.jenjang} -{' '}
                                                 {jenjang.nama_sekolah}
@@ -191,9 +194,12 @@ export default function UserCreate({
                             <Label htmlFor="kelas_id">Kelas (Opsional)</Label>
                             <div className="max-w-md">
                                 <Select
-                                    value={data.kelas_id}
+                                    value={data.kelas_id || 'none'}
                                     onValueChange={(value) =>
-                                        setData('kelas_id', value)
+                                        setData(
+                                            'kelas_id',
+                                            value === 'none' ? '' : value,
+                                        )
                                     }
                                     disabled={!data.jenjang_id}
                                 >
@@ -207,19 +213,19 @@ export default function UserCreate({
                                         />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="">
+                                        <SelectItem value="none">
                                             Tidak Ada
                                         </SelectItem>
                                         {kelases
                                             ?.filter(
                                                 (k) =>
-                                                    k.jenjang_id.toString() ===
+                                                    k.jenjang_id?.toString() ===
                                                     data.jenjang_id,
                                             )
-                                            .map((kelas) => (
+                                            ?.map((kelas) => (
                                                 <SelectItem
                                                     key={kelas.id}
-                                                    value={kelas.id.toString()}
+                                                    value={kelas.id?.toString()}
                                                 >
                                                     {kelas.nama_kelas}
                                                 </SelectItem>
@@ -236,22 +242,25 @@ export default function UserCreate({
                             </Label>
                             <div className="max-w-md">
                                 <Select
-                                    value={data.orang_tua_id}
+                                    value={data.orang_tua_id || 'none'}
                                     onValueChange={(value) =>
-                                        setData('orang_tua_id', value)
+                                        setData(
+                                            'orang_tua_id',
+                                            value === 'none' ? '' : value,
+                                        )
                                     }
                                 >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Pilih Orang Tua" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="">
+                                        <SelectItem value="none">
                                             Tidak Ada
                                         </SelectItem>
                                         {orangTuas?.map((ot) => (
                                             <SelectItem
                                                 key={ot.id}
-                                                value={ot.id.toString()}
+                                                value={ot.id?.toString()}
                                             >
                                                 {ot.name}
                                             </SelectItem>

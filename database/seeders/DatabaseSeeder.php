@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RoleSeeder::class,           // First - no dependencies
             JenjangSeeder::class,         // No dependencies
+            KelasSeeder::class,           // Depends on jenjangs
             UserSeeder::class,            // Depends on roles and jenjangs
             QuizCategorySeeder::class,    // No dependencies
             QuizSeeder::class,            // Depends on users and categories

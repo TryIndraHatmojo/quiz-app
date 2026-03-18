@@ -1,8 +1,8 @@
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Upload, X, File as FileIcon, FileVideo, FileImage } from 'lucide-react';
+import { Upload, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
-import { useDropzone, FileRejection, DropzoneOptions } from 'react-dropzone';
+import { DropzoneOptions, FileRejection, useDropzone } from 'react-dropzone';
 
 interface FileUploaderProps {
     onFileSelect: (file: File | null) => void;
@@ -44,7 +44,9 @@ export function FileUploader({
             if (fileRejections.length > 0) {
                 const rejection = fileRejections[0];
                 if (rejection.errors[0].code === 'file-too-large') {
-                    setError(`File terlalu besar. Maksimal ${maxSize / 1024 / 1024}MB.`);
+                    setError(
+                        `File terlalu besar. Maksimal ${maxSize / 1024 / 1024}MB.`,
+                    );
                 } else {
                     setError(rejection.errors[0].message);
                 }
@@ -58,7 +60,10 @@ export function FileUploader({
                 onFileSelect(selectedFile);
 
                 // Create preview
-                if (selectedFile.type.startsWith('image/') || selectedFile.type.startsWith('video/')) {
+                if (
+                    selectedFile.type.startsWith('image/') ||
+                    selectedFile.type.startsWith('video/')
+                ) {
                     const reader = new FileReader();
                     reader.onloadend = () => {
                         setPreview(reader.result as string);
@@ -69,7 +74,7 @@ export function FileUploader({
                 }
             }
         },
-        [maxSize, onFileSelect]
+        [maxSize, onFileSelect],
     );
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -89,22 +94,35 @@ export function FileUploader({
 
     const isVideo = (url: string | null, type: string | null) => {
         if (type === 'video') return true;
-        if (url && (url.endsWith('.mp4') || url.endsWith('.webm') || url.endsWith('.ogg'))) return true;
+        if (
+            url &&
+            (url.endsWith('.mp4') ||
+                url.endsWith('.webm') ||
+                url.endsWith('.ogg'))
+        )
+            return true;
         return false;
     };
 
     const renderPreview = () => {
         if (!preview && !currentFile) return null;
 
-        const src = preview || currentFile;
-        const isVid = isVideo(src, fileType === 'video' ? 'video' : file?.type.startsWith('video/') ? 'video' : null);
+        const src = preview || currentFile || null;
+        const isVid = isVideo(
+            src,
+            fileType === 'video'
+                ? 'video'
+                : file?.type.startsWith('video/')
+                  ? 'video'
+                  : null,
+        );
 
         if (isVid) {
             return (
                 <video
                     src={src!}
                     controls
-                    className="h-full w-full object-contain rounded-lg bg-black"
+                    className="h-full w-full rounded-lg bg-black object-contain"
                 />
             );
         }
@@ -113,7 +131,7 @@ export function FileUploader({
             <img
                 src={src!}
                 alt="Preview"
-                className="h-full w-full object-contain rounded-lg"
+                className="h-full w-full rounded-lg object-contain"
             />
         );
     };
@@ -125,15 +143,15 @@ export function FileUploader({
                 className={cn(
                     'relative flex min-h-[200px] cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 px-6 py-10 text-center transition-colors hover:bg-gray-100',
                     isDragActive && 'border-primary bg-primary/5',
-                    error && 'border-destructive/50 bg-destructive/5'
+                    error && 'border-destructive/50 bg-destructive/5',
                 )}
             >
                 <input {...getInputProps()} />
-                
-                {(preview || currentFile) ? (
-                    <div className="relative w-full h-[300px]">
+
+                {preview || currentFile ? (
+                    <div className="relative h-[300px] w-full">
                         {renderPreview()}
-                        <div className="absolute -right-2 -top-2">
+                        <div className="absolute -top-2 -right-2">
                             <Button
                                 type="button"
                                 variant="destructive"
@@ -145,7 +163,7 @@ export function FileUploader({
                             </Button>
                         </div>
                         {file && (
-                            <div className="absolute bottom-2 left-2 right-2 rounded-md bg-black/50 p-2 text-xs text-white truncate">
+                            <div className="absolute right-2 bottom-2 left-2 truncate rounded-md bg-black/50 p-2 text-xs text-white">
                                 {file.name}
                             </div>
                         )}
@@ -159,7 +177,9 @@ export function FileUploader({
                             <p className="text-sm font-medium text-gray-700">
                                 {isDragActive ? 'Lepaskan file di sini' : label}
                             </p>
-                            <p className="text-xs text-gray-500">{description}</p>
+                            <p className="text-xs text-gray-500">
+                                {description}
+                            </p>
                         </div>
                     </div>
                 )}

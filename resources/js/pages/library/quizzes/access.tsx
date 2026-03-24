@@ -274,7 +274,8 @@ export default function QuizAccess({
                                                     key={j.id}
                                                     value={j.id.toString()}
                                                 >
-                                                    {j.jenjang}
+                                                    {j.jenjang} -{' '}
+                                                    {j.nama_sekolah}
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
@@ -518,7 +519,8 @@ export default function QuizAccess({
                                                     key={j.id}
                                                     value={j.id.toString()}
                                                 >
-                                                    {j.jenjang}
+                                                    {j.jenjang} -{' '}
+                                                    {j.nama_sekolah}
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>

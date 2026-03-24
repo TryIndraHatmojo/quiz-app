@@ -6,7 +6,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, type Jenjang, type SharedData } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { CheckCircle2, Pencil, Plus, Trash2, XCircle } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -44,6 +44,8 @@ interface Props {
 
 export default function KelasIndex({ kelases, filters }: Props) {
     const { flash } = usePage<SharedData>().props;
+    const isFirstRender = useRef(true);
+    const hasInteractedWithFilters = useRef(false);
 
     const [searchFilters, setSearchFilters] = useState({
         nama_kelas: filters?.nama_kelas || '',
@@ -51,6 +53,15 @@ export default function KelasIndex({ kelases, filters }: Props) {
     });
 
     useEffect(() => {
+        if (!hasInteractedWithFilters.current) {
+            return;
+        }
+
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
+
         const timeout = setTimeout(() => {
             router.get(route('master.kelas.index'), searchFilters as any, {
                 preserveState: true,
@@ -62,6 +73,8 @@ export default function KelasIndex({ kelases, filters }: Props) {
     }, [searchFilters]);
 
     const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        hasInteractedWithFilters.current = true;
+
         setSearchFilters((prev) => ({
             ...prev,
             [e.target.name]: e.target.value,

@@ -60,7 +60,34 @@ class QuizController extends Controller
             });
         }
 
-        $quizzes = $query->latest()->paginate(12);
+        $quizzes = $query->latest()->paginate(12)
+            ->through(function (Quiz $quiz) use ($userId) {
+                $canEdit = $quiz->user_id === $userId || $quiz->hasTeacherAccess($userId, 'edit');
+                $canPreview = $quiz->user_id === $userId
+                    || $quiz->teacherAccess()
+                        ->where('user_id', $userId)
+                        ->whereIn('permission', ['view', 'edit'])
+                        ->exists();
+
+                return [
+                    'id' => $quiz->id,
+                    'title' => $quiz->title,
+                    'slug' => $quiz->slug,
+                    'join_code' => $quiz->join_code,
+                    'description' => $quiz->description,
+                    'status' => $quiz->status,
+                    'time_mode' => $quiz->time_mode,
+                    'duration' => $quiz->duration,
+                    'category' => $quiz->category,
+                    'jenjang' => $quiz->jenjang,
+                    'kelas' => $quiz->kelas,
+                    'created_at' => $quiz->created_at,
+                    'can_edit' => $canEdit,
+                    'can_preview' => $canPreview,
+                    'can_manage_questions' => $canEdit,
+                    'can_delete' => $quiz->user_id === $userId,
+                ];
+            });
         $categories = QuizCategory::all();
 
         return Inertia::render('library/quizzes/index', [
@@ -147,7 +174,7 @@ class QuizController extends Controller
 
     public function edit(Quiz $quiz)
     {
-        if ($quiz->user_id !== auth()->id()) {
+        if (!$this->canEditQuiz($quiz)) {
             abort(403);
         }
 
@@ -163,12 +190,13 @@ class QuizController extends Controller
             'backgrounds' => $backgrounds,
             'jenjangs' => Jenjang::all(),
             'kelases' => Kelas::all(),
+            'canManageAccess' => $this->canManageAccess($quiz),
         ]);
     }
 
     public function update(Request $request, Quiz $quiz)
     {
-        if ($quiz->user_id !== auth()->id()) {
+        if (!$this->canEditQuiz($quiz)) {
             abort(403);
         }
 
@@ -239,7 +267,7 @@ class QuizController extends Controller
 
     public function questions(Quiz $quiz)
     {
-        if ($quiz->user_id !== auth()->id()) {
+        if (!$this->canEditQuiz($quiz)) {
             abort(403);
         }
 
@@ -253,18 +281,19 @@ class QuizController extends Controller
 
     public function preview(Quiz $quiz)
     {
-        if ($quiz->user_id !== auth()->id()) {
+        if (!$this->canPreviewQuiz($quiz)) {
             abort(403);
         }
 
         return Inertia::render('library/quizzes/preview', [
             'quiz' => $quiz->load(['questions.options', 'questions.matchingPairs', 'questions.shortAnswerFields', 'background']),
+            'canManageQuestions' => $this->canEditQuiz($quiz),
         ]);
     }
 
     public function storeQuestions(Request $request, Quiz $quiz)
     {
-        if ($quiz->user_id !== auth()->id()) {
+        if (!$this->canEditQuiz($quiz)) {
             abort(403);
         }
 
@@ -369,7 +398,7 @@ class QuizController extends Controller
      */
     public function access(Quiz $quiz)
     {
-        if ($quiz->user_id !== auth()->id()) {
+        if (!$this->canManageAccess($quiz)) {
             abort(403);
         }
 
@@ -420,7 +449,7 @@ class QuizController extends Controller
      */
     public function grantTeacherAccess(Request $request, Quiz $quiz)
     {
-        if ($quiz->user_id !== auth()->id()) {
+        if (!$this->canManageAccess($quiz)) {
             abort(403);
         }
 
@@ -446,7 +475,7 @@ class QuizController extends Controller
      */
     public function revokeTeacherAccess(Quiz $quiz, $userId)
     {
-        if ($quiz->user_id !== auth()->id()) {
+        if (!$this->canManageAccess($quiz)) {
             abort(403);
         }
 
@@ -462,7 +491,7 @@ class QuizController extends Controller
      */
     public function grantStudentAccess(Request $request, Quiz $quiz)
     {
-        if ($quiz->user_id !== auth()->id()) {
+        if (!$this->canManageAccess($quiz)) {
             abort(403);
         }
 
@@ -489,7 +518,7 @@ class QuizController extends Controller
      */
     public function revokeStudentAccess(Quiz $quiz, $userId)
     {
-        if ($quiz->user_id !== auth()->id()) {
+        if (!$this->canManageAccess($quiz)) {
             abort(403);
         }
 
@@ -505,7 +534,7 @@ class QuizController extends Controller
      */
     public function grantStudentAccessByJenjang(Request $request, Quiz $quiz)
     {
-        if ($quiz->user_id !== auth()->id()) {
+        if (!$this->canManageAccess($quiz)) {
             abort(403);
         }
 
@@ -529,5 +558,34 @@ class QuizController extends Controller
         }
 
         return back()->with('success', 'Akses berhasil diberikan ke ' . $students->count() . ' siswa.');
+    }
+
+    private function canEditQuiz(Quiz $quiz): bool
+    {
+        $userId = auth()->id();
+        if (!$userId) {
+            return false;
+        }
+
+        return $quiz->user_id === $userId || $quiz->hasTeacherAccess($userId, 'edit');
+    }
+
+    private function canPreviewQuiz(Quiz $quiz): bool
+    {
+        $userId = auth()->id();
+        if (!$userId) {
+            return false;
+        }
+
+        return $quiz->user_id === $userId
+            || $quiz->teacherAccess()
+                ->where('user_id', $userId)
+                ->whereIn('permission', ['view', 'edit'])
+                ->exists();
+    }
+
+    private function canManageAccess(Quiz $quiz): bool
+    {
+        return $quiz->user_id === auth()->id();
     }
 }

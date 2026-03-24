@@ -60,6 +60,10 @@ interface Quiz {
     jenjang?: Jenjang;
     kelas?: Kelas;
     created_at: string;
+    can_edit?: boolean;
+    can_preview?: boolean;
+    can_manage_questions?: boolean;
+    can_delete?: boolean;
 }
 
 interface Props {
@@ -526,50 +530,58 @@ export default function QuizIndex({
                                     </p>
                                 </CardContent>
                                 <CardFooter className="flex gap-2">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="flex-1"
-                                        asChild
-                                    >
-                                        <Link
-                                            href={route(
-                                                'library.quizzes.questions',
-                                                quiz.id,
-                                            )}
+                                    {quiz.can_manage_questions && (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="flex-1"
+                                            asChild
                                         >
-                                            <Pencil className="mr-2 h-4 w-4" />
-                                            Pertanyaan
-                                        </Link>
-                                    </Button>
-                                    <Button variant="outline" size="sm" asChild>
-                                        <Link
-                                            href={route(
-                                                'library.quizzes.preview',
-                                                quiz.id,
-                                            )}
+                                            <Link
+                                                href={route(
+                                                    'library.quizzes.questions',
+                                                    quiz.id,
+                                                )}
+                                            >
+                                                <Pencil className="mr-2 h-4 w-4" />
+                                                Pertanyaan
+                                            </Link>
+                                        </Button>
+                                    )}
+                                    {quiz.can_preview && (
+                                        <Button variant="outline" size="sm" asChild>
+                                            <Link
+                                                href={route(
+                                                    'library.quizzes.preview',
+                                                    quiz.id,
+                                                )}
+                                            >
+                                                <Eye className="h-4 w-4" />
+                                            </Link>
+                                        </Button>
+                                    )}
+                                    {quiz.can_edit && (
+                                        <Button variant="outline" size="sm" asChild>
+                                            <Link
+                                                href={route(
+                                                    'library.quizzes.edit',
+                                                    quiz.id,
+                                                )}
+                                            >
+                                                Edit
+                                            </Link>
+                                        </Button>
+                                    )}
+                                    {quiz.can_delete && (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                                            onClick={() => handleDelete(quiz.id)}
                                         >
-                                            <Eye className="h-4 w-4" />
-                                        </Link>
-                                    </Button>
-                                    <Button variant="outline" size="sm" asChild>
-                                        <Link
-                                            href={route(
-                                                'library.quizzes.edit',
-                                                quiz.id,
-                                            )}
-                                        >
-                                            Edit
-                                        </Link>
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                                        onClick={() => handleDelete(quiz.id)}
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    )}
                                 </CardFooter>
                             </Card>
                         ))

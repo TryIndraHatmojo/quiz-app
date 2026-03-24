@@ -14,6 +14,7 @@ import { type NavGroup } from '@/types';
 import { Link } from '@inertiajs/react';
 import {
     BookOpen,
+    ClipboardCheck,
     Database,
     FileImage,
     GraduationCap,
@@ -32,6 +33,11 @@ const mainNavGroups: NavGroup[] = [
                 title: 'Dashboard',
                 href: dashboard(),
                 icon: LayoutGrid,
+            },
+            {
+                title: 'Nilai',
+                href: '/nilai',
+                icon: ClipboardCheck,
             },
         ],
     },

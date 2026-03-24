@@ -39,6 +39,7 @@ interface Props {
     backgrounds: QuizBackground[];
     jenjangs: Jenjang[];
     kelases: Kelas[];
+    canManageAccess: boolean;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -62,6 +63,7 @@ export default function QuizEdit({
     backgrounds = [],
     jenjangs = [],
     kelases = [],
+    canManageAccess,
 }: Props) {
     const { data, setData, post, processing, errors } = useForm({
         _method: 'PUT',
@@ -97,14 +99,19 @@ export default function QuizEdit({
                                 Perbarui detail kuis Anda.
                             </p>
                         </div>
-                        <Button variant="outline" asChild>
-                            <Link
-                                href={route('library.quizzes.access', quiz.id)}
-                            >
-                                <UserCog className="mr-2 h-4 w-4" />
-                                Pengaturan Akses
-                            </Link>
-                        </Button>
+                        {canManageAccess && (
+                            <Button variant="outline" asChild>
+                                <Link
+                                    href={route(
+                                        'library.quizzes.access',
+                                        quiz.id,
+                                    )}
+                                >
+                                    <UserCog className="mr-2 h-4 w-4" />
+                                    Pengaturan Akses
+                                </Link>
+                            </Button>
+                        )}
                     </div>
 
                     <form onSubmit={submit} className="space-y-6">

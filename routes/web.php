@@ -47,4 +47,10 @@ Route::middleware(['auth', 'verified'])->prefix('quiz')->name('quiz.')->group(fu
     Route::get('attempt/{attempt}/result', [App\Http\Controllers\QuizAttemptController::class, 'result'])->name('result');
 });
 
+Route::middleware(['auth', 'verified'])->prefix('nilai')->name('nilai.')->group(function () {
+    Route::get('/', [App\Http\Controllers\Nilai\NilaiController::class, 'index'])->name('index');
+    Route::get('/{attempt}', [App\Http\Controllers\Nilai\NilaiController::class, 'show'])->name('show');
+    Route::patch('/{attempt}/question-score', [App\Http\Controllers\Nilai\NilaiController::class, 'updateQuestionScore'])->name('question-score.update');
+});
+
 require __DIR__.'/settings.php';

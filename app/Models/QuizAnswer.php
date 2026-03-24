@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class QuizAnswer extends Model
 {
@@ -54,5 +55,13 @@ class QuizAnswer extends Model
     public function selectedMatchingPair(): BelongsTo
     {
         return $this->belongsTo(QuizMatchingPair::class, 'quiz_matching_pair_id');
+    }
+
+    /**
+     * Get matching-pair detail answers for this question answer.
+     */
+    public function matchingPairAnswers(): HasMany
+    {
+        return $this->hasMany(QuizAnswerMatchingPair::class)->orderBy('id');
     }
 }

@@ -111,6 +111,9 @@ class QuizAttemptController extends Controller
             'quiz_question_option_id' => 'nullable|exists:quiz_question_options,id',
             'quiz_matching_pair_id' => 'nullable|exists:quiz_matching_pairs,id',
             'answer_text' => 'nullable|string',
+            'matching_answers' => 'nullable|array',
+            'matching_answers.*.left_quiz_matching_pair_id' => 'required_with:matching_answers|exists:quiz_matching_pairs,id',
+            'matching_answers.*.selected_right_quiz_matching_pair_id' => 'required_with:matching_answers|exists:quiz_matching_pairs,id',
         ]);
         
         Log::info('saveAnswer: Validation passed');
@@ -131,6 +134,7 @@ class QuizAttemptController extends Controller
         // Calculate if answer is correct and points
         $isCorrect = false;
         $awardedPoints = 0;
+        $matchingDetailRows = [];
         
         switch ($question->question_type) {
             case 'multiple_choice':
@@ -176,22 +180,69 @@ class QuizAttemptController extends Controller
                 break;
                 
             case 'matching_pairs':
-                if ($request->quiz_matching_pair_id && $request->answer_text) {
-                    $pair = $question->matchingPairs()->find($request->quiz_matching_pair_id);
-                    // For matching pairs, answer_text contains the selected right_text
-                    $isCorrect = $pair && $pair->right_text === $request->answer_text;
-                    // Points are awarded per pair, divide by number of pairs
-                    $pairsCount = $question->matchingPairs()->count();
-                    $awardedPoints = $isCorrect ? round($question->points / $pairsCount) : 0;
-                    
-                    Log::info('saveAnswer: Matching pairs processed', [
-                        'pair_id' => $request->quiz_matching_pair_id,
-                        'selected_answer' => $request->answer_text,
-                        'is_correct' => $isCorrect,
-                        'pairs_count' => $pairsCount,
-                        'awarded_points' => $awardedPoints
-                    ]);
+                $questionPairs = $question->matchingPairs()->get()->keyBy('id');
+                $pairsCount = $questionPairs->count();
+                $pointsPerPair = $pairsCount > 0 ? (int) round($question->points / $pairsCount) : 0;
+
+                $submittedPairs = collect($request->input('matching_answers', []));
+
+                // Backward compatibility with old single-pair payload.
+                if ($submittedPairs->isEmpty() && $request->quiz_matching_pair_id && $request->answer_text) {
+                    $leftPair = $questionPairs->get((int) $request->quiz_matching_pair_id);
+                    $selectedRightPair = $questionPairs->firstWhere('right_text', $request->answer_text);
+
+                    if ($leftPair && $selectedRightPair) {
+                        $submittedPairs = collect([[
+                            'left_quiz_matching_pair_id' => $leftPair->id,
+                            'selected_right_quiz_matching_pair_id' => $selectedRightPair->id,
+                        ]]);
+                    }
                 }
+
+                $usedRightPairIds = [];
+
+                foreach ($submittedPairs as $submittedPair) {
+                    $leftPairId = (int) ($submittedPair['left_quiz_matching_pair_id'] ?? 0);
+                    $selectedRightPairId = (int) ($submittedPair['selected_right_quiz_matching_pair_id'] ?? 0);
+
+                    $leftPair = $questionPairs->get($leftPairId);
+                    $selectedRightPair = $questionPairs->get($selectedRightPairId);
+
+                    if (!$leftPair || !$selectedRightPair) {
+                        continue;
+                    }
+
+                    // Right-side options should be unique; repeated choices are counted incorrect.
+                    $isDuplicateRight = in_array($selectedRightPairId, $usedRightPairIds, true);
+                    if (!$isDuplicateRight) {
+                        $usedRightPairIds[] = $selectedRightPairId;
+                    }
+
+                    $pairCorrect = !$isDuplicateRight
+                        && $leftPair->right_text === $selectedRightPair->right_text;
+
+                    $matchingDetailRows[] = [
+                        'quiz_attempt_id' => $attempt->id,
+                        'quiz_question_id' => $question->id,
+                        'left_quiz_matching_pair_id' => $leftPair->id,
+                        'selected_right_quiz_matching_pair_id' => $selectedRightPair->id,
+                        'is_correct' => $pairCorrect,
+                        'awarded_points' => $pairCorrect ? $pointsPerPair : 0,
+                        'answered_at' => now(),
+                    ];
+                }
+
+                $awardedPoints = (int) collect($matchingDetailRows)->sum('awarded_points');
+                $isCorrect = $pairsCount > 0
+                    && count($matchingDetailRows) === $pairsCount
+                    && collect($matchingDetailRows)->every(fn (array $row) => $row['is_correct']);
+
+                Log::info('saveAnswer: Matching pairs processed', [
+                    'pairs_count' => $pairsCount,
+                    'submitted_pairs_count' => count($matchingDetailRows),
+                    'is_correct' => $isCorrect,
+                    'awarded_points' => $awardedPoints,
+                ]);
                 break;
                 
             case 'long_answer':
@@ -222,6 +273,24 @@ class QuizAttemptController extends Controller
                 'answered_at' => now(),
             ]
         );
+
+        if ($question->question_type === 'matching_pairs') {
+            $answer->matchingPairAnswers()->delete();
+
+            if (!empty($matchingDetailRows)) {
+                $answer->matchingPairAnswers()->createMany(
+                    array_map(function (array $row) {
+                        return array_merge($row, [
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                    }, $matchingDetailRows)
+                );
+            }
+        } else {
+            // Keep detail table clean if question type changes or payload is resent.
+            $answer->matchingPairAnswers()->delete();
+        }
         
         Log::info('saveAnswer: Answer saved successfully', ['answer_id' => $answer->id]);
         

@@ -53,6 +53,14 @@ class QuizAttempt extends Model
     }
 
     /**
+     * Get all matching-pair detail answers in this attempt.
+     */
+    public function matchingPairAnswers(): HasMany
+    {
+        return $this->hasMany(QuizAnswerMatchingPair::class);
+    }
+
+    /**
      * Check if this attempt is completed.
      */
     public function isCompleted(): bool
@@ -86,11 +94,22 @@ class QuizAttempt extends Model
             $this->duration_seconds = $this->started_at->diffInSeconds(now());
         }
         
-        // Calculate scores from answers
-        $answers = $this->answers;
-        $this->correct_count = $answers->where('is_correct', true)->count();
-        $this->wrong_count = $answers->where('is_correct', false)->count();
-        $this->total_points = $answers->sum('awarded_points');
+        // Calculate scores from non-matching answers and matching detail answers.
+        $answers = $this->answers()->with('question')->get();
+        $matchingDetailAnswers = $this->matchingPairAnswers;
+
+        $nonMatchingAnswers = $answers->filter(function (QuizAnswer $answer) {
+            return $answer->question?->question_type !== QuizQuestion::TYPE_MATCHING_PAIRS;
+        });
+
+        $this->correct_count = $nonMatchingAnswers->where('is_correct', true)->count()
+            + $matchingDetailAnswers->where('is_correct', true)->count();
+
+        $this->wrong_count = $nonMatchingAnswers->where('is_correct', false)->count()
+            + $matchingDetailAnswers->where('is_correct', false)->count();
+
+        $this->total_points = (int) $nonMatchingAnswers->sum('awarded_points')
+            + (int) $matchingDetailAnswers->sum('awarded_points');
         
         $this->save();
     }

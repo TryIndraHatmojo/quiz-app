@@ -57,4 +57,9 @@ class QuizQuestion extends Model
     {
         return $this->hasMany(QuizShortAnswerField::class)->orderBy('order');
     }
+
+    public function matchingPairAnswers(): HasMany
+    {
+        return $this->hasMany(QuizAnswerMatchingPair::class);
+    }
 }

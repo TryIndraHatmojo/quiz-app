@@ -13,12 +13,26 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
+        $smkId = DB::table('jenjangs')->where('jenjang', 'SMK')->value('id');
+        $smaId = DB::table('jenjangs')->where('jenjang', 'SMA')->value('id');
+        $smpId = DB::table('jenjangs')->where('jenjang', 'SMP')->value('id');
+
+        $kelasXFarmasi1Id = DB::table('kelas')->where('nama_kelas', 'X Farmasi 1')->value('id');
+        $kelasXFarmasi2Id = DB::table('kelas')->where('nama_kelas', 'X Farmasi 2')->value('id');
+        $kelasXIMipa1Id = DB::table('kelas')->where('nama_kelas', 'XI MIPA 1')->value('id');
+        $kelasXIIIps1Id = DB::table('kelas')->where('nama_kelas', 'XII IPS 1')->value('id');
+        $kelas7AId = DB::table('kelas')->where('nama_kelas', '7A')->value('id');
+        $kelas8AId = DB::table('kelas')->where('nama_kelas', '8A')->value('id');
+        $kelas9AId = DB::table('kelas')->where('nama_kelas', '9A')->value('id');
+
         $users = [
             // Admin
             [
                 'name' => 'Admin Sistem',
                 'email' => 'admin@example.com',
                 'password' => Hash::make('password'),
+                'jenjang_id' => $smkId,
+                'kelas_id' => $kelasXFarmasi1Id,
                 'email_verified_at' => now(),
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -28,6 +42,8 @@ class UserSeeder extends Seeder
                 'name' => 'Budi Santoso',
                 'email' => 'budi.telaah@example.com',
                 'password' => Hash::make('password'),
+                'jenjang_id' => $smaId,
+                'kelas_id' => $kelasXIMipa1Id,
                 'email_verified_at' => now(),
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -36,6 +52,8 @@ class UserSeeder extends Seeder
                 'name' => 'Siti Nurhaliza',
                 'email' => 'siti.telaah@example.com',
                 'password' => Hash::make('password'),
+                'jenjang_id' => $smaId,
+                'kelas_id' => $kelasXIIIps1Id,
                 'email_verified_at' => now(),
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -45,6 +63,8 @@ class UserSeeder extends Seeder
                 'name' => 'Ahmad Hidayat',
                 'email' => 'ahmad.guru@example.com',
                 'password' => Hash::make('password'),
+                'jenjang_id' => $smkId,
+                'kelas_id' => $kelasXFarmasi1Id,
                 'email_verified_at' => now(),
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -53,6 +73,8 @@ class UserSeeder extends Seeder
                 'name' => 'Dewi Lestari',
                 'email' => 'dewi.guru@example.com',
                 'password' => Hash::make('password'),
+                'jenjang_id' => $smkId,
+                'kelas_id' => $kelasXFarmasi2Id,
                 'email_verified_at' => now(),
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -61,6 +83,8 @@ class UserSeeder extends Seeder
                 'name' => 'Rina Wijaya',
                 'email' => 'rina.guru@example.com',
                 'password' => Hash::make('password'),
+                'jenjang_id' => $smpId,
+                'kelas_id' => $kelas9AId,
                 'email_verified_at' => now(),
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -70,6 +94,8 @@ class UserSeeder extends Seeder
                 'name' => 'Andi Pratama',
                 'email' => 'andi.siswa@example.com',
                 'password' => Hash::make('password'),
+                'jenjang_id' => $smkId,
+                'kelas_id' => $kelasXFarmasi1Id,
                 'email_verified_at' => now(),
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -78,6 +104,8 @@ class UserSeeder extends Seeder
                 'name' => 'Lina Marlina',
                 'email' => 'lina.siswa@example.com',
                 'password' => Hash::make('password'),
+                'jenjang_id' => $smaId,
+                'kelas_id' => $kelasXIIIps1Id,
                 'email_verified_at' => now(),
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -86,6 +114,8 @@ class UserSeeder extends Seeder
                 'name' => 'Rudi Hermawan',
                 'email' => 'rudi.siswa@example.com',
                 'password' => Hash::make('password'),
+                'jenjang_id' => $smpId,
+                'kelas_id' => $kelas7AId,
                 'email_verified_at' => now(),
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -94,6 +124,8 @@ class UserSeeder extends Seeder
                 'name' => 'Maya Sari',
                 'email' => 'maya.siswa@example.com',
                 'password' => Hash::make('password'),
+                'jenjang_id' => $smpId,
+                'kelas_id' => $kelas8AId,
                 'email_verified_at' => now(),
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -102,6 +134,8 @@ class UserSeeder extends Seeder
                 'name' => 'Doni Setiawan',
                 'email' => 'doni.siswa@example.com',
                 'password' => Hash::make('password'),
+                'jenjang_id' => $smpId,
+                'kelas_id' => $kelas9AId,
                 'email_verified_at' => now(),
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -111,6 +145,8 @@ class UserSeeder extends Seeder
                 'name' => 'Bapak Andi (Orang Tua)',
                 'email' => 'ortu.andi@example.com',
                 'password' => Hash::make('password'),
+                'jenjang_id' => $smkId,
+                'kelas_id' => $kelasXFarmasi1Id,
                 'email_verified_at' => now(),
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -119,6 +155,8 @@ class UserSeeder extends Seeder
                 'name' => 'Ibu Lina (Orang Tua)',
                 'email' => 'ortu.lina@example.com',
                 'password' => Hash::make('password'),
+                'jenjang_id' => $smaId,
+                'kelas_id' => $kelasXIIIps1Id,
                 'email_verified_at' => now(),
                 'created_at' => now(),
                 'updated_at' => now(),

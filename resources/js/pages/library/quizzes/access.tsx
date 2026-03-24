@@ -13,6 +13,7 @@ import AppSidebarLayout from '@/layouts/app/app-sidebar-layout';
 import {
     type BreadcrumbItem,
     type Jenjang,
+    type Kelas,
     type QuizStudentAccess,
     type QuizTeacherAccess,
     type SharedData,
@@ -42,6 +43,7 @@ interface Props {
     teacherAccess: QuizTeacherAccess[];
     studentAccess: QuizStudentAccess[];
     jenjangs: Jenjang[];
+    kelases: Kelas[];
 }
 
 export default function QuizAccess({
@@ -51,6 +53,7 @@ export default function QuizAccess({
     teacherAccess,
     studentAccess,
     jenjangs,
+    kelases,
 }: Props) {
     const { flash } = usePage<SharedData>().props;
     const [selectedTeacher, setSelectedTeacher] = useState<string>('');
@@ -58,6 +61,12 @@ export default function QuizAccess({
     const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
     const [selectedJenjang, setSelectedJenjang] = useState<string>('');
     const [studentSearchTerm, setStudentSearchTerm] = useState('');
+    const [teacherJenjangFilter, setTeacherJenjangFilter] =
+        useState<string>('all');
+    const [teacherKelasFilter, setTeacherKelasFilter] = useState<string>('all');
+    const [studentJenjangFilter, setStudentJenjangFilter] =
+        useState<string>('all');
+    const [studentKelasFilter, setStudentKelasFilter] = useState<string>('all');
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Koleksi', href: '#' },
@@ -72,16 +81,40 @@ export default function QuizAccess({
     );
 
     // Filter students by search term
-    const filteredStudents = availableStudents.filter(
+    let filteredStudents = availableStudents.filter(
         (s) =>
             s.name.toLowerCase().includes(studentSearchTerm.toLowerCase()) ||
             s.email.toLowerCase().includes(studentSearchTerm.toLowerCase()),
     );
 
+    // Filter students by jenjang and kelas
+    if (studentJenjangFilter !== 'all') {
+        filteredStudents = filteredStudents.filter(
+            (s) => s.jenjang_id?.toString() === studentJenjangFilter,
+        );
+    }
+    if (studentKelasFilter !== 'all') {
+        filteredStudents = filteredStudents.filter(
+            (s) => s.kelas_id?.toString() === studentKelasFilter,
+        );
+    }
+
     // Filter teachers not already having access
-    const availableTeachers = teachers.filter(
+    let availableTeachers = teachers.filter(
         (t) => !teacherAccess.find((ta) => ta.user_id === t.id),
     );
+
+    // Filter teachers by jenjang and kelas
+    if (teacherJenjangFilter !== 'all') {
+        availableTeachers = availableTeachers.filter(
+            (t) => t.jenjang_id?.toString() === teacherJenjangFilter,
+        );
+    }
+    if (teacherKelasFilter !== 'all') {
+        availableTeachers = availableTeachers.filter(
+            (t) => t.kelas_id?.toString() === teacherKelasFilter,
+        );
+    }
 
     const handleGrantTeacherAccess = () => {
         if (!selectedTeacher) return;
@@ -220,6 +253,61 @@ export default function QuizAccess({
 
                         {/* Add Teacher Form */}
                         <div className="mb-6 space-y-4 rounded-lg bg-muted/50 p-4">
+                            <div className="grid grid-cols-2 gap-2">
+                                <div className="space-y-1">
+                                    <Label className="text-xs">
+                                        Filter Jenjang
+                                    </Label>
+                                    <Select
+                                        value={teacherJenjangFilter}
+                                        onValueChange={setTeacherJenjangFilter}
+                                    >
+                                        <SelectTrigger className="h-8">
+                                            <SelectValue placeholder="Semua Jenjang" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">
+                                                Semua Jenjang
+                                            </SelectItem>
+                                            {jenjangs.map((j) => (
+                                                <SelectItem
+                                                    key={j.id}
+                                                    value={j.id.toString()}
+                                                >
+                                                    {j.jenjang}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-1">
+                                    <Label className="text-xs">
+                                        Filter Kelas
+                                    </Label>
+                                    <Select
+                                        value={teacherKelasFilter}
+                                        onValueChange={setTeacherKelasFilter}
+                                    >
+                                        <SelectTrigger className="h-8">
+                                            <SelectValue placeholder="Semua Kelas" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">
+                                                Semua Kelas
+                                            </SelectItem>
+                                            {kelases.map((k) => (
+                                                <SelectItem
+                                                    key={k.id}
+                                                    value={k.id.toString()}
+                                                >
+                                                    {k.nama_kelas}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+
                             <div className="space-y-2">
                                 <Label>Pilih Guru</Label>
                                 <Select
@@ -239,6 +327,12 @@ export default function QuizAccess({
                                                 {teacher.roles?.[0]?.name ||
                                                     'No Role'}
                                                 )
+                                                {teacher.kelas
+                                                    ? ` - ${teacher.kelas.nama_kelas}`
+                                                    : ''}
+                                                {teacher.jenjang
+                                                    ? ` (${teacher.jenjang.jenjang})`
+                                                    : ''}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
@@ -403,6 +497,61 @@ export default function QuizAccess({
                                 </Label>
                             </div>
 
+                            <div className="grid grid-cols-2 gap-2">
+                                <div className="space-y-1">
+                                    <Label className="text-xs">
+                                        Filter Jenjang
+                                    </Label>
+                                    <Select
+                                        value={studentJenjangFilter}
+                                        onValueChange={setStudentJenjangFilter}
+                                    >
+                                        <SelectTrigger className="h-8">
+                                            <SelectValue placeholder="Semua Jenjang" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">
+                                                Semua Jenjang
+                                            </SelectItem>
+                                            {jenjangs.map((j) => (
+                                                <SelectItem
+                                                    key={j.id}
+                                                    value={j.id.toString()}
+                                                >
+                                                    {j.jenjang}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-1">
+                                    <Label className="text-xs">
+                                        Filter Kelas
+                                    </Label>
+                                    <Select
+                                        value={studentKelasFilter}
+                                        onValueChange={setStudentKelasFilter}
+                                    >
+                                        <SelectTrigger className="h-8">
+                                            <SelectValue placeholder="Semua Kelas" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">
+                                                Semua Kelas
+                                            </SelectItem>
+                                            {kelases.map((k) => (
+                                                <SelectItem
+                                                    key={k.id}
+                                                    value={k.id.toString()}
+                                                >
+                                                    {k.nama_kelas}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+
                             <Input
                                 placeholder="Cari siswa..."
                                 value={studentSearchTerm}
@@ -444,6 +593,8 @@ export default function QuizAccess({
                                                         {student.email}
                                                         {student.jenjang &&
                                                             ` • ${student.jenjang.jenjang}`}
+                                                        {student.kelas &&
+                                                            ` • ${student.kelas.nama_kelas}`}
                                                     </p>
                                                 </div>
                                             </label>

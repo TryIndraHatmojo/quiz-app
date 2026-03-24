@@ -366,6 +366,7 @@ class QuizController extends Controller
         $quiz->load([
             'teacherAccess.user.roles',
             'studentAccess.user.jenjang',
+            'studentAccess.user.kelas',
         ]);
 
         // Get available teachers (users with role_id 2 or 3)
@@ -374,22 +375,24 @@ class QuizController extends Controller
             $q->whereIn('roles.id', [2, 3]); // Guru Telaah Soal (id=2) dan Guru Mata Pelajaran (id=3)
         })
         ->where('id', '!=', auth()->id())
-        ->with('roles')
+        ->with(['roles', 'jenjang', 'kelas'])
         ->get();
 
         // Get available students (users with role_id 4)
         $students = \App\Models\User::whereHas('roles', function ($q) {
             $q->where('roles.id', 4); // Siswa (id=4)
         })
-        ->with('jenjang')
+        ->with(['jenjang', 'kelas'])
         ->get();
 
         // Get all jenjangs for bulk student access
         $jenjangs = \App\Models\Jenjang::orderBy('jenjang')->get();
+        // Get all kelas for filtering
+        $kelases = \App\Models\Kelas::orderBy('nama_kelas')->get();
 
         // Ensure studentAccess has user.jenjang loaded
-        $studentAccessList = $quiz->studentAccess()->with('user.jenjang')->get();
-        $teacherAccessList = $quiz->teacherAccess()->with('user.roles')->get();
+        $studentAccessList = $quiz->studentAccess()->with(['user.jenjang', 'user.kelas'])->get();
+        $teacherAccessList = $quiz->teacherAccess()->with(['user.roles', 'user.jenjang', 'user.kelas'])->get();
 
         return Inertia::render('library/quizzes/access', [
             'quiz' => $quiz,
@@ -398,6 +401,7 @@ class QuizController extends Controller
             'teacherAccess' => $teacherAccessList,
             'studentAccess' => $studentAccessList,
             'jenjangs' => $jenjangs,
+            'kelases' => $kelases,
         ]);
     }
 

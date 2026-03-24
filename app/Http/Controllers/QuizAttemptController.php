@@ -68,7 +68,7 @@ class QuizAttemptController extends Controller
         
         // Get existing answers for this attempt
         $existingAnswers = $attempt->answers()
-            ->with('selectedOption', 'selectedMatchingPair')
+            ->with('selectedOption', 'selectedMatchingPair', 'matchingPairAnswers')
             ->get()
             ->keyBy('quiz_question_id');
         

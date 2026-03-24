@@ -18,11 +18,11 @@ return new class extends Migration
             $table->foreignId('quiz_question_id')->constrained('quiz_questions')->cascadeOnDelete();
             $table->foreignId('left_quiz_matching_pair_id')
                 ->nullable()
-                ->constrained('quiz_matching_pairs')
+                ->constrained('quiz_matching_pairs', 'id', 'qamp_left_pair_fk')
                 ->nullOnDelete();
             $table->foreignId('selected_right_quiz_matching_pair_id')
                 ->nullable()
-                ->constrained('quiz_matching_pairs')
+                ->constrained('quiz_matching_pairs', 'id', 'qamp_right_pair_fk')
                 ->nullOnDelete();
             $table->boolean('is_correct')->default(false);
             $table->integer('awarded_points')->default(0);

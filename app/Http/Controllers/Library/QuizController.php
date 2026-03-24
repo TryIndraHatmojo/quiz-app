@@ -18,8 +18,18 @@ class QuizController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Quiz::where('user_id', auth()->id())
-            ->with('category');
+        $userId = $request->user()?->id;
+
+        $query = Quiz::with(['category', 'jenjang', 'kelas'])
+            ->where(function ($q) use ($userId) {
+                $q->where('user_id', $userId)
+                    ->orWhereHas('teacherAccess', function ($teacherAccess) use ($userId) {
+                        $teacherAccess->where('user_id', $userId);
+                    })
+                    ->orWhereHas('studentAccess', function ($studentAccess) use ($userId) {
+                        $studentAccess->where('user_id', $userId);
+                    });
+            });
 
         // Filter by status
         if ($request->filled('status')) {

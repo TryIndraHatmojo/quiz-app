@@ -9,7 +9,9 @@ import {
     CheckCircle2,
     Eye,
     PencilLine,
+    RefreshCw,
     Save,
+    Trophy,
     XCircle,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -19,6 +21,7 @@ interface AttemptDetail {
     quiz: {
         id: number;
         title: string;
+        passing_score: number;
     };
     student: {
         id: number;
@@ -33,6 +36,7 @@ interface AttemptDetail {
     correct_count: number;
     wrong_count: number;
     completed_at: string | null;
+    is_passed: boolean;
 }
 
 interface QuestionScoreItem {
@@ -104,7 +108,8 @@ export default function NilaiShow({
         <AppSidebarLayout breadcrumbs={breadcrumbs}>
             <Head title={titleText} />
 
-            <div className="flex h-full flex-1 flex-col gap-4 p-4">
+            <div className="flex h-full flex-1 flex-col gap-5 p-4 md:p-6">
+                {/* Flash Messages */}
                 {flash.success && (
                     <Alert
                         variant="default"
@@ -124,18 +129,15 @@ export default function NilaiShow({
                     </Alert>
                 )}
 
+                {/* Header */}
                 <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                        <h1 className="text-2xl font-semibold tracking-tight">
+                        <h1 className="text-2xl font-bold tracking-tight">
                             {titleText}
                         </h1>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="mt-1 text-sm text-muted-foreground">
                             Quiz: {attempt.quiz.title} | Siswa:{' '}
                             {attempt.student.name}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                            Total: {attempt.total_points} / {attempt.max_points}{' '}
-                            ({attempt.score_percentage}%)
                         </p>
                     </div>
 
@@ -147,11 +149,86 @@ export default function NilaiShow({
                     </Button>
                 </div>
 
+                {/* Score Summary Card */}
+                <div className="overflow-hidden rounded-xl border border-sidebar-border bg-sidebar">
+                    <div className="grid grid-cols-1 divide-y divide-sidebar-border sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-5">
+                        {/* Total Score */}
+                        <div className="p-4 text-center">
+                            <p className="text-xs font-medium text-muted-foreground">
+                                Total Skor
+                            </p>
+                            <p className="mt-1 text-2xl font-bold">
+                                {attempt.total_points}{' '}
+                                <span className="text-sm font-normal text-muted-foreground">
+                                    / {attempt.max_points}
+                                </span>
+                            </p>
+                        </div>
+
+                        {/* Percentage */}
+                        <div className="p-4 text-center">
+                            <p className="text-xs font-medium text-muted-foreground">
+                                Persentase
+                            </p>
+                            <p
+                                className={`mt-1 text-2xl font-bold ${attempt.is_passed ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}
+                            >
+                                {attempt.score_percentage}%
+                            </p>
+                        </div>
+
+                        {/* KKM */}
+                        <div className="p-4 text-center">
+                            <p className="text-xs font-medium text-muted-foreground">
+                                KKM
+                            </p>
+                            <p className="mt-1 text-2xl font-bold text-primary">
+                                {attempt.quiz.passing_score}%
+                            </p>
+                        </div>
+
+                        {/* Correct / Wrong */}
+                        <div className="p-4 text-center">
+                            <p className="text-xs font-medium text-muted-foreground">
+                                Benar / Salah
+                            </p>
+                            <p className="mt-1 text-2xl font-bold">
+                                <span className="text-emerald-600">
+                                    {attempt.correct_count}
+                                </span>
+                                {' / '}
+                                <span className="text-red-500">
+                                    {attempt.wrong_count}
+                                </span>
+                            </p>
+                        </div>
+
+                        {/* Status */}
+                        <div className="flex flex-col items-center justify-center p-4">
+                            <p className="text-xs font-medium text-muted-foreground">
+                                Status
+                            </p>
+                            {attempt.is_passed ? (
+                                <div className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+                                    <Trophy className="h-4 w-4" />
+                                    Lulus
+                                </div>
+                            ) : (
+                                <div className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-3 py-1 text-sm font-semibold text-amber-700 dark:text-amber-400">
+                                    <RefreshCw className="h-4 w-4" />
+                                    Remedial
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Question Scores Table */}
                 <div className="overflow-hidden rounded-xl border border-sidebar-border bg-sidebar">
                     <div className="overflow-x-auto">
                         <table className="min-w-full text-sm">
                             <thead>
-                                <tr className="border-b border-sidebar-border text-left">
+                                <tr className="border-b border-sidebar-border bg-accent/30 text-left">
                                     <th className="px-4 py-3 font-medium">
                                         No
                                     </th>
@@ -200,22 +277,26 @@ export default function NilaiShow({
                                     return (
                                         <tr
                                             key={item.question_id}
-                                            className="border-b border-sidebar-border/70 align-top"
+                                            className="border-b border-sidebar-border/40 align-top transition-colors hover:bg-accent/20"
                                         >
                                             <td className="px-4 py-3">
                                                 {item.order}
                                             </td>
-                                            <td className="px-4 py-3">
-                                                {item.question_text}
+                                            <td className="max-w-xs px-4 py-3">
+                                                <p className="line-clamp-2">
+                                                    {item.question_text}
+                                                </p>
                                             </td>
                                             <td className="px-4 py-3">
-                                                {item.question_type}
+                                                <span className="inline-flex rounded-full bg-accent px-2 py-0.5 text-xs font-medium">
+                                                    {item.question_type}
+                                                </span>
                                             </td>
-                                            <td className="max-w-md px-4 py-3 text-xs text-muted-foreground">
-                                                {item.answer_preview}
+                                            <td className="max-w-[200px] px-4 py-3 text-xs text-muted-foreground">
+                                                <p className="line-clamp-3">{item.answer_preview}</p>
                                             </td>
-                                            <td className="max-w-md px-4 py-3 text-xs text-muted-foreground">
-                                                {item.answer_key}
+                                            <td className="max-w-[200px] px-4 py-3 text-xs text-muted-foreground">
+                                                <p className="line-clamp-3">{item.answer_key}</p>
                                             </td>
                                             <td className="px-4 py-3">
                                                 {isEditable ? (
@@ -227,7 +308,7 @@ export default function NilaiShow({
                                                                 item.max_points ||
                                                                 undefined
                                                             }
-                                                            className="h-8 w-24"
+                                                            className="h-8 w-20"
                                                             value={
                                                                 displayedScore
                                                             }
@@ -243,26 +324,29 @@ export default function NilaiShow({
                                                                 );
                                                             }}
                                                         />
-                                                        <span className="text-muted-foreground">
-                                                            / {item.max_points}
+                                                        <span className="text-xs text-muted-foreground">
+                                                            /{' '}
+                                                            {item.max_points}
                                                         </span>
                                                     </div>
                                                 ) : (
-                                                    <span>
-                                                        {item.awarded_points} /{' '}
-                                                        {item.max_points}
+                                                    <span className="font-medium">
+                                                        {item.awarded_points}{' '}
+                                                        <span className="font-normal text-muted-foreground">
+                                                            / {item.max_points}
+                                                        </span>
                                                     </span>
                                                 )}
                                             </td>
                                             <td className="px-4 py-3">
                                                 {item.is_correct ? (
-                                                    <span className="inline-flex items-center text-xs text-green-600">
-                                                        <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
+                                                    <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                                                        <CheckCircle2 className="h-3.5 w-3.5" />
                                                         Benar
                                                     </span>
                                                 ) : (
-                                                    <span className="inline-flex items-center text-xs text-amber-600">
-                                                        <XCircle className="mr-1 h-3.5 w-3.5" />
+                                                    <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400">
+                                                        <XCircle className="h-3.5 w-3.5" />
                                                         Belum penuh
                                                     </span>
                                                 )}
@@ -271,11 +355,12 @@ export default function NilaiShow({
                                                 {isEditable ? (
                                                     <Button
                                                         size="sm"
+                                                        className="h-8"
                                                         onClick={() =>
                                                             submitScore(item)
                                                         }
                                                     >
-                                                        <Save className="mr-2 h-4 w-4" />
+                                                        <Save className="mr-1.5 h-3.5 w-3.5" />
                                                         Simpan
                                                     </Button>
                                                 ) : (
@@ -293,7 +378,8 @@ export default function NilaiShow({
                     </div>
                 </div>
 
-                <div className="rounded-lg border border-sidebar-border bg-sidebar p-3 text-xs text-muted-foreground">
+                {/* Footer Info */}
+                <div className="rounded-xl border border-sidebar-border bg-sidebar p-4 text-xs text-muted-foreground">
                     {permissions.canEdit ? (
                         <span className="inline-flex items-center">
                             <PencilLine className="mr-2 h-4 w-4" />

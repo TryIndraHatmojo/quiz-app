@@ -31,11 +31,17 @@ class Quiz extends Model
         'status',
         'time_mode',
         'duration',
+        'starts_at',
+        'ends_at',
+        'passing_score',
         'quiz_background_id',
     ];
 
     protected $casts = [
         'duration' => 'integer',
+        'starts_at' => 'datetime',
+        'ends_at' => 'datetime',
+        'passing_score' => 'integer',
     ];
 
     public function user(): BelongsTo

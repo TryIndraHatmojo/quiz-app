@@ -83,6 +83,20 @@ class QuizAttempt extends Model
     }
 
     /**
+     * Check if attempt passes the given KKM threshold.
+     */
+    public function isPassed(int $passingScore, int $maxPoints): bool
+    {
+        if ($maxPoints <= 0) {
+            return false;
+        }
+
+        $percentage = round(($this->total_points / $maxPoints) * 100, 2);
+
+        return $percentage >= $passingScore;
+    }
+
+    /**
      * Complete the attempt and calculate scores.
      */
     public function complete(): void

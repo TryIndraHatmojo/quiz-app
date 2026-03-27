@@ -65,6 +65,16 @@ export default function QuizEdit({
     kelases = [],
     canManageAccess,
 }: Props) {
+    const formatDatetimeLocal = (val: string | null | undefined) => {
+        if (!val) return '';
+        try {
+            const d = new Date(val);
+            if (isNaN(d.getTime())) return '';
+            const pad = (n: number) => n.toString().padStart(2, '0');
+            return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        } catch { return ''; }
+    };
+
     const { data, setData, post, processing, errors } = useForm({
         _method: 'PUT',
         title: quiz.title || '',
@@ -77,6 +87,9 @@ export default function QuizEdit({
         status: quiz.status || 'draft',
         time_mode: (quiz.time_mode || 'per_question') as TimeMode,
         duration: quiz.duration || 30,
+        starts_at: formatDatetimeLocal(quiz.starts_at),
+        ends_at: formatDatetimeLocal(quiz.ends_at),
+        passing_score: quiz.passing_score ?? 70,
     });
 
     const submit: FormEventHandler = (e) => {
@@ -358,6 +371,67 @@ export default function QuizEdit({
                                     {errors.time_mode}
                                 </p>
                             )}
+                        </div>
+
+                        {/* Exam Schedule & KKM */}
+                        <div className="space-y-4 rounded-lg border p-4">
+                            <div className="flex items-center gap-2">
+                                <Clock className="h-5 w-5 text-muted-foreground" />
+                                <Label className="text-base font-medium">
+                                    Jadwal & Batas Nilai
+                                </Label>
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                <div className="space-y-2">
+                                    <Label htmlFor="starts_at">Tanggal Mulai Ujian</Label>
+                                    <Input
+                                        id="starts_at"
+                                        type="datetime-local"
+                                        value={data.starts_at}
+                                        onChange={(e) => setData('starts_at', e.target.value)}
+                                    />
+                                    {errors.starts_at && (
+                                        <p className="text-sm text-destructive">{errors.starts_at}</p>
+                                    )}
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="ends_at">Tanggal Akhir Ujian</Label>
+                                    <Input
+                                        id="ends_at"
+                                        type="datetime-local"
+                                        value={data.ends_at}
+                                        onChange={(e) => setData('ends_at', e.target.value)}
+                                    />
+                                    {errors.ends_at && (
+                                        <p className="text-sm text-destructive">{errors.ends_at}</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="passing_score">Nilai Minimum Kelulusan / KKM (%)</Label>
+                                <div className="flex items-center gap-2">
+                                    <Input
+                                        id="passing_score"
+                                        type="number"
+                                        min={0}
+                                        max={100}
+                                        value={data.passing_score}
+                                        onChange={(e) =>
+                                            setData('passing_score', parseInt(e.target.value) || 0)
+                                        }
+                                        className="w-32"
+                                    />
+                                    <span className="text-muted-foreground">%</span>
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                    Siswa dengan persentase nilai di bawah KKM akan dianggap perlu remedial.
+                                </p>
+                                {errors.passing_score && (
+                                    <p className="text-sm text-destructive">{errors.passing_score}</p>
+                                )}
+                            </div>
                         </div>
 
                         <div className="space-y-4">

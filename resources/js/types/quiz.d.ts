@@ -59,6 +59,9 @@ export interface Quiz {
     status: string;
     time_mode: TimeMode;
     duration: number | null;
+    starts_at?: string | null;
+    ends_at?: string | null;
+    passing_score?: number;
     jenjang_id?: number | null;
     kelas_id?: number | null;
     quiz_background_id?: number | null;

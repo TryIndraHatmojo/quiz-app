@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Nilai;
 
 use App\Http\Controllers\Controller;
+use App\Models\Jenjang;
+use App\Models\Quiz;
 use App\Models\QuizAnswer;
 use App\Models\QuizAttempt;
 use App\Models\QuizQuestion;
@@ -24,18 +26,26 @@ class NilaiController extends Controller
             abort(403, 'Anda tidak memiliki akses ke halaman nilai.');
         }
 
+        // -------------------------------------------------------
+        // Base query: completed attempts with eager loads
+        // -------------------------------------------------------
         $query = QuizAttempt::query()
             ->whereNotNull('completed_at')
             ->with([
-                'quiz:id,title,user_id',
+                'quiz:id,title,user_id,jenjang_id,kelas_id,passing_score,starts_at',
                 'quiz.questions:id,quiz_id,points',
                 'quiz.teacherAccess:id,quiz_id,user_id,permission',
+                'quiz.jenjang:id,jenjang,nama_sekolah',
+                'quiz.kelas:id,nama_kelas',
                 'user:id,name,email,jenjang_id,kelas_id,orang_tua_id',
                 'user.jenjang:id,jenjang,nama_sekolah',
                 'user.kelas:id,nama_kelas',
             ])
             ->orderByDesc('completed_at');
 
+        // -------------------------------------------------------
+        // Role-based scope
+        // -------------------------------------------------------
         if (!$roles['admin']) {
             if ($roles['guru']) {
                 $query->whereHas('quiz', function ($quizQuery) use ($user) {
@@ -50,16 +60,87 @@ class NilaiController extends Controller
                 $childIds = User::query()
                     ->where('orang_tua_id', $user->id)
                     ->pluck('id');
-
                 $query->whereIn('user_id', $childIds);
             }
         }
 
-        $attempts = $query->paginate(15)->withQueryString();
+        // -------------------------------------------------------
+        // Filters
+        // -------------------------------------------------------
+
+        // Filter: search by quiz title or student name
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('quiz', function ($quizQ) use ($search) {
+                    $quizQ->where('title', 'like', "%{$search}%");
+                })->orWhereHas('user', function ($userQ) use ($search) {
+                    $userQ->where('name', 'like', "%{$search}%");
+                });
+            });
+        }
+
+        // Filter: jenjang (quiz's jenjang)
+        if ($request->filled('jenjang_id')) {
+            $query->whereHas('quiz', function ($q) use ($request) {
+                $q->where('jenjang_id', $request->jenjang_id);
+            });
+        }
+
+        // Filter: date range (quiz starts_at)
+        if ($request->filled('date_from')) {
+            $query->whereHas('quiz', function ($q) use ($request) {
+                $q->whereNotNull('starts_at')
+                    ->whereDate('starts_at', '>=', $request->date_from);
+            });
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereHas('quiz', function ($q) use ($request) {
+                $q->whereNotNull('starts_at')
+                    ->whereDate('starts_at', '<=', $request->date_to);
+            });
+        }
+
+        // -------------------------------------------------------
+        // Clone query for summary stats (before pagination)
+        // -------------------------------------------------------
+        $statsQuery = clone $query;
+        $allAttemptsForStats = $statsQuery->get();
+
+        $totalSelesai = $allAttemptsForStats->count();
+        $lulusCount = 0;
+        $remedialCount = 0;
+        $totalPercentage = 0;
+
+        foreach ($allAttemptsForStats as $attempt) {
+            $quiz = $attempt->quiz;
+            $maxPoints = $quiz ? (int) $quiz->questions->sum('points') : 0;
+            $passingScore = $quiz ? ((int) $quiz->passing_score ?: 70) : 70;
+            $scorePercentage = $maxPoints > 0
+                ? round(((int) $attempt->total_points / $maxPoints) * 100, 2)
+                : 0;
+
+            $totalPercentage += $scorePercentage;
+
+            if ($maxPoints > 0 && $scorePercentage >= $passingScore) {
+                $lulusCount++;
+            } else {
+                $remedialCount++;
+            }
+        }
+
+        $rataRata = $totalSelesai > 0 ? round($totalPercentage / $totalSelesai, 1) : 0;
+
+        // -------------------------------------------------------
+        // Paginate & transform
+        // -------------------------------------------------------
+        $attempts = $query->paginate(20)->withQueryString();
 
         $attempts->through(function (QuizAttempt $attempt) use ($user, $roles) {
             $quiz = $attempt->quiz;
             $maxPoints = $quiz ? (int) $quiz->questions->sum('points') : 0;
+            $passingScore = $quiz ? ((int) $quiz->passing_score ?: 70) : 70;
             $teacherAccess = $quiz
                 ? $quiz->teacherAccess->firstWhere('user_id', $user->id)
                 : null;
@@ -74,17 +155,30 @@ class NilaiController extends Controller
                 ? round(((int) $attempt->total_points / $maxPoints) * 100, 2)
                 : 0;
 
+            $isPassed = $maxPoints > 0 && $scorePercentage >= $passingScore;
+
             return [
                 'id' => $attempt->id,
                 'quiz' => [
                     'id' => $quiz?->id,
                     'title' => $quiz?->title,
+                    'passing_score' => $passingScore,
+                    'starts_at' => $quiz?->starts_at?->toDateTimeString(),
+                    'jenjang' => $quiz?->jenjang ? [
+                        'id' => $quiz->jenjang->id,
+                        'jenjang' => $quiz->jenjang->jenjang,
+                        'nama_sekolah' => $quiz->jenjang->nama_sekolah,
+                    ] : null,
+                    'kelas' => $quiz?->kelas ? [
+                        'nama_kelas' => $quiz->kelas->nama_kelas,
+                    ] : null,
                 ],
                 'student' => [
                     'id' => $attempt->user?->id,
                     'name' => $attempt->user?->name,
                     'email' => $attempt->user?->email,
                     'jenjang' => $attempt->user?->jenjang?->jenjang,
+                    'nama_sekolah' => $quiz?->jenjang?->nama_sekolah,
                     'kelas' => $attempt->user?->kelas?->nama_kelas,
                 ],
                 'total_points' => (int) $attempt->total_points,
@@ -94,12 +188,21 @@ class NilaiController extends Controller
                 'wrong_count' => (int) $attempt->wrong_count,
                 'completed_at' => optional($attempt->completed_at)?->toDateTimeString(),
                 'can_edit' => $canEdit,
+                'is_passed' => $isPassed,
                 'detail_url' => route('nilai.show', $attempt->id),
             ];
         });
 
         return Inertia::render('nilai/index', [
             'attempts' => $attempts,
+            'summary' => [
+                'rata_rata' => $rataRata,
+                'total_selesai' => $totalSelesai,
+                'lulus' => $lulusCount,
+                'remedial' => $remedialCount,
+            ],
+            'jenjangs' => Jenjang::orderBy('jenjang')->get(['id', 'jenjang', 'nama_sekolah']),
+            'filters' => $request->only(['search', 'jenjang_id', 'date_from', 'date_to']),
             'permissions' => [
                 'canEditAny' => $roles['admin'] || $roles['guru'],
                 'isSiswa' => $roles['siswa'],
@@ -115,7 +218,7 @@ class NilaiController extends Controller
         $roles = $this->resolveRoles($user);
 
         $attempt->load([
-            'quiz:id,title,user_id',
+            'quiz:id,title,user_id,passing_score',
             'quiz.questions:id,quiz_id,question_text,question_type,points,order',
             'quiz.questions.options:id,quiz_question_id,option_text,is_correct,order',
             'quiz.questions.matchingPairs:id,quiz_question_id,left_text,right_text,order',
@@ -178,9 +281,11 @@ class NilaiController extends Controller
         });
 
         $maxPoints = (int) $questions->sum('points');
+        $passingScore = (int) ($attempt->quiz->passing_score ?? 70);
         $scorePercentage = $maxPoints > 0
             ? round(((int) $attempt->total_points / $maxPoints) * 100, 2)
             : 0;
+        $isPassed = $maxPoints > 0 && $scorePercentage >= $passingScore;
 
         return Inertia::render('nilai/show', [
             'attempt' => [
@@ -188,6 +293,7 @@ class NilaiController extends Controller
                 'quiz' => [
                     'id' => $attempt->quiz->id,
                     'title' => $attempt->quiz->title,
+                    'passing_score' => $passingScore,
                 ],
                 'student' => [
                     'id' => $attempt->user?->id,
@@ -202,6 +308,7 @@ class NilaiController extends Controller
                 'correct_count' => (int) $attempt->correct_count,
                 'wrong_count' => (int) $attempt->wrong_count,
                 'completed_at' => optional($attempt->completed_at)?->toDateTimeString(),
+                'is_passed' => $isPassed,
             ],
             'questionScores' => $questionScores,
             'permissions' => [

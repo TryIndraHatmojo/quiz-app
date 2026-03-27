@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             QuizSeeder::class,            // Depends on users and categories
             QuizQuestionSeeder::class,    // Depends on quizzes
             QuizQuestionOptionSeeder::class, // Depends on questions
+            QuizAttemptSeeder::class,     // Depends on quizzes, questions, and users
         ]);
     }
 }

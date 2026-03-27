@@ -78,6 +78,9 @@ class QuizController extends Controller
                     'status' => $quiz->status,
                     'time_mode' => $quiz->time_mode,
                     'duration' => $quiz->duration,
+                    'starts_at' => $quiz->starts_at?->toIso8601String(),
+                    'ends_at' => $quiz->ends_at?->toIso8601String(),
+                    'passing_score' => $quiz->passing_score ?? 70,
                     'category' => $quiz->category,
                     'jenjang' => $quiz->jenjang,
                     'kelas' => $quiz->kelas,
@@ -127,6 +130,9 @@ class QuizController extends Controller
             'background_file' => 'nullable|file|mimes:jpeg,png,jpg,gif|max:10240',
             'time_mode' => 'required|in:per_question,total',
             'duration' => 'nullable|integer|min:1',
+            'starts_at' => 'nullable|date',
+            'ends_at' => 'nullable|date|after_or_equal:starts_at',
+            'passing_score' => 'nullable|integer|min:0|max:100',
         ]);
 
         $backgroundId = $request->quiz_background_id;
@@ -165,6 +171,9 @@ class QuizController extends Controller
             'quiz_background_id' => $backgroundId,
             'time_mode' => $request->time_mode,
             'duration' => $request->duration,
+            'starts_at' => $request->starts_at,
+            'ends_at' => $request->ends_at,
+            'passing_score' => $request->passing_score ?? 70,
             'status' => 'draft',
         ]);
 
@@ -211,6 +220,9 @@ class QuizController extends Controller
             'status' => 'required|in:draft,live,finished,archived',
             'time_mode' => 'required|in:per_question,total',
             'duration' => 'nullable|integer|min:1',
+            'starts_at' => 'nullable|date',
+            'ends_at' => 'nullable|date|after_or_equal:starts_at',
+            'passing_score' => 'nullable|integer|min:0|max:100',
         ]);
 
         $backgroundId = $request->quiz_background_id;
@@ -246,6 +258,9 @@ class QuizController extends Controller
             'quiz_background_id' => $backgroundId,
             'time_mode' => $request->time_mode,
             'duration' => $request->duration,
+            'starts_at' => $request->starts_at,
+            'ends_at' => $request->ends_at,
+            'passing_score' => $request->passing_score ?? 70,
             'status' => $request->status,
         ]);
 

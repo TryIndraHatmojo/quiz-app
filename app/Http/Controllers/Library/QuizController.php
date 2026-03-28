@@ -9,6 +9,7 @@ use App\Models\QuizBackground;
 use App\Models\Gallery;
 use App\Models\Jenjang;
 use App\Models\Kelas;
+use App\Models\CatatanTelaahSoal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Inertia\Inertia;
@@ -66,8 +67,17 @@ class QuizController extends Controller
                 $canPreview = $quiz->user_id === $userId
                     || $quiz->teacherAccess()
                         ->where('user_id', $userId)
-                        ->whereIn('permission', ['view', 'edit'])
+                        ->whereIn('permission', ['view', 'edit', 'telaah_soal'])
                         ->exists();
+                $canReview = $quiz->hasTeacherAccess($userId, 'telaah_soal');
+
+                // Hitung catatan telaah yang masih butuh review pada quiz ini
+                $catatanButuhReviewCount = 0;
+                if ($canEdit || $canReview) {
+                    $catatanButuhReviewCount = CatatanTelaahSoal::whereHas('question', function ($q) use ($quiz) {
+                        $q->where('quiz_id', $quiz->id);
+                    })->where('status', 'butuh_review')->count();
+                }
 
                 return [
                     'id' => $quiz->id,
@@ -89,6 +99,8 @@ class QuizController extends Controller
                     'can_preview' => $canPreview,
                     'can_manage_questions' => $canEdit,
                     'can_delete' => $quiz->user_id === $userId,
+                    'can_review' => $canReview,
+                    'catatan_butuh_review_count' => $catatanButuhReviewCount,
                 ];
             });
         $categories = QuizCategory::all();
@@ -288,8 +300,23 @@ class QuizController extends Controller
 
         $galleries = Gallery::latest()->get();
 
+        // Load catatan telaah untuk ditampilkan di editor soal
+        $quiz->load([
+            'questions.options',
+            'questions.matchingPairs',
+            'questions.shortAnswerFields',
+            'questions.catatanTelaah.user',
+        ]);
+
+        // Tambahkan count catatan yang butuh review per question
+        $quiz->questions->each(function ($question) {
+            $question->catatan_telaah_count = $question->catatanTelaah
+                ->where('status', 'butuh_review')
+                ->count();
+        });
+
         return Inertia::render('library/quizzes/questions', [
-            'quiz' => $quiz->load(['questions.options', 'questions.matchingPairs', 'questions.shortAnswerFields']),
+            'quiz' => $quiz,
             'galleries' => $galleries,
         ]);
     }
@@ -303,6 +330,38 @@ class QuizController extends Controller
         return Inertia::render('library/quizzes/preview', [
             'quiz' => $quiz->load(['questions.options', 'questions.matchingPairs', 'questions.shortAnswerFields', 'background']),
             'canManageQuestions' => $this->canEditQuiz($quiz),
+        ]);
+    }
+
+    /**
+     * Halaman Telaah Soal — untuk user dengan akses telaah_soal.
+     */
+    public function telaahSoal(Quiz $quiz)
+    {
+        if (!$this->canReviewQuiz($quiz)) {
+            abort(403);
+        }
+
+        $quiz->load([
+            'questions.options',
+            'questions.matchingPairs',
+            'questions.shortAnswerFields',
+            'questions.catatanTelaah.user',
+            'background',
+            'category',
+            'jenjang',
+            'kelas',
+        ]);
+
+        // Tambahkan count catatan butuh_review per question
+        $quiz->questions->each(function ($question) {
+            $question->catatan_telaah_count = $question->catatanTelaah
+                ->where('status', 'butuh_review')
+                ->count();
+        });
+
+        return Inertia::render('library/quizzes/telaah-soal', [
+            'quiz' => $quiz,
         ]);
     }
 
@@ -470,7 +529,7 @@ class QuizController extends Controller
 
         $request->validate([
             'user_id' => 'required|exists:users,id',
-            'permission' => 'required|in:view,edit',
+            'permission' => 'required|in:view,edit,telaah_soal',
         ]);
 
         \App\Models\QuizTeacherAccess::updateOrCreate(
@@ -595,8 +654,18 @@ class QuizController extends Controller
         return $quiz->user_id === $userId
             || $quiz->teacherAccess()
                 ->where('user_id', $userId)
-                ->whereIn('permission', ['view', 'edit'])
+                ->whereIn('permission', ['view', 'edit', 'telaah_soal'])
                 ->exists();
+    }
+
+    private function canReviewQuiz(Quiz $quiz): bool
+    {
+        $userId = auth()->id();
+        if (!$userId) {
+            return false;
+        }
+
+        return $quiz->hasTeacherAccess($userId, 'telaah_soal');
     }
 
     private function canManageAccess(Quiz $quiz): bool

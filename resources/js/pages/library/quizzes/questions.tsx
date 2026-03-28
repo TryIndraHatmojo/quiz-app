@@ -1,4 +1,5 @@
 import { FileUploader } from '@/components/file-uploader';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -19,7 +20,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import AppSidebarLayout from '@/layouts/app/app-sidebar-layout';
-import { BreadcrumbItem, Gallery } from '@/types';
+import { BreadcrumbItem, CatatanTelaahSoal, Gallery } from '@/types';
 import {
     Quiz,
     QuizMatchingPair,
@@ -27,10 +28,11 @@ import {
     QuizQuestionOption,
     QuizShortAnswerField,
 } from '@/types/quiz';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import {
     AlignLeft,
     Check,
+    CheckCircle2,
     ChevronLeft,
     Copy,
     Eye,
@@ -38,6 +40,7 @@ import {
     Image as ImageIcon,
     Link2,
     ListChecks,
+    MessageSquareWarning,
     Plus,
     Save,
     ToggleLeft,
@@ -288,13 +291,17 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
     const [activeTab, setActiveTab] = useState<'gallery' | 'upload'>('gallery');
     const questionTextRef = useRef<HTMLTextAreaElement>(null);
 
+    // Strip read-only catatan fields from form data (not submitted, only displayed)
+    const stripCatatanForForm = (qs: QuizQuestion[]) =>
+        qs.map(({ catatan_telaah, catatan_telaah_count, ...rest }) => rest);
+
     const { setData, post, processing } = useForm({
-        questions: questions,
+        questions: stripCatatanForForm(questions),
     });
 
     // Sync local state with form data whenever questions change
     useEffect(() => {
-        setData('questions', questions);
+        setData('questions', stripCatatanForForm(questions));
     }, [questions, setData]);
 
     const currentQuestion = questions[currentIndex];
@@ -1111,6 +1118,12 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                                 <div className="mt-2 truncate text-xs font-medium">
                                     {q.question_text || 'Pertanyaan'}
                                 </div>
+                                {(q.catatan_telaah_count ?? 0) > 0 && (
+                                    <div className="mt-1 flex items-center gap-1 text-[10px] font-medium text-amber-600">
+                                        <MessageSquareWarning className="h-3 w-3" />
+                                        <span>{q.catatan_telaah_count}</span>
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>
@@ -1478,6 +1491,125 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
 
                             {/* Type-specific Editor */}
                             {renderQuestionTypeEditor()}
+
+                            {/* Catatan Telaah Soal Panel - Visible to Editors */}
+                            {currentQuestion.catatan_telaah &&
+                                currentQuestion.catatan_telaah.length > 0 && (
+                                    <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50/50 p-5 dark:border-amber-800 dark:bg-amber-900/10">
+                                        <div className="mb-4 flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <MessageSquareWarning className="h-5 w-5 text-amber-600" />
+                                                <h3 className="text-base font-semibold text-amber-800 dark:text-amber-300">
+                                                    Catatan Telaah Soal
+                                                </h3>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                {(currentQuestion.catatan_telaah_count ?? 0) > 0 && (
+                                                    <Badge
+                                                        variant="outline"
+                                                        className="border-amber-300 bg-amber-100 text-amber-700"
+                                                    >
+                                                        {currentQuestion.catatan_telaah_count} Butuh Review
+                                                    </Badge>
+                                                )}
+                                                {currentQuestion.catatan_telaah.filter(c => c.status === 'selesai').length > 0 && (
+                                                    <Badge
+                                                        variant="outline"
+                                                        className="border-green-300 bg-green-100 text-green-700"
+                                                    >
+                                                        <CheckCircle2 className="mr-1 h-3 w-3" />
+                                                        {currentQuestion.catatan_telaah.filter(c => c.status === 'selesai').length} Selesai
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="space-y-3">
+                                            {currentQuestion.catatan_telaah.map(
+                                                (catatan: CatatanTelaahSoal) => (
+                                                    <div
+                                                        key={catatan.id}
+                                                        className={`rounded-lg border p-4 transition-all ${
+                                                            catatan.status === 'butuh_review'
+                                                                ? 'border-amber-200 bg-white dark:border-amber-700 dark:bg-gray-900'
+                                                                : 'border-green-200 bg-green-50/50 dark:border-green-700 dark:bg-green-900/10'
+                                                        }`}
+                                                    >
+                                                        <div className="mb-2 flex items-start justify-between">
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-100 text-xs font-bold text-amber-700 dark:bg-amber-800 dark:text-amber-300">
+                                                                    {catatan.user?.name?.charAt(0)?.toUpperCase() || '?'}
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-sm font-medium">
+                                                                        {catatan.user?.name || 'Penelaah'}
+                                                                    </p>
+                                                                    <p className="text-[11px] text-muted-foreground">
+                                                                        {new Date(catatan.created_at).toLocaleDateString('id-ID', {
+                                                                            day: 'numeric',
+                                                                            month: 'short',
+                                                                            year: 'numeric',
+                                                                            hour: '2-digit',
+                                                                            minute: '2-digit',
+                                                                        })}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                            <Badge
+                                                                variant="outline"
+                                                                className={`text-[10px] ${
+                                                                    catatan.status === 'butuh_review'
+                                                                        ? 'border-amber-300 text-amber-700'
+                                                                        : 'border-green-300 text-green-700'
+                                                                }`}
+                                                            >
+                                                                {catatan.status === 'butuh_review'
+                                                                    ? 'Butuh Review'
+                                                                    : 'Selesai'}
+                                                            </Badge>
+                                                        </div>
+                                                        <p className="mb-3 text-sm leading-relaxed text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                                                            {catatan.catatan}
+                                                        </p>
+                                                        <div className="flex justify-end gap-2">
+                                                            {catatan.status === 'butuh_review' ? (
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    className="border-green-300 text-green-700 hover:bg-green-50"
+                                                                    onClick={() => {
+                                                                        router.patch(
+                                                                            route('library.catatan-telaah.resolve', catatan.id),
+                                                                            {},
+                                                                            { preserveScroll: true },
+                                                                        );
+                                                                    }}
+                                                                >
+                                                                    <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />
+                                                                    Tandai Selesai
+                                                                </Button>
+                                                            ) : (
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    className="border-amber-300 text-amber-700 hover:bg-amber-50"
+                                                                    onClick={() => {
+                                                                        router.patch(
+                                                                            route('library.catatan-telaah.reopen', catatan.id),
+                                                                            {},
+                                                                            { preserveScroll: true },
+                                                                        );
+                                                                    }}
+                                                                >
+                                                                    Buka Kembali
+                                                                </Button>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ),
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                         </div>
                     </div>
                 </div>

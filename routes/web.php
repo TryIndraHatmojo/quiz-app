@@ -29,6 +29,7 @@ Route::middleware(['auth', 'verified'])->prefix('library')->name('library.')->gr
     Route::get('quizzes/{quiz}/questions', [App\Http\Controllers\Library\QuizController::class, 'questions'])->name('quizzes.questions');
     Route::post('quizzes/{quiz}/questions', [App\Http\Controllers\Library\QuizController::class, 'storeQuestions'])->name('quizzes.questions.store');
     Route::get('quizzes/{quiz}/preview', [App\Http\Controllers\Library\QuizController::class, 'preview'])->name('quizzes.preview');
+    Route::get('quizzes/{quiz}/telaah-soal', [App\Http\Controllers\Library\QuizController::class, 'telaahSoal'])->name('quizzes.telaah-soal');
     
     // Quiz Access Management
     Route::get('quizzes/{quiz}/access', [App\Http\Controllers\Library\QuizController::class, 'access'])->name('quizzes.access');
@@ -37,6 +38,13 @@ Route::middleware(['auth', 'verified'])->prefix('library')->name('library.')->gr
     Route::post('quizzes/{quiz}/access/student', [App\Http\Controllers\Library\QuizController::class, 'grantStudentAccess'])->name('quizzes.access.student.grant');
     Route::delete('quizzes/{quiz}/access/student/{user}', [App\Http\Controllers\Library\QuizController::class, 'revokeStudentAccess'])->name('quizzes.access.student.revoke');
     Route::post('quizzes/{quiz}/access/student/jenjang', [App\Http\Controllers\Library\QuizController::class, 'grantStudentAccessByJenjang'])->name('quizzes.access.student.jenjang');
+
+    // Catatan Telaah Soal
+    Route::get('questions/{question}/catatan', [App\Http\Controllers\Library\CatatanTelaahSoalController::class, 'index'])->name('catatan-telaah.index');
+    Route::post('questions/{question}/catatan', [App\Http\Controllers\Library\CatatanTelaahSoalController::class, 'store'])->name('catatan-telaah.store');
+    Route::patch('catatan-telaah/{catatan}/resolve', [App\Http\Controllers\Library\CatatanTelaahSoalController::class, 'resolve'])->name('catatan-telaah.resolve');
+    Route::patch('catatan-telaah/{catatan}/reopen', [App\Http\Controllers\Library\CatatanTelaahSoalController::class, 'reopen'])->name('catatan-telaah.reopen');
+    Route::delete('catatan-telaah/{catatan}', [App\Http\Controllers\Library\CatatanTelaahSoalController::class, 'destroy'])->name('catatan-telaah.destroy');
 });
 
 // Quiz Attempt Routes (for students taking quizzes)

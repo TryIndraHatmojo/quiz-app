@@ -107,7 +107,7 @@ export interface QuizTeacherAccess {
     id: number;
     quiz_id: number;
     user_id: number;
-    permission: 'view' | 'edit';
+    permission: 'view' | 'edit' | 'telaah_soal';
     granted_at: string;
     granted_by: number | null;
     user?: User;
@@ -124,4 +124,15 @@ export interface QuizStudentAccess {
     attempt_count: number;
     user?: User;
     granter?: User;
+}
+
+export interface CatatanTelaahSoal {
+    id: number;
+    quiz_question_id: number;
+    user_id: number;
+    catatan: string;
+    status: 'butuh_review' | 'selesai';
+    created_at: string;
+    updated_at: string;
+    user?: User;
 }

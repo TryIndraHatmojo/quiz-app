@@ -1,4 +1,4 @@
-import { QuizBackground } from './index';
+import { QuizBackground, CatatanTelaahSoal } from './index';
 
 export interface QuizQuestionOption {
     id?: number;
@@ -47,6 +47,8 @@ export interface QuizQuestion {
     options: QuizQuestionOption[];
     matching_pairs?: QuizMatchingPair[];
     short_answer_fields?: QuizShortAnswerField[];
+    catatan_telaah?: CatatanTelaahSoal[];
+    catatan_telaah_count?: number;
 }
 
 export type TimeMode = 'per_question' | 'total';
@@ -68,3 +70,4 @@ export interface Quiz {
     background?: QuizBackground;
     questions?: QuizQuestion[];
 }
+

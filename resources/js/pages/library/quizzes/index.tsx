@@ -22,6 +22,7 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     CheckCircle2,
     Eye,
+    MessageSquareWarning,
     Pencil,
     Plus,
     Search,
@@ -64,6 +65,8 @@ interface Quiz {
     can_preview?: boolean;
     can_manage_questions?: boolean;
     can_delete?: boolean;
+    can_review?: boolean;
+    catatan_butuh_review_count?: number;
 }
 
 interface Props {
@@ -528,8 +531,15 @@ export default function QuizIndex({
                                             quiz.created_at,
                                         ).toLocaleDateString()}
                                     </p>
+                                    {/* Badge catatan telaah */}
+                                    {(quiz.catatan_butuh_review_count ?? 0) > 0 && (
+                                        <div className="mt-3 flex items-center gap-1.5 rounded-md bg-amber-50 px-2.5 py-1.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                                            <MessageSquareWarning className="h-3.5 w-3.5" />
+                                            <span>{quiz.catatan_butuh_review_count} catatan telaah butuh review</span>
+                                        </div>
+                                    )}
                                 </CardContent>
-                                <CardFooter className="flex gap-2">
+                                <CardFooter className="flex flex-wrap gap-2">
                                     {quiz.can_manage_questions && (
                                         <Button
                                             variant="outline"
@@ -545,6 +555,29 @@ export default function QuizIndex({
                                             >
                                                 <Pencil className="mr-2 h-4 w-4" />
                                                 Pertanyaan
+                                            </Link>
+                                        </Button>
+                                    )}
+                                    {quiz.can_review && (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="relative flex-1 border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-700 dark:text-amber-400 dark:hover:bg-amber-900/30"
+                                            asChild
+                                        >
+                                            <Link
+                                                href={route(
+                                                    'library.quizzes.telaah-soal',
+                                                    quiz.id,
+                                                )}
+                                            >
+                                                <Search className="mr-1.5 h-4 w-4" />
+                                                Telaah Soal
+                                                {(quiz.catatan_butuh_review_count ?? 0) > 0 && (
+                                                    <span className="ml-1.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-bold text-white">
+                                                        {quiz.catatan_butuh_review_count}
+                                                    </span>
+                                                )}
                                             </Link>
                                         </Button>
                                     )}

@@ -28,6 +28,7 @@ import {
     GraduationCap,
     Pencil,
     School,
+    Search,
     Shield,
     Trash2,
     UserPlus,
@@ -353,13 +354,19 @@ export default function QuizAccess({
                                         <SelectItem value="view">
                                             <div className="flex items-center gap-2">
                                                 <Eye className="h-4 w-4" />
-                                                <span>View Only</span>
+                                                <span>Lihat Saja</span>
                                             </div>
                                         </SelectItem>
                                         <SelectItem value="edit">
                                             <div className="flex items-center gap-2">
                                                 <Pencil className="h-4 w-4" />
                                                 <span>Edit</span>
+                                            </div>
+                                        </SelectItem>
+                                        <SelectItem value="telaah_soal">
+                                            <div className="flex items-center gap-2">
+                                                <Search className="h-4 w-4" />
+                                                <span>Telaah Soal</span>
                                             </div>
                                         </SelectItem>
                                     </SelectContent>
@@ -411,13 +418,19 @@ export default function QuizAccess({
                                                         access.permission ===
                                                         'edit'
                                                             ? 'bg-green-100 text-green-700'
-                                                            : 'bg-gray-100 text-gray-700'
+                                                            : access.permission ===
+                                                              'telaah_soal'
+                                                              ? 'bg-amber-100 text-amber-700'
+                                                              : 'bg-gray-100 text-gray-700'
                                                     }`}
                                                 >
                                                     {access.permission ===
                                                     'edit'
                                                         ? 'Edit'
-                                                        : 'View'}
+                                                        : access.permission ===
+                                                          'telaah_soal'
+                                                          ? 'Telaah Soal'
+                                                          : 'Lihat'}
                                                 </span>
                                                 <Button
                                                     variant="ghost"

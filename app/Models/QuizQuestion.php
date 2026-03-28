@@ -62,4 +62,12 @@ class QuizQuestion extends Model
     {
         return $this->hasMany(QuizAnswerMatchingPair::class);
     }
+
+    /**
+     * Get catatan telaah (review notes) for this question.
+     */
+    public function catatanTelaah(): HasMany
+    {
+        return $this->hasMany(CatatanTelaahSoal::class, 'quiz_question_id')->orderByDesc('created_at');
+    }
 }

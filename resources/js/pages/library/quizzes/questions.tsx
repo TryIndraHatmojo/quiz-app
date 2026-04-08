@@ -574,6 +574,14 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
         }
     };
 
+    const handleStatusChange = (newStatus: string) => {
+        router.patch(
+            route('library.quizzes.status.update', quiz.id),
+            { status: newStatus },
+            { preserveScroll: true }
+        );
+    };
+
     const renderQuestionTypeEditor = () => {
         switch (currentQuestion.question_type) {
             case 'multiple_choice':
@@ -1229,21 +1237,40 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                                 </Select>
                             </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <Button variant="outline" size="sm" asChild>
-                                <Link
-                                    href={route(
-                                        'library.quizzes.preview',
-                                        quiz.id,
-                                    )}
+                        <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-2 border-r pr-4">
+                                <Label className="text-sm font-medium">Status Kuis:</Label>
+                                <Select
+                                    defaultValue={quiz.status}
+                                    onValueChange={handleStatusChange}
                                 >
-                                    <Eye className="mr-2 h-4 w-4" /> Preview
-                                </Link>
-                            </Button>
-                            <Button onClick={save} disabled={processing}>
-                                <Save className="mr-2 h-4 w-4" /> Simpan
-                                Perubahan
-                            </Button>
+                                    <SelectTrigger className="h-8 w-32">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="draft">Draft</SelectItem>
+                                        <SelectItem value="live">Live</SelectItem>
+                                        <SelectItem value="finished">Selesai</SelectItem>
+                                        <SelectItem value="archived">Arsip</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Button variant="outline" size="sm" asChild>
+                                    <Link
+                                        href={route(
+                                            'library.quizzes.preview',
+                                            quiz.id,
+                                        )}
+                                    >
+                                        <Eye className="mr-2 h-4 w-4" /> Preview
+                                    </Link>
+                                </Button>
+                                <Button onClick={save} disabled={processing}>
+                                    <Save className="mr-2 h-4 w-4" /> Simpan
+                                    Perubahan
+                                </Button>
+                            </div>
                         </div>
                     </div>
 

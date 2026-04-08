@@ -171,7 +171,7 @@ class QuizController extends Controller
             $backgroundId = $background->id;
         }
 
-        Quiz::create([
+        $quiz = Quiz::create([
             'user_id' => auth()->id(),
             'title' => $request->title,
             'slug' => Str::slug($request->title) . '-' . Str::random(6),
@@ -189,8 +189,8 @@ class QuizController extends Controller
             'status' => 'draft',
         ]);
 
-        return redirect()->route('library.quizzes.index')
-            ->with('success', 'Kuis berhasil dibuat.');
+        return redirect()->route('library.quizzes.access', $quiz->id)
+            ->with('success', 'Kuis berhasil dibuat, silakan atur akses kuis ini.');
     }
 
     public function edit(Quiz $quiz)
@@ -278,6 +278,21 @@ class QuizController extends Controller
 
         return redirect()->route('library.quizzes.index')
             ->with('success', 'Kuis berhasil diperbarui.');
+    }
+
+    public function updateStatus(Request $request, Quiz $quiz)
+    {
+        if (!$this->canEditQuiz($quiz)) {
+            abort(403);
+        }
+
+        $request->validate([
+            'status' => 'required|in:draft,live,finished,archived',
+        ]);
+
+        $quiz->update(['status' => $request->status]);
+
+        return back()->with('success', 'Status kuis berhasil diperbarui.');
     }
 
     public function destroy(Quiz $quiz)

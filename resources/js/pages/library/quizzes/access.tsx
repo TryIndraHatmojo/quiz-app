@@ -23,6 +23,7 @@ import { type Quiz } from '@/types/quiz';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
+    ArrowRight,
     CheckCircle2,
     Eye,
     GraduationCap,
@@ -210,12 +211,20 @@ export default function QuizAccess({
                             {quiz.title}"
                         </p>
                     </div>
-                    <Button variant="outline" asChild>
-                        <Link href={route('library.quizzes.edit', quiz.id)}>
-                            <ArrowLeft className="mr-2 h-4 w-4" />
-                            Kembali
-                        </Link>
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button variant="outline" asChild>
+                            <Link href={route('library.quizzes.edit', quiz.id)}>
+                                <ArrowLeft className="mr-2 h-4 w-4" />
+                                Kembali
+                            </Link>
+                        </Button>
+                        <Button asChild>
+                            <Link href={route('library.quizzes.questions', quiz.id)}>
+                                Lanjut ke Edit Pertanyaan
+                                <ArrowRight className="ml-2 h-4 w-4" />
+                            </Link>
+                        </Button>
+                    </div>
                 </div>
 
                 {/* Flash Messages */}

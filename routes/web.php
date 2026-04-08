@@ -26,6 +26,7 @@ Route::middleware(['auth', 'verified'])->prefix('master')->name('master.')->grou
 
 Route::middleware(['auth', 'verified'])->prefix('library')->name('library.')->group(function () {
     Route::resource('quizzes', App\Http\Controllers\Library\QuizController::class);
+    Route::patch('quizzes/{quiz}/status', [App\Http\Controllers\Library\QuizController::class, 'updateStatus'])->name('quizzes.status.update');
     Route::get('quizzes/{quiz}/questions', [App\Http\Controllers\Library\QuizController::class, 'questions'])->name('quizzes.questions');
     Route::post('quizzes/{quiz}/questions', [App\Http\Controllers\Library\QuizController::class, 'storeQuestions'])->name('quizzes.questions.store');
     Route::get('quizzes/{quiz}/preview', [App\Http\Controllers\Library\QuizController::class, 'preview'])->name('quizzes.preview');

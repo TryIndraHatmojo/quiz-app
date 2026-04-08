@@ -43,6 +43,7 @@ import {
     MessageSquareWarning,
     Plus,
     Save,
+    Send,
     ToggleLeft,
     Trash2,
     X,
@@ -1256,6 +1257,23 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                                 </Select>
                             </div>
                             <div className="flex items-center gap-2">
+                                {quiz.status !== 'live' && (
+                                    <Button
+                                        onClick={() => {
+                                            router.patch(
+                                                route('library.quizzes.status.update', quiz.id),
+                                                { status: 'live' },
+                                                { 
+                                                    onSuccess: () => router.visit(route('library.quizzes.index'))
+                                                }
+                                            );
+                                        }}
+                                        size="sm"
+                                        className="bg-green-600 hover:bg-green-700"
+                                    >
+                                        <Send className="mr-2 h-4 w-4" /> Publish
+                                    </Button>
+                                )}
                                 <Button variant="outline" size="sm" asChild>
                                     <Link
                                         href={route(

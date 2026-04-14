@@ -1,4 +1,4 @@
-import { QuizBackground, CatatanTelaahSoal } from './index';
+import { CatatanTelaahSoal, QuizBackground } from './index';
 
 export interface QuizQuestionOption {
     id?: number;
@@ -41,6 +41,7 @@ export interface QuizQuestion {
         | 'true_false';
     question_text: string;
     media_path?: string | null;
+    explanation?: string | null;
     time_limit: number;
     points: number;
     order: number;
@@ -70,4 +71,3 @@ export interface Quiz {
     background?: QuizBackground;
     questions?: QuizQuestion[];
 }
-

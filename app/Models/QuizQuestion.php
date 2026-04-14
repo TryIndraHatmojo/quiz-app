@@ -27,6 +27,7 @@ class QuizQuestion extends Model
         'question_type',
         'question_text',
         'media_path',
+        'explanation',
         'time_limit',
         'points',
         'order',

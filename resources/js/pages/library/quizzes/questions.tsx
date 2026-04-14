@@ -176,6 +176,7 @@ const createDefaultQuestion = (
     const base = {
         question_type: type,
         question_text: '',
+        explanation: '',
         time_limit: 30,
         points: 100,
         order: 0,
@@ -357,6 +358,7 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
         newQuestion.id = currentQuestion.id;
         newQuestion.question_text = currentQuestion.question_text;
         newQuestion.media_path = currentQuestion.media_path;
+        newQuestion.explanation = currentQuestion.explanation;
         newQuestion.time_limit = currentQuestion.time_limit;
         newQuestion.points = currentQuestion.points;
         newQuestion.order = currentQuestion.order;
@@ -579,7 +581,7 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
         router.patch(
             route('library.quizzes.status.update', quiz.id),
             { status: newStatus },
-            { preserveScroll: true }
+            { preserveScroll: true },
         );
     };
 
@@ -678,37 +680,96 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
 
     const renderTrueFalseEditor = () => {
         return (
-            <div className="grid grid-cols-2 gap-4">
-                {/* True Option */}
-                <button
-                    onClick={() => {
-                        updateOption(0, 'is_correct', true);
-                        updateOption(1, 'is_correct', false);
-                    }}
-                    className={`flex items-center justify-center gap-3 rounded-xl p-8 transition-all ${
-                        currentQuestion.options[0]?.is_correct
-                            ? 'bg-green-500 text-white ring-4 ring-green-300'
-                            : 'bg-white text-gray-700 shadow-sm ring-1 ring-gray-200 hover:ring-green-300'
-                    }`}
-                >
-                    <Check className="h-8 w-8" />
-                    <span className="text-2xl font-bold">Benar</span>
-                </button>
-                {/* False Option */}
-                <button
-                    onClick={() => {
-                        updateOption(0, 'is_correct', false);
-                        updateOption(1, 'is_correct', true);
-                    }}
-                    className={`flex items-center justify-center gap-3 rounded-xl p-8 transition-all ${
-                        currentQuestion.options[1]?.is_correct
-                            ? 'bg-red-500 text-white ring-4 ring-red-300'
-                            : 'bg-white text-gray-700 shadow-sm ring-1 ring-gray-200 hover:ring-red-300'
-                    }`}
-                >
-                    <X className="h-8 w-8" />
-                    <span className="text-2xl font-bold">Salah</span>
-                </button>
+            <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                    {/* True Option */}
+                    <button
+                        onClick={() => {
+                            const newQuestions = [...questions];
+                            const newOptions = [
+                                ...newQuestions[currentIndex].options,
+                            ];
+                            newOptions[0] = {
+                                ...newOptions[0],
+                                is_correct: true,
+                            };
+                            newOptions[1] = {
+                                ...newOptions[1],
+                                is_correct: false,
+                            };
+                            newQuestions[currentIndex] = {
+                                ...newQuestions[currentIndex],
+                                options: newOptions,
+                            };
+                            setQuestions(newQuestions);
+                        }}
+                        className={`flex items-center justify-center gap-3 rounded-xl p-8 transition-all ${
+                            currentQuestion.options[0]?.is_correct
+                                ? 'bg-green-500 text-white ring-4 ring-green-300'
+                                : 'bg-white text-gray-700 shadow-sm ring-1 ring-gray-200 hover:ring-green-300'
+                        }`}
+                    >
+                        <Check className="h-8 w-8" />
+                        <span className="text-2xl font-bold">Benar</span>
+                    </button>
+                    {/* False Option */}
+                    <button
+                        onClick={() => {
+                            const newQuestions = [...questions];
+                            const newOptions = [
+                                ...newQuestions[currentIndex].options,
+                            ];
+                            newOptions[0] = {
+                                ...newOptions[0],
+                                is_correct: false,
+                            };
+                            newOptions[1] = {
+                                ...newOptions[1],
+                                is_correct: true,
+                            };
+                            newQuestions[currentIndex] = {
+                                ...newQuestions[currentIndex],
+                                options: newOptions,
+                            };
+                            setQuestions(newQuestions);
+                        }}
+                        className={`flex items-center justify-center gap-3 rounded-xl p-8 transition-all ${
+                            currentQuestion.options[1]?.is_correct
+                                ? 'bg-red-500 text-white ring-4 ring-red-300'
+                                : 'bg-white text-gray-700 shadow-sm ring-1 ring-gray-200 hover:ring-red-300'
+                        }`}
+                    >
+                        <X className="h-8 w-8" />
+                        <span className="text-2xl font-bold">Salah</span>
+                    </button>
+                </div>
+                <div>
+                    <Label
+                        htmlFor="explanation"
+                        className="mb-2 block text-sm font-medium text-gray-700"
+                    >
+                        Penjelasan (Opsional)
+                    </Label>
+                    <div className="relative">
+                        <Input
+                            id="explanation"
+                            value={currentQuestion.explanation || ''}
+                            onChange={(e) =>
+                                updateCurrentQuestion(
+                                    'explanation',
+                                    e.target.value,
+                                )
+                            }
+                            placeholder="Tambahkan penjelasan mengapa jawaban tersebut benar/salah..."
+                            className="bg-gray-50 pr-10"
+                        />
+                        <FileText className="absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                    </div>
+                    <p className="mt-1 text-xs text-gray-500">
+                        Penjelasan ini akan ditampilkan setelah siswa menjawab
+                        pertanyaan (opsional).
+                    </p>
+                </div>
             </div>
         );
     };
@@ -1240,7 +1301,9 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                         </div>
                         <div className="flex items-center gap-4">
                             <div className="flex items-center gap-2 border-r pr-4">
-                                <Label className="text-sm font-medium">Status Kuis:</Label>
+                                <Label className="text-sm font-medium">
+                                    Status Kuis:
+                                </Label>
                                 <Select
                                     defaultValue={quiz.status}
                                     onValueChange={handleStatusChange}
@@ -1249,10 +1312,18 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="draft">Draft</SelectItem>
-                                        <SelectItem value="live">Live</SelectItem>
-                                        <SelectItem value="finished">Selesai</SelectItem>
-                                        <SelectItem value="archived">Arsip</SelectItem>
+                                        <SelectItem value="draft">
+                                            Draft
+                                        </SelectItem>
+                                        <SelectItem value="live">
+                                            Live
+                                        </SelectItem>
+                                        <SelectItem value="finished">
+                                            Selesai
+                                        </SelectItem>
+                                        <SelectItem value="archived">
+                                            Arsip
+                                        </SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -1261,17 +1332,26 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                                     <Button
                                         onClick={() => {
                                             router.patch(
-                                                route('library.quizzes.status.update', quiz.id),
+                                                route(
+                                                    'library.quizzes.status.update',
+                                                    quiz.id,
+                                                ),
                                                 { status: 'live' },
-                                                { 
-                                                    onSuccess: () => router.visit(route('library.quizzes.index'))
-                                                }
+                                                {
+                                                    onSuccess: () =>
+                                                        router.visit(
+                                                            route(
+                                                                'library.quizzes.index',
+                                                            ),
+                                                        ),
+                                                },
                                             );
                                         }}
                                         size="sm"
                                         className="bg-green-600 hover:bg-green-700"
                                     >
-                                        <Send className="mr-2 h-4 w-4" /> Publish
+                                        <Send className="mr-2 h-4 w-4" />{' '}
+                                        Publish
                                     </Button>
                                 )}
                                 <Button variant="outline" size="sm" asChild>

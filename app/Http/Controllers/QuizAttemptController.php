@@ -65,6 +65,13 @@ class QuizAttemptController extends Controller
             'questions.shortAnswerFields',
             'background',
         ]);
+
+        // Acak urutan opsi jawaban untuk soal pilihan ganda
+        $quiz->questions->each(function ($question) {
+            if ($question->question_type === 'multiple_choice' && $question->relationLoaded('options')) {
+                $question->setRelation('options', $question->options->shuffle()->values());
+            }
+        });
         
         // Get existing answers for this attempt
         $existingAnswers = $attempt->answers()

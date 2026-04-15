@@ -341,9 +341,18 @@ class QuizController extends Controller
         if (!$this->canPreviewQuiz($quiz)) {
             abort(403);
         }
+        
+        $quiz->load(['questions.options', 'questions.matchingPairs', 'questions.shortAnswerFields', 'background']);
+
+        // Acak urutan opsi jawaban untuk soal pilihan ganda
+        $quiz->questions->each(function ($question) {
+            if ($question->question_type === 'multiple_choice' && $question->relationLoaded('options')) {
+                $question->setRelation('options', $question->options->shuffle()->values());
+            }
+        });
 
         return Inertia::render('library/quizzes/preview', [
-            'quiz' => $quiz->load(['questions.options', 'questions.matchingPairs', 'questions.shortAnswerFields', 'background']),
+            'quiz' => $quiz,
             'canManageQuestions' => $this->canEditQuiz($quiz),
         ]);
     }

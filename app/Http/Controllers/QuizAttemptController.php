@@ -34,6 +34,17 @@ class QuizAttemptController extends Controller
                 ->with('error', 'Quiz belum tersedia.');
         }
         
+        // Check if user has already completed this quiz
+        $completedAttempt = QuizAttempt::where('quiz_id', $quiz->id)
+            ->where('user_id', $user->id)
+            ->whereNotNull('completed_at')
+            ->first();
+            
+        if ($completedAttempt) {
+            return redirect()->route('quiz.result', $completedAttempt->id)
+                ->with('error', 'Anda sudah menyelesaikan kuis ini dan hanya dapat dikerjakan sekali.');
+        }
+        
         // Check for existing incomplete attempt
         $attempt = QuizAttempt::where('quiz_id', $quiz->id)
             ->where('user_id', $user->id)

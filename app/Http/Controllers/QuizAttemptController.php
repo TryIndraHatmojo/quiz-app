@@ -77,6 +77,11 @@ class QuizAttemptController extends Controller
             'background',
         ]);
 
+        // Acak urutan soal
+        if ($quiz->relationLoaded('questions')) {
+            $quiz->setRelation('questions', $quiz->questions->shuffle()->values());
+        }
+
         // Acak urutan opsi jawaban untuk soal pilihan ganda
         $quiz->questions->each(function ($question) {
             if ($question->question_type === 'multiple_choice' && $question->relationLoaded('options')) {

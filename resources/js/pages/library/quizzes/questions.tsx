@@ -291,6 +291,7 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
     const [galleryList, setGalleryList] = useState<Gallery[]>(galleries);
     const [isUploading, setIsUploading] = useState(false);
     const [activeTab, setActiveTab] = useState<'gallery' | 'upload'>('gallery');
+    const [showSuccess, setShowSuccess] = useState(false);
     const questionTextRef = useRef<HTMLTextAreaElement>(null);
 
     // Strip read-only catatan fields from form data (not submitted, only displayed)
@@ -526,7 +527,8 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
         post(route('library.quizzes.questions.store', quiz.id), {
             preserveScroll: true,
             onSuccess: () => {
-                // Optional: show toast
+                setShowSuccess(true);
+                setTimeout(() => setShowSuccess(false), 3000);
             },
         });
     };
@@ -684,6 +686,7 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                 <div className="grid grid-cols-2 gap-4">
                     {/* True Option */}
                     <button
+                        type="button"
                         onClick={() => {
                             const newQuestions = [...questions];
                             const newOptions = [
@@ -691,10 +694,12 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                             ];
                             newOptions[0] = {
                                 ...newOptions[0],
+                                option_text: 'Benar',
                                 is_correct: true,
                             };
                             newOptions[1] = {
                                 ...newOptions[1],
+                                option_text: 'Salah',
                                 is_correct: false,
                             };
                             newQuestions[currentIndex] = {
@@ -704,7 +709,8 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                             setQuestions(newQuestions);
                         }}
                         className={`flex items-center justify-center gap-3 rounded-xl p-8 transition-all ${
-                            currentQuestion.options[0]?.is_correct
+                            currentQuestion.options[0]?.is_correct === true ||
+                            currentQuestion.options[0]?.is_correct === 1
                                 ? 'bg-green-500 text-white ring-4 ring-green-300'
                                 : 'bg-white text-gray-700 shadow-sm ring-1 ring-gray-200 hover:ring-green-300'
                         }`}
@@ -714,6 +720,7 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                     </button>
                     {/* False Option */}
                     <button
+                        type="button"
                         onClick={() => {
                             const newQuestions = [...questions];
                             const newOptions = [
@@ -721,10 +728,12 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                             ];
                             newOptions[0] = {
                                 ...newOptions[0],
+                                option_text: 'Benar',
                                 is_correct: false,
                             };
                             newOptions[1] = {
                                 ...newOptions[1],
+                                option_text: 'Salah',
                                 is_correct: true,
                             };
                             newQuestions[currentIndex] = {
@@ -734,7 +743,8 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                             setQuestions(newQuestions);
                         }}
                         className={`flex items-center justify-center gap-3 rounded-xl p-8 transition-all ${
-                            currentQuestion.options[1]?.is_correct
+                            currentQuestion.options[1]?.is_correct === true ||
+                            currentQuestion.options[1]?.is_correct === 1
                                 ? 'bg-red-500 text-white ring-4 ring-red-300'
                                 : 'bg-white text-gray-700 shadow-sm ring-1 ring-gray-200 hover:ring-red-300'
                         }`}
@@ -1770,6 +1780,14 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                     </div>
                 </div>
             </div>
+            {showSuccess && (
+                <div className="fixed right-6 bottom-6 z-50 flex animate-in items-center gap-2 rounded-lg bg-green-500 px-4 py-3 text-white shadow-lg transition-all slide-in-from-bottom-5 fade-in">
+                    <CheckCircle2 className="h-5 w-5" />
+                    <span className="font-medium">
+                        Pertanyaan berhasil disimpan!
+                    </span>
+                </div>
+            )}
         </AppSidebarLayout>
     );
 }

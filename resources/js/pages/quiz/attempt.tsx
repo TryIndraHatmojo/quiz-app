@@ -468,25 +468,39 @@ export default function QuizAttemptPage({
         }
 
         try {
-            const csrfToken =
-                document
-                    .querySelector('meta[name="csrf-token"]')
-                    ?.getAttribute('content') || '';
+            // Gunakan cookie XSRF-TOKEN yang otomatis diperbarui oleh Laravel
+            // Ini mencegah error CSRF token mismatch jika meta tag kadaluarsa setelah login
+            const xsrfCookie = document.cookie
+                .split('; ')
+                .find((row) => row.startsWith('XSRF-TOKEN='))
+                ?.split('=')[1];
 
-            if (!csrfToken) {
-                console.error('Failed to save answer: CSRF token not found');
-                return false;
+            const headers: Record<string, string> = {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            };
+
+            if (xsrfCookie) {
+                headers['X-XSRF-TOKEN'] = decodeURIComponent(xsrfCookie);
+            } else {
+                const metaToken = document
+                    .querySelector('meta[name="csrf-token"]')
+                    ?.getAttribute('content');
+                if (metaToken) {
+                    headers['X-CSRF-TOKEN'] = metaToken;
+                } else {
+                    console.error(
+                        'Failed to save answer: CSRF token not found',
+                    );
+                    return false;
+                }
             }
 
             const response = await fetch(route('quiz.answer', attempt.id), {
                 method: 'POST',
                 credentials: 'same-origin',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': csrfToken,
-                },
+                headers,
                 body: JSON.stringify(answerData),
             });
 

@@ -344,6 +344,11 @@ class QuizController extends Controller
         
         $quiz->load(['questions.options', 'questions.matchingPairs', 'questions.shortAnswerFields', 'background']);
 
+        // Acak urutan soal
+        if ($quiz->relationLoaded('questions')) {
+            $quiz->setRelation('questions', $quiz->questions->shuffle()->values());
+        }
+
         // Acak urutan opsi jawaban untuk soal pilihan ganda
         $quiz->questions->each(function ($question) {
             if ($question->question_type === 'multiple_choice' && $question->relationLoaded('options')) {
@@ -394,6 +399,8 @@ class QuizController extends Controller
         if (!$this->canEditQuiz($quiz)) {
             abort(403);
         }
+
+        \Illuminate\Support\Facades\Log::info("storeQuestions called: ", $request->all());
 
         $request->validate([
             'questions' => 'array',
@@ -450,7 +457,7 @@ class QuizController extends Controller
                     if (!empty($oData['option_text'])) {
                         $question->options()->create([
                             'option_text' => $oData['option_text'],
-                            'is_correct' => $oData['is_correct'] ?? false,
+                            'is_correct' => filter_var($oData['is_correct'] ?? false, FILTER_VALIDATE_BOOLEAN),
                             'order' => $oIndex,
                         ]);
                     }

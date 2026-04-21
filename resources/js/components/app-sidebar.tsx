@@ -10,102 +10,27 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
-import { type NavGroup } from '@/types';
-import { Link } from '@inertiajs/react';
-import {
-    BookOpen,
-    ClipboardCheck,
-    Database,
-    FileImage,
-    GraduationCap,
-    LayoutGrid,
-    Plus,
-    Shield,
-    Users,
-} from 'lucide-react';
+import { type NavGroup, type SharedData } from '@/types';
+import { Link, usePage } from '@inertiajs/react';
+import * as LucideIcons from 'lucide-react';
 import AppLogo from './app-logo';
 
-const mainNavGroups: NavGroup[] = [
-    {
-        title: 'Platform',
-        items: [
-            {
-                title: 'Dashboard',
-                href: dashboard(),
-                icon: LayoutGrid,
-            },
-            {
-                title: 'Nilai',
-                href: '/nilai',
-                icon: ClipboardCheck,
-            },
-        ],
-    },
-    {
-        title: 'Koleksi',
-        items: [
-            {
-                title: 'Buat Baru',
-                href: '/library/quizzes/create',
-                icon: Plus,
-            },
-            {
-                title: 'Semua Kuis',
-                href: '/library/quizzes',
-                icon: BookOpen,
-            },
-        ],
-    },
-    {
-        title: 'Data Master',
-        items: [
-            {
-                title: 'Master Data',
-                href: '#',
-                icon: Database,
-                items: [
-                    {
-                        title: 'Pengguna',
-                        href: '/master/users',
-                        icon: Users,
-                    },
-                    {
-                        title: 'Peran',
-                        href: '/master/roles',
-                        icon: Shield,
-                    },
-                    {
-                        title: 'Mata Pelajaran',
-                        href: '/master/categories',
-                        icon: BookOpen,
-                    },
-                    {
-                        title: 'Jenjang',
-                        href: '/master/jenjang',
-                        icon: GraduationCap,
-                    },
-                    {
-                        title: 'Kelas',
-                        href: '/master/kelas',
-                        icon: Users,
-                    },
-                    {
-                        title: 'Backgrounds',
-                        href: '/master/backgrounds',
-                        icon: LayoutGrid,
-                    },
-                    {
-                        title: 'Galeri',
-                        href: '/master/galleries',
-                        icon: FileImage,
-                    },
-                ],
-            },
-        ],
-    },
-];
-
 export function AppSidebar() {
+    const { navGroups } = usePage<SharedData>().props;
+
+    // Convert string icons to Lucide components
+    const mappedNavGroups: NavGroup[] = (navGroups || []).map(group => ({
+        ...group,
+        items: group.items.map(item => ({
+            ...item,
+            icon: item.icon ? (LucideIcons[item.icon as keyof typeof LucideIcons] as any) : undefined,
+            items: item.items?.map(subItem => ({
+                ...subItem,
+                icon: subItem.icon ? (LucideIcons[subItem.icon as keyof typeof LucideIcons] as any) : undefined,
+            }))
+        }))
+    }));
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
@@ -121,7 +46,7 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMainWithDropdown groups={mainNavGroups} />
+                <NavMainWithDropdown groups={mappedNavGroups} />
             </SidebarContent>
 
             <SidebarFooter>

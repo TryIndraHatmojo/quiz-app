@@ -1,11 +1,12 @@
 import Pagination from '@/components/pagination';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, type Role, type SharedData } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { CheckCircle2, Pencil, Plus, Trash2, XCircle } from 'lucide-react';
+import { CheckCircle2, Pencil, Plus, Shield, Trash2, XCircle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -31,9 +32,10 @@ interface Props {
     filters?: {
         name?: string;
     };
+    totalMenus: number;
 }
 
-export default function RoleIndex({ roles, filters }: Props) {
+export default function RoleIndex({ roles, filters, totalMenus }: Props) {
     const { flash } = usePage<SharedData>().props;
     const isFirstRender = useRef(true);
     const hasInteractedWithFilters = useRef(false);
@@ -136,6 +138,9 @@ export default function RoleIndex({ roles, filters }: Props) {
                                 <th scope="col" className="px-6 py-3">
                                     Dibuat
                                 </th>
+                                <th scope="col" className="px-6 py-3">
+                                    Hak Akses
+                                </th>
                                 <th
                                     scope="col"
                                     className="px-6 py-3 text-right"
@@ -162,8 +167,36 @@ export default function RoleIndex({ roles, filters }: Props) {
                                             role.created_at,
                                         ).toLocaleDateString('id-ID')}
                                     </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex flex-wrap gap-1 max-w-[300px]">
+                                            {role.menus && role.menus.length > 0 ? (
+                                                role.menus.map((menu) => (
+                                                    <Badge key={menu.id} variant="secondary" className="font-normal text-[10px] px-1.5 py-0">
+                                                        {menu.title}
+                                                    </Badge>
+                                                ))
+                                            ) : (
+                                                <span className="text-muted-foreground italic text-xs">Belum ada akses</span>
+                                            )}
+                                        </div>
+                                    </td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex justify-end gap-2">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                title="Atur Hak Akses"
+                                                asChild
+                                            >
+                                                <Link
+                                                    href={route(
+                                                        'master.roles.access',
+                                                        role.id,
+                                                    )}
+                                                >
+                                                    <Shield className="h-4 w-4" />
+                                                </Link>
+                                            </Button>
                                             <Button
                                                 variant="ghost"
                                                 size="icon"

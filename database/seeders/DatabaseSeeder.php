@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
             QuizQuestionOptionSeeder::class, // Depends on questions
             QuizAttemptSeeder::class,     // Depends on quizzes, questions, and users
             CatatanTelaahSoalSeeder::class, // Depends on quizzes, questions, and users
+            MenuSeeder::class,            // Depends on roles
         ]);
     }
 }

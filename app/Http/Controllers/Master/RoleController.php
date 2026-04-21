@@ -11,16 +11,20 @@ class RoleController extends Controller
 {
     public function index(Request $request)
     {
-        $roles = Role::when($request->name, function ($query, $name) {
+        $roles = Role::with(['menus:id,title'])->withCount('menus')
+            ->when($request->name, function ($query, $name) {
                 $query->where('name', 'like', "%{$name}%");
             })
             ->latest()
             ->paginate(10)
             ->withQueryString();
 
+        $totalMenus = \App\Models\Menu::count();
+
         return Inertia::render('master/roles/index', [
             'roles' => $roles,
             'filters' => $request->only(['name']),
+            'totalMenus' => $totalMenus,
         ]);
     }
 
@@ -62,8 +66,8 @@ class RoleController extends Controller
 
     public function destroy(Role $role)
     {
-        if ($role->name === 'Super Admin') {
-            return back()->with('error', 'Tidak dapat menghapus peran Super Admin.');
+        if ($role->name === 'Admin') {
+            return back()->with('error', 'Tidak dapat menghapus peran Admin.');
         }
 
         $cek = $role->users;

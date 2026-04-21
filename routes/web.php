@@ -17,6 +17,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::middleware(['auth', 'verified'])->prefix('master')->name('master.')->group(function () {
     Route::resource('users', App\Http\Controllers\Master\UserController::class);
     Route::resource('roles', App\Http\Controllers\Master\RoleController::class);
+    Route::get('roles/{role}/access', [App\Http\Controllers\Master\RoleMenuController::class, 'index'])->name('roles.access');
+    Route::post('roles/{role}/access', [App\Http\Controllers\Master\RoleMenuController::class, 'update'])->name('roles.access.update');
     Route::resource('categories', App\Http\Controllers\Master\QuizCategoryController::class)->parameters(['categories' => 'category']);
     Route::resource('kelas', App\Http\Controllers\Master\KelasController::class)->parameters(['kelas' => 'kela']);
     Route::resource('backgrounds', App\Http\Controllers\Master\QuizBackgroundController::class);

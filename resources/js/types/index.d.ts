@@ -7,6 +7,8 @@ export interface Role {
     slug: string;
     description: string;
     created_at: string;
+    menus_count?: number;
+    menus?: { id: number; title: string }[];
 }
 
 export interface QuizCategory {
@@ -77,6 +79,19 @@ export interface SharedData {
     quote: { message: string; author: string };
     auth: Auth;
     sidebarOpen: boolean;
+    navGroups?: Array<{
+        title: string;
+        items: Array<{
+            title: string;
+            href: string;
+            icon?: string | null;
+            items?: Array<{
+                title: string;
+                href: string;
+                icon?: string | null;
+            }>;
+        }>;
+    }>;
     flash: {
         success: string | null;
         error: string | null;

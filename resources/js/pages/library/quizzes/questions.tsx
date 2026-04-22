@@ -175,7 +175,7 @@ const createDefaultQuestion = (
 ): QuizQuestion => {
     const base = {
         question_type: type,
-        question_text: '',
+        question_text: 'Pertanyaan Baru',
         explanation: '',
         time_limit: 30,
         points: 100,
@@ -190,10 +190,15 @@ const createDefaultQuestion = (
             return {
                 ...base,
                 options: [
-                    { ...defaultOption, order: 0 },
-                    { ...defaultOption, order: 1 },
-                    { ...defaultOption, order: 2 },
-                    { ...defaultOption, order: 3 },
+                    {
+                        ...defaultOption,
+                        option_text: 'Opsi A',
+                        is_correct: true,
+                        order: 0,
+                    },
+                    { ...defaultOption, option_text: 'Opsi B', order: 1 },
+                    { ...defaultOption, option_text: 'Opsi C', order: 2 },
+                    { ...defaultOption, option_text: 'Opsi D', order: 3 },
                 ],
             };
         case 'true_false':
@@ -217,10 +222,26 @@ const createDefaultQuestion = (
         case 'matching_pairs':
             return {
                 ...base,
+                question_text: 'Cocokkan pasangan berikut dengan benar',
                 matching_pairs: [
-                    { ...defaultMatchingPair, order: 0 },
-                    { ...defaultMatchingPair, order: 1 },
-                    { ...defaultMatchingPair, order: 2 },
+                    {
+                        ...defaultMatchingPair,
+                        left_text: 'Item A',
+                        right_text: 'Pasangan A',
+                        order: 0,
+                    },
+                    {
+                        ...defaultMatchingPair,
+                        left_text: 'Item B',
+                        right_text: 'Pasangan B',
+                        order: 1,
+                    },
+                    {
+                        ...defaultMatchingPair,
+                        left_text: 'Item C',
+                        right_text: 'Pasangan C',
+                        order: 2,
+                    },
                 ],
             };
         case 'short_answer':
@@ -228,12 +249,18 @@ const createDefaultQuestion = (
                 ...base,
                 question_text: 'Lengkapi kalimat: ___ adalah ibukota Indonesia',
                 short_answer_fields: [
-                    { ...defaultShortAnswerField, label: '1', order: 0 },
+                    {
+                        ...defaultShortAnswerField,
+                        label: '1',
+                        expected_answer: 'Jakarta',
+                        order: 0,
+                    },
                 ],
             };
         case 'long_answer':
             return {
                 ...base,
+                question_text: 'Jelaskan pendapat Anda tentang...',
                 short_answer_fields: [{ ...defaultShortAnswerField, order: 0 }],
             };
         default:
@@ -288,6 +315,7 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
     );
     const [currentIndex, setCurrentIndex] = useState(0);
     const [mediaDialogOpen, setMediaDialogOpen] = useState(false);
+    const [addQuestionDialogOpen, setAddQuestionDialogOpen] = useState(false);
     const [galleryList, setGalleryList] = useState<Gallery[]>(galleries);
     const [isUploading, setIsUploading] = useState(false);
     const [activeTab, setActiveTab] = useState<'gallery' | 'upload'>('gallery');
@@ -924,7 +952,7 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                 {blankCount > 0 && (
                     <div className="rounded-xl bg-white p-6 shadow-sm">
                         <p className="mb-3 text-sm text-gray-500">
-                            Preview Soal:
+                            Tampilan Soal:
                         </p>
                         {renderQuestionPreview()}
                     </div>
@@ -984,7 +1012,9 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                                                     htmlFor={`case-sensitive-${idx}`}
                                                     className="cursor-pointer text-sm"
                                                 >
-                                                    Case Sensitive
+                                                    Sensitif terhadap huruf
+                                                    besar (kapital) dan huruf
+                                                    kecil dalam teks
                                                 </Label>
                                             </div>
                                         </div>
@@ -1035,7 +1065,7 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                         />
                     </div>
                     <div>
-                        <Label>Placeholder (Opsional)</Label>
+                        <Label>Panduan (Opsional)</Label>
                         <Input
                             value={field.placeholder || ''}
                             onChange={(e) =>
@@ -1045,7 +1075,7 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                                     e.target.value,
                                 )
                             }
-                            placeholder="Teks placeholder untuk input"
+                            placeholder="Teks panduan untuk input"
                             className="mt-1"
                         />
                     </div>
@@ -1069,7 +1099,7 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                     </div>
                 </div>
                 <div className="rounded-lg border-2 border-dashed border-gray-200 bg-gray-50 p-4">
-                    <p className="mb-2 text-sm text-gray-500">Preview:</p>
+                    <p className="mb-2 text-sm text-gray-500">Tampilan:</p>
                     <Textarea
                         disabled
                         placeholder={
@@ -1209,7 +1239,10 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                     </div>
 
                     {/* Add Question Menu */}
-                    <Dialog>
+                    <Dialog
+                        open={addQuestionDialogOpen}
+                        onOpenChange={setAddQuestionDialogOpen}
+                    >
                         <DialogTrigger asChild>
                             <Button className="mt-4 w-full" variant="outline">
                                 <Plus className="mr-2 h-4 w-4" /> Tambah
@@ -1233,12 +1266,7 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                                         key={type}
                                         onClick={() => {
                                             handleAddQuestion(type);
-                                            // Close dialog
-                                            const closeBtn =
-                                                document.querySelector(
-                                                    '[data-state="open"] button[aria-label="Close"]',
-                                                ) as HTMLButtonElement;
-                                            closeBtn?.click();
+                                            setAddQuestionDialogOpen(false);
                                         }}
                                         className="flex items-center gap-3 rounded-lg border p-4 text-left transition-colors hover:border-primary hover:bg-gray-50"
                                     >

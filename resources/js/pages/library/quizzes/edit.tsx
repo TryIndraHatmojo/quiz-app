@@ -52,7 +52,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: '/library/quizzes',
     },
     {
-        title: 'Edit',
+        title: 'Ubah',
         href: '#',
     },
 ];
@@ -71,8 +71,10 @@ export default function QuizEdit({
             const d = new Date(val);
             if (isNaN(d.getTime())) return '';
             const pad = (n: number) => n.toString().padStart(2, '0');
-            return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-        } catch { return ''; }
+            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        } catch {
+            return '';
+        }
     };
 
     const { data, setData, post, processing, errors } = useForm({
@@ -99,14 +101,14 @@ export default function QuizEdit({
 
     return (
         <AppSidebarLayout breadcrumbs={breadcrumbs}>
-            <Head title="Edit Kuis" />
+            <Head title="Ubah Kuis" />
 
             <div className="flex h-full flex-1 flex-col gap-4 p-4">
                 <div className="max-w-2xl">
                     <div className="mb-6 flex items-center justify-between">
                         <div>
                             <h1 className="text-2xl font-bold tracking-tight">
-                                Edit Kuis
+                                Ubah Kuis
                             </h1>
                             <p className="text-muted-foreground">
                                 Perbarui detail kuis Anda.
@@ -384,33 +386,47 @@ export default function QuizEdit({
 
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                 <div className="space-y-2">
-                                    <Label htmlFor="starts_at">Tanggal Mulai Ujian</Label>
+                                    <Label htmlFor="starts_at">
+                                        Tanggal Mulai Ujian
+                                    </Label>
                                     <Input
                                         id="starts_at"
                                         type="datetime-local"
                                         value={data.starts_at}
-                                        onChange={(e) => setData('starts_at', e.target.value)}
+                                        onChange={(e) =>
+                                            setData('starts_at', e.target.value)
+                                        }
                                     />
                                     {errors.starts_at && (
-                                        <p className="text-sm text-destructive">{errors.starts_at}</p>
+                                        <p className="text-sm text-destructive">
+                                            {errors.starts_at}
+                                        </p>
                                     )}
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="ends_at">Tanggal Akhir Ujian</Label>
+                                    <Label htmlFor="ends_at">
+                                        Tanggal Akhir Ujian
+                                    </Label>
                                     <Input
                                         id="ends_at"
                                         type="datetime-local"
                                         value={data.ends_at}
-                                        onChange={(e) => setData('ends_at', e.target.value)}
+                                        onChange={(e) =>
+                                            setData('ends_at', e.target.value)
+                                        }
                                     />
                                     {errors.ends_at && (
-                                        <p className="text-sm text-destructive">{errors.ends_at}</p>
+                                        <p className="text-sm text-destructive">
+                                            {errors.ends_at}
+                                        </p>
                                     )}
                                 </div>
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="passing_score">Nilai Minimum Kelulusan / KKM (%)</Label>
+                                <Label htmlFor="passing_score">
+                                    Nilai Minimum Kelulusan / KKM (%)
+                                </Label>
                                 <div className="flex items-center gap-2">
                                     <Input
                                         id="passing_score"
@@ -419,23 +435,31 @@ export default function QuizEdit({
                                         max={100}
                                         value={data.passing_score}
                                         onChange={(e) =>
-                                            setData('passing_score', parseInt(e.target.value) || 0)
+                                            setData(
+                                                'passing_score',
+                                                parseInt(e.target.value) || 0,
+                                            )
                                         }
                                         className="w-32"
                                     />
-                                    <span className="text-muted-foreground">%</span>
+                                    <span className="text-muted-foreground">
+                                        %
+                                    </span>
                                 </div>
                                 <p className="text-xs text-muted-foreground">
-                                    Siswa dengan persentase nilai di bawah KKM akan dianggap perlu remedial.
+                                    Siswa dengan persentase nilai di bawah KKM
+                                    akan dianggap perlu remedial.
                                 </p>
                                 {errors.passing_score && (
-                                    <p className="text-sm text-destructive">{errors.passing_score}</p>
+                                    <p className="text-sm text-destructive">
+                                        {errors.passing_score}
+                                    </p>
                                 )}
                             </div>
                         </div>
 
                         <div className="space-y-4">
-                            <Label>Background</Label>
+                            <Label>Gambar Latar Belakang</Label>
 
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                 <div className="space-y-2">

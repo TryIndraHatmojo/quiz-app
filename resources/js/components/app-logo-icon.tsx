@@ -2,8 +2,8 @@ import { ImgHTMLAttributes } from 'react';
 
 export default function AppLogoIcon({
     className,
-    src = "/images/Logo-SMP-Al-Falah-Terbaru-24-25.png",
-    alt = "App Logo",
+    src = '/images/Logo-SMP-Al-Falah-Terbaru-24-25.png',
+    alt = 'App Logo',
     ...props
 }: ImgHTMLAttributes<HTMLImageElement>) {
     return (

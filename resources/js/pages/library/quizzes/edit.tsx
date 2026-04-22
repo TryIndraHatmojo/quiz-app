@@ -583,13 +583,13 @@ export default function QuizEdit({
                                     <SelectValue placeholder="Pilih status" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="draft">Draft</SelectItem>
-                                    <SelectItem value="live">Live</SelectItem>
+                                    <SelectItem value="draft">Draf</SelectItem>
+                                    <SelectItem value="live">Tayang</SelectItem>
                                     <SelectItem value="finished">
-                                        Finished
+                                        Selesai
                                     </SelectItem>
                                     <SelectItem value="archived">
-                                        Archived
+                                        Arsip
                                     </SelectItem>
                                 </SelectContent>
                             </Select>

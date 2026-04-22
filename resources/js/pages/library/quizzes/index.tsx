@@ -288,7 +288,7 @@ export default function QuizIndex({
                                 );
                             }}
                         >
-                            Live
+                            Tayang
                         </Button>
                         <Button
                             variant={
@@ -310,7 +310,7 @@ export default function QuizIndex({
                                 );
                             }}
                         >
-                            Draft
+                            Draf
                         </Button>
                     </div>
 
@@ -500,10 +500,21 @@ export default function QuizIndex({
                                             className={`ml-2 rounded-full px-2.5 py-0.5 text-xs font-medium ${
                                                 quiz.status === 'live'
                                                     ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-                                                    : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
+                                                    : quiz.status === 'finished'
+                                                      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
+                                                      : quiz.status ===
+                                                          'archived'
+                                                        ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300'
+                                                        : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
                                             }`}
                                         >
-                                            {quiz.status.toUpperCase()}
+                                            {quiz.status === 'live'
+                                                ? 'Tayang'
+                                                : quiz.status === 'finished'
+                                                  ? 'Selesai'
+                                                  : quiz.status === 'archived'
+                                                    ? 'Arsip'
+                                                    : 'Draf'}
                                         </span>
                                     </div>
                                 </CardHeader>
@@ -532,10 +543,16 @@ export default function QuizIndex({
                                         ).toLocaleDateString()}
                                     </p>
                                     {/* Badge catatan telaah */}
-                                    {(quiz.catatan_butuh_review_count ?? 0) > 0 && (
+                                    {(quiz.catatan_butuh_review_count ?? 0) >
+                                        0 && (
                                         <div className="mt-3 flex items-center gap-1.5 rounded-md bg-amber-50 px-2.5 py-1.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
                                             <MessageSquareWarning className="h-3.5 w-3.5" />
-                                            <span>{quiz.catatan_butuh_review_count} catatan telaah butuh review</span>
+                                            <span>
+                                                {
+                                                    quiz.catatan_butuh_review_count
+                                                }{' '}
+                                                catatan telaah butuh review
+                                            </span>
                                         </div>
                                     )}
                                 </CardContent>
@@ -573,16 +590,23 @@ export default function QuizIndex({
                                             >
                                                 <Search className="mr-1.5 h-4 w-4" />
                                                 Telaah Soal
-                                                {(quiz.catatan_butuh_review_count ?? 0) > 0 && (
+                                                {(quiz.catatan_butuh_review_count ??
+                                                    0) > 0 && (
                                                     <span className="ml-1.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-bold text-white">
-                                                        {quiz.catatan_butuh_review_count}
+                                                        {
+                                                            quiz.catatan_butuh_review_count
+                                                        }
                                                     </span>
                                                 )}
                                             </Link>
                                         </Button>
                                     )}
                                     {quiz.can_preview && (
-                                        <Button variant="outline" size="sm" asChild>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            asChild
+                                        >
                                             <Link
                                                 href={route(
                                                     'library.quizzes.preview',
@@ -594,7 +618,11 @@ export default function QuizIndex({
                                         </Button>
                                     )}
                                     {quiz.can_edit && (
-                                        <Button variant="outline" size="sm" asChild>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            asChild
+                                        >
                                             <Link
                                                 href={route(
                                                     'library.quizzes.edit',
@@ -610,7 +638,9 @@ export default function QuizIndex({
                                             variant="outline"
                                             size="sm"
                                             className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                                            onClick={() => handleDelete(quiz.id)}
+                                            onClick={() =>
+                                                handleDelete(quiz.id)
+                                            }
                                         >
                                             <Trash2 className="h-4 w-4" />
                                         </Button>

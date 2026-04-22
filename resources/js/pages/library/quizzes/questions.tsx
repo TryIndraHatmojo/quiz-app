@@ -1323,10 +1323,10 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="draft">
-                                            Draft
+                                            Draf
                                         </SelectItem>
                                         <SelectItem value="live">
-                                            Live
+                                            Tayang
                                         </SelectItem>
                                         <SelectItem value="finished">
                                             Selesai

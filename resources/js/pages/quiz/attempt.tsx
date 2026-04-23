@@ -180,10 +180,13 @@ export default function QuizAttemptPage({
         const rawQuestions = quiz.questions || [];
         // Shuffle the questions order
         const shuffledQuestions = shuffleArray(rawQuestions);
-        // Shuffle options for multiple choice questions
+        // Shuffle options for multiple choice and matching pairs questions
         return shuffledQuestions.map((q) => {
             if (q.question_type === 'multiple_choice' && q.options?.length > 0) {
                 return { ...q, options: shuffleArray(q.options) };
+            }
+            if (q.question_type === 'matching_pairs' && q.matching_pairs?.length) {
+                return { ...q, matching_pairs: shuffleArray(q.matching_pairs) };
             }
             return q;
         });

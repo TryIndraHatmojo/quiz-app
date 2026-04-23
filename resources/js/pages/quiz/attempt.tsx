@@ -17,7 +17,7 @@ import {
     ToggleLeft,
     X,
 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 interface QuizAttempt {
     id: number;
@@ -141,6 +141,16 @@ type Answer = {
     longAnswer?: string;
 };
 
+// Fisher-Yates shuffle utility
+function shuffleArray<T>(array: T[]): T[] {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+}
+
 export default function QuizAttemptPage({
     quiz,
     attempt,
@@ -165,7 +175,19 @@ export default function QuizAttemptPage({
     >({});
     const [renderKey, setRenderKey] = useState(0);
 
-    const questions = quiz.questions || [];
+    // Shuffle questions order and multiple choice options on mount
+    const questions = useMemo(() => {
+        const rawQuestions = quiz.questions || [];
+        // Shuffle the questions order
+        const shuffledQuestions = shuffleArray(rawQuestions);
+        // Shuffle options for multiple choice questions
+        return shuffledQuestions.map((q) => {
+            if (q.question_type === 'multiple_choice' && q.options?.length > 0) {
+                return { ...q, options: shuffleArray(q.options) };
+            }
+            return q;
+        });
+    }, [quiz.questions]);
     const currentQuestion = questions[currentQuestionIndex];
 
     // Initialize answers from existing answers

@@ -320,6 +320,7 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
     const [isUploading, setIsUploading] = useState(false);
     const [activeTab, setActiveTab] = useState<'gallery' | 'upload'>('gallery');
     const [showSuccess, setShowSuccess] = useState(false);
+    const [showRevisionSuccess, setShowRevisionSuccess] = useState(false);
     const questionTextRef = useRef<HTMLTextAreaElement>(null);
 
     // Strip read-only catatan fields from form data (not submitted, only displayed)
@@ -710,15 +711,19 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                         variant="outline"
                         onClick={() => {
                             const newQuestions = [...questions];
-                            const currentOptions = newQuestions[currentIndex].options || [];
-                            
+                            const currentOptions =
+                                newQuestions[currentIndex].options || [];
+
                             // Clone and shuffle
                             const shuffled = [...currentOptions];
                             for (let i = shuffled.length - 1; i > 0; i--) {
                                 const j = Math.floor(Math.random() * (i + 1));
-                                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                                [shuffled[i], shuffled[j]] = [
+                                    shuffled[j],
+                                    shuffled[i],
+                                ];
                             }
-                            
+
                             // Reorder order field
                             const reordered = shuffled.map((o, idx) => ({
                                 ...o,
@@ -733,7 +738,24 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                         }}
                         className="w-full flex-none sm:w-auto"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 h-4 w-4"><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22"/><path d="m18 2 4 4-4 4"/><path d="M2 6h1.9c1.5 0 2.8.8 3.6 2.1l1.5 2.5"/><path d="m22 22-4-4 4-4"/><path d="M16 16v.1"/></svg>
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="mr-2 h-4 w-4"
+                        >
+                            <path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22" />
+                            <path d="m18 2 4 4-4 4" />
+                            <path d="M2 6h1.9c1.5 0 2.8.8 3.6 2.1l1.5 2.5" />
+                            <path d="m22 22-4-4 4-4" />
+                            <path d="M16 16v.1" />
+                        </svg>
                         Acak Opsi
                     </Button>
                 </div>
@@ -920,15 +942,19 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                         variant="outline"
                         onClick={() => {
                             const newQuestions = [...questions];
-                            const currentPairs = newQuestions[currentIndex].matching_pairs || [];
-                            
+                            const currentPairs =
+                                newQuestions[currentIndex].matching_pairs || [];
+
                             // Clone and shuffle
                             const shuffled = [...currentPairs];
                             for (let i = shuffled.length - 1; i > 0; i--) {
                                 const j = Math.floor(Math.random() * (i + 1));
-                                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                                [shuffled[i], shuffled[j]] = [
+                                    shuffled[j],
+                                    shuffled[i],
+                                ];
                             }
-                            
+
                             // Reorder order field
                             const reordered = shuffled.map((p, idx) => ({
                                 ...p,
@@ -943,7 +969,24 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                         }}
                         className="w-full flex-1"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 h-4 w-4"><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22"/><path d="m18 2 4 4-4 4"/><path d="M2 6h1.9c1.5 0 2.8.8 3.6 2.1l1.5 2.5"/><path d="m22 22-4-4 4-4"/><path d="M16 16v.1"/></svg>
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="mr-2 h-4 w-4"
+                        >
+                            <path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22" />
+                            <path d="m18 2 4 4-4 4" />
+                            <path d="M2 6h1.9c1.5 0 2.8.8 3.6 2.1l1.5 2.5" />
+                            <path d="m22 22-4-4 4-4" />
+                            <path d="M16 16v.1" />
+                        </svg>
                         Acak Pasangan
                     </Button>
                 </div>
@@ -1682,7 +1725,12 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                                                                 handleFileUpload
                                                             }
                                                             accept={{
-                                                                'image/*': ['.jpeg', '.png', '.jpg', '.gif'],
+                                                                'image/*': [
+                                                                    '.jpeg',
+                                                                    '.png',
+                                                                    '.jpg',
+                                                                    '.gif',
+                                                                ],
                                                             }}
                                                             label="Upload Gambar"
                                                             description="Format: JPG, PNG, GIF. Maksimal 10MB."
@@ -1833,6 +1881,19 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                                                                             {},
                                                                             {
                                                                                 preserveScroll: true,
+                                                                                onSuccess:
+                                                                                    () => {
+                                                                                        setShowRevisionSuccess(
+                                                                                            true,
+                                                                                        );
+                                                                                        setTimeout(
+                                                                                            () =>
+                                                                                                setShowRevisionSuccess(
+                                                                                                    false,
+                                                                                                ),
+                                                                                            3000,
+                                                                                        );
+                                                                                    },
                                                                             },
                                                                         );
                                                                     }}
@@ -1878,6 +1939,14 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                     <CheckCircle2 className="h-5 w-5" />
                     <span className="font-medium">
                         Pertanyaan berhasil disimpan!
+                    </span>
+                </div>
+            )}
+            {showRevisionSuccess && (
+                <div className="fixed right-6 bottom-6 z-50 flex animate-in items-center gap-2 rounded-lg bg-blue-500 px-4 py-3 text-white shadow-lg transition-all slide-in-from-bottom-5 fade-in">
+                    <CheckCircle2 className="h-5 w-5" />
+                    <span className="font-medium">
+                        Status catatan berhasil ditandai selesai!
                     </span>
                 </div>
             )}

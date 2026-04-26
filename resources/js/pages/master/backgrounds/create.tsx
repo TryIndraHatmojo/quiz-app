@@ -75,7 +75,7 @@ export default function BackgroundCreate() {
                             <Label htmlFor="image">Gambar</Label>
                             <FileUploader
                                 onFileSelect={handleFileSelect}
-                                accept={{ 'image/*': [] }}
+                                accept={{ 'image/*': ['.jpeg', '.png', '.jpg', '.gif'] }}
                                 label="Unggah Gambar Background"
                                 description="Format: JPG, PNG, GIF. Maksimal 2MB."
                                 maxSize={2 * 1024 * 1024}

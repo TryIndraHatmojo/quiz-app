@@ -36,7 +36,9 @@ export default function GalleryEdit({ gallery }: Props) {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        post(route('master.galleries.update', gallery.id));
+        post(route('master.galleries.update', gallery.id), {
+            forceFormData: true,
+        });
     };
 
     const handleFileSelect = (file: File | null) => {
@@ -77,8 +79,8 @@ export default function GalleryEdit({ gallery }: Props) {
                             <FileUploader
                                 onFileSelect={handleFileSelect}
                                 accept={{ 
-                                    'image/*': [],
-                                    'video/*': []
+                                    'image/*': ['.jpeg', '.png', '.jpg', '.gif'],
+                                    'video/*': ['.mp4', '.webm']
                                 }}
                                 currentFile={gallery.file_path}
                                 label="Ganti File"

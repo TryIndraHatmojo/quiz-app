@@ -80,8 +80,8 @@ export default function GalleryCreate() {
                             <FileUploader
                                 onFileSelect={handleFileSelect}
                                 accept={{ 
-                                    'image/*': [],
-                                    'video/*': []
+                                    'image/*': ['.jpeg', '.png', '.jpg', '.gif'],
+                                    'video/*': ['.mp4', '.webm']
                                 }}
                                 label="Unggah Gambar atau Video"
                                 description="Format: JPG, PNG, GIF, MP4, WEBM. Maksimal 10MB."

@@ -96,7 +96,9 @@ export default function QuizEdit({
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        post(route('library.quizzes.update', quiz.id));
+        post(route('library.quizzes.update', quiz.id), {
+            forceFormData: true,
+        });
     };
 
     return (

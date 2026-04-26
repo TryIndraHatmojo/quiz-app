@@ -41,7 +41,9 @@ export default function BackgroundEdit({ background }: Props) {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        post(route('master.backgrounds.update', background.id));
+        post(route('master.backgrounds.update', background.id), {
+            forceFormData: true,
+        });
     };
 
     const handleFileSelect = (file: File | null) => {
@@ -82,7 +84,7 @@ export default function BackgroundEdit({ background }: Props) {
                             <Label htmlFor="image">Gambar (Biarkan kosong jika tidak ingin mengubah)</Label>
                             <FileUploader
                                 onFileSelect={handleFileSelect}
-                                accept={{ 'image/*': [] }}
+                                accept={{ 'image/*': ['.jpeg', '.png', '.jpg', '.gif'] }}
                                 currentFile={preview}
                                 label="Ganti Gambar Background"
                                 description="Format: JPG, PNG, GIF. Maksimal 2MB."

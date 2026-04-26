@@ -524,7 +524,7 @@ export default function QuizAttemptPage({
 
             const response = await fetch(route('quiz.answer', attempt.id), {
                 method: 'POST',
-                credentials: 'same-origin',
+                credentials: 'include',
                 headers,
                 body: JSON.stringify(answerData),
             });

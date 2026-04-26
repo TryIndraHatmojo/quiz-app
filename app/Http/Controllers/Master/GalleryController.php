@@ -44,19 +44,21 @@ class GalleryController extends Controller
             File::makeDirectory($destinationPath, 0755, true);
         }
         
-        $file->move($destinationPath, $fileName);
-        $filePath = '/uploads/galleries/' . $fileName;
-        
         $mimeType = $file->getClientMimeType();
         $fileType = str_starts_with($mimeType, 'video') ? 'video' : 'image';
+        $fileSize = $file->getSize();
+        $originalName = $file->getClientOriginalName();
+
+        $file->move($destinationPath, $fileName);
+        $filePath = '/uploads/galleries/' . $fileName;
 
         $gallery = Gallery::create([
             'user_id' => Auth::id(),
-            'title' => $request->title ?? $file->getClientOriginalName(),
+            'title' => $request->title ?? $originalName,
             'file_path' => $filePath,
             'file_type' => $fileType,
             'mime_type' => $mimeType,
-            'size' => $file->getSize(),
+            'size' => $fileSize,
         ]);
 
         // Return JSON for API requests (async uploads from question editor)
@@ -106,16 +108,17 @@ class GalleryController extends Controller
                 File::makeDirectory($destinationPath, 0755, true);
             }
             
-            $file->move($destinationPath, $fileName);
-            $filePath = '/uploads/galleries/' . $fileName;
-            
             $mimeType = $file->getClientMimeType();
             $fileType = str_starts_with($mimeType, 'video') ? 'video' : 'image';
+            $fileSize = $file->getSize();
+
+            $file->move($destinationPath, $fileName);
+            $filePath = '/uploads/galleries/' . $fileName;
 
             $data['file_path'] = $filePath;
             $data['file_type'] = $fileType;
             $data['mime_type'] = $mimeType;
-            $data['size'] = $file->getSize();
+            $data['size'] = $fileSize;
         }
 
         $gallery->update($data);

@@ -577,6 +577,7 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
         try {
             const response = await fetch(route('master.galleries.store'), {
                 method: 'POST',
+                credentials: 'include',
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
                     Accept: 'application/json',
@@ -1617,7 +1618,7 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                                                                 handleFileUpload
                                                             }
                                                             accept={{
-                                                                'image/*': [],
+                                                                'image/*': ['.jpeg', '.png', '.jpg', '.gif'],
                                                             }}
                                                             label="Upload Gambar"
                                                             description="Format: JPG, PNG, GIF. Maksimal 10MB."

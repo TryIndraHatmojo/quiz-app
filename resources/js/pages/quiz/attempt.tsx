@@ -17,7 +17,7 @@ import {
     ToggleLeft,
     X,
 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 interface QuizAttempt {
     id: number;
@@ -159,8 +159,10 @@ export default function QuizAttemptPage({
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [answers, setAnswers] = useState<Record<number, Answer>>({});
     const [timeLeft, setTimeLeft] = useState<number | null>(null);
+    const [perQuestionTimers, setPerQuestionTimers] = useState<Record<number, number>>({});
     const [isSaving, setIsSaving] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const isAutoSubmittingRef = useRef(false);
 
     // Matching pairs specific state
     const [selectedLeft, setSelectedLeft] = useState<number | null>(null);
@@ -327,12 +329,24 @@ export default function QuizAttemptPage({
         setHoveredRight(null);
     }, [currentQuestionIndex]);
 
-    // Initialize timer based on quiz time_mode
+    // Initialize per-question timers once on mount
     useEffect(() => {
-        if (quiz.time_mode === 'per_question' && currentQuestion) {
-            setTimeLeft(currentQuestion.time_limit || 60);
+        if (quiz.time_mode === 'per_question') {
+            const timers: Record<number, number> = {};
+            questions.forEach((q, idx) => {
+                timers[idx] = q.time_limit || 60;
+            });
+            setPerQuestionTimers(timers);
+        }
+    }, [quiz.time_mode, questions]);
+
+    // Initialize/update timeLeft based on quiz time_mode
+    useEffect(() => {
+        if (quiz.time_mode === 'per_question') {
+            // Load the saved timer for the current question
+            setTimeLeft(perQuestionTimers[currentQuestionIndex] ?? (currentQuestion?.time_limit || 60));
         } else if (quiz.time_mode === 'total' && quiz.duration) {
-            // For total time, calculate remaining time based on started_at
+            // For total time, calculate remaining time based on started_at (only on first render)
             const startedAt = new Date(attempt.started_at);
             const elapsedSeconds = Math.floor(
                 (Date.now() - startedAt.getTime()) / 1000,
@@ -343,39 +357,52 @@ export default function QuizAttemptPage({
             );
             setTimeLeft(remainingSeconds);
         }
-    }, [
-        currentQuestionIndex,
-        currentQuestion,
-        quiz.time_mode,
-        quiz.duration,
-        attempt.started_at,
-    ]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentQuestionIndex, quiz.time_mode]);
 
-    // Timer countdown
+    // Timer countdown - runs every second
     useEffect(() => {
         if (timeLeft === null || timeLeft <= 0) return;
 
         const timer = setInterval(() => {
-            setTimeLeft((prev) => (prev !== null && prev > 0 ? prev - 1 : 0));
+            setTimeLeft((prev) => {
+                if (prev === null || prev <= 0) return 0;
+                const newVal = prev - 1;
+                // For per_question mode, persist the countdown in the record
+                if (quiz.time_mode === 'per_question') {
+                    setPerQuestionTimers((timers) => ({
+                        ...timers,
+                        [currentQuestionIndex]: newVal,
+                    }));
+                }
+                return newVal;
+            });
         }, 1000);
 
         return () => clearInterval(timer);
-    }, [timeLeft]);
+    }, [timeLeft, quiz.time_mode, currentQuestionIndex]);
 
     // Handle timer expiration
     useEffect(() => {
-        if (timeLeft === 0) {
-            if (quiz.time_mode === 'total') {
-                handleSubmit();
-            } else if (quiz.time_mode === 'per_question') {
+        if (timeLeft !== 0 || isAutoSubmittingRef.current) return;
+
+        if (quiz.time_mode === 'total') {
+            // Auto-submit immediately, no confirmation dialog
+            isAutoSubmittingRef.current = true;
+            handleAutoSubmit();
+        } else if (quiz.time_mode === 'per_question') {
+            // Save current answer then advance
+            saveCurrentAnswer().then(() => {
                 if (currentQuestionIndex < questions.length - 1) {
-                    goToNext();
+                    setCurrentQuestionIndex((prev) => prev + 1);
                 } else {
-                    handleSubmit();
+                    // Last question, auto-submit
+                    isAutoSubmittingRef.current = true;
+                    handleAutoSubmit();
                 }
-            }
+            });
         }
-    }, [timeLeft, quiz.time_mode, currentQuestionIndex, questions.length]);
+    }, [timeLeft]);
 
     const formatTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60);
@@ -386,6 +413,13 @@ export default function QuizAttemptPage({
     const goToNext = () => {
         if (currentQuestionIndex < questions.length - 1) {
             saveCurrentAnswer();
+            // Save current timer before switching (per_question mode)
+            if (quiz.time_mode === 'per_question' && timeLeft !== null) {
+                setPerQuestionTimers((prev) => ({
+                    ...prev,
+                    [currentQuestionIndex]: timeLeft,
+                }));
+            }
             setCurrentQuestionIndex(currentQuestionIndex + 1);
         }
     };
@@ -393,12 +427,24 @@ export default function QuizAttemptPage({
     const goToPrevious = () => {
         if (currentQuestionIndex > 0) {
             saveCurrentAnswer();
+            if (quiz.time_mode === 'per_question' && timeLeft !== null) {
+                setPerQuestionTimers((prev) => ({
+                    ...prev,
+                    [currentQuestionIndex]: timeLeft,
+                }));
+            }
             setCurrentQuestionIndex(currentQuestionIndex - 1);
         }
     };
 
     const goToQuestion = (index: number) => {
         saveCurrentAnswer();
+        if (quiz.time_mode === 'per_question' && timeLeft !== null) {
+            setPerQuestionTimers((prev) => ({
+                ...prev,
+                [currentQuestionIndex]: timeLeft,
+            }));
+        }
         setCurrentQuestionIndex(index);
     };
 
@@ -619,7 +665,27 @@ export default function QuizAttemptPage({
         setRenderKey((prev) => prev + 1);
     };
 
-    // Submit quiz
+    // Auto-submit (called by timer expiration — no confirmation dialog)
+    const handleAutoSubmit = async () => {
+        if (isSubmitting) return;
+        setIsSubmitting(true);
+
+        await saveCurrentAnswer();
+
+        router.post(
+            route('quiz.complete', attempt.id),
+            {},
+            {
+                onError: (errors) => {
+                    console.error('Failed to complete quiz:', errors);
+                    setIsSubmitting(false);
+                    isAutoSubmittingRef.current = false;
+                },
+            },
+        );
+    };
+
+    // Submit quiz (manual — shows confirmation if unanswered questions)
     const handleSubmit = async () => {
         if (isSubmitting) return;
 

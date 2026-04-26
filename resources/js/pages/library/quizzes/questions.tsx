@@ -695,16 +695,48 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                         </div>
                     ))}
                 </div>
-                {canAddMore && (
+                <div className="flex gap-2">
+                    {canAddMore && (
+                        <Button
+                            variant="outline"
+                            onClick={addOption}
+                            className="w-full flex-1"
+                        >
+                            <Plus className="mr-2 h-4 w-4" /> Tambah Opsi (
+                            {options.length}/8)
+                        </Button>
+                    )}
                     <Button
                         variant="outline"
-                        onClick={addOption}
-                        className="w-full"
+                        onClick={() => {
+                            const newQuestions = [...questions];
+                            const currentOptions = newQuestions[currentIndex].options || [];
+                            
+                            // Clone and shuffle
+                            const shuffled = [...currentOptions];
+                            for (let i = shuffled.length - 1; i > 0; i--) {
+                                const j = Math.floor(Math.random() * (i + 1));
+                                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                            }
+                            
+                            // Reorder order field
+                            const reordered = shuffled.map((o, idx) => ({
+                                ...o,
+                                order: idx + 1,
+                            }));
+
+                            newQuestions[currentIndex] = {
+                                ...newQuestions[currentIndex],
+                                options: reordered,
+                            };
+                            setQuestions(newQuestions);
+                        }}
+                        className="w-full flex-none sm:w-auto"
                     >
-                        <Plus className="mr-2 h-4 w-4" /> Tambah Opsi (
-                        {options.length}/8)
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 h-4 w-4"><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22"/><path d="m18 2 4 4-4 4"/><path d="M2 6h1.9c1.5 0 2.8.8 3.6 2.1l1.5 2.5"/><path d="m22 22-4-4 4-4"/><path d="M16 16v.1"/></svg>
+                        Acak Opsi
                     </Button>
-                )}
+                </div>
             </div>
         );
     };
@@ -876,13 +908,45 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                         </div>
                     </div>
                 ))}
-                <Button
-                    variant="outline"
-                    onClick={addMatchingPair}
-                    className="w-full"
-                >
-                    <Plus className="mr-2 h-4 w-4" /> Tambah Pasangan
-                </Button>
+                <div className="flex gap-2">
+                    <Button
+                        variant="outline"
+                        onClick={addMatchingPair}
+                        className="w-full flex-1"
+                    >
+                        <Plus className="mr-2 h-4 w-4" /> Tambah Pasangan
+                    </Button>
+                    <Button
+                        variant="outline"
+                        onClick={() => {
+                            const newQuestions = [...questions];
+                            const currentPairs = newQuestions[currentIndex].matching_pairs || [];
+                            
+                            // Clone and shuffle
+                            const shuffled = [...currentPairs];
+                            for (let i = shuffled.length - 1; i > 0; i--) {
+                                const j = Math.floor(Math.random() * (i + 1));
+                                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                            }
+                            
+                            // Reorder order field
+                            const reordered = shuffled.map((p, idx) => ({
+                                ...p,
+                                order: idx + 1,
+                            }));
+
+                            newQuestions[currentIndex] = {
+                                ...newQuestions[currentIndex],
+                                matching_pairs: reordered,
+                            };
+                            setQuestions(newQuestions);
+                        }}
+                        className="w-full flex-1"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 h-4 w-4"><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22"/><path d="m18 2 4 4-4 4"/><path d="M2 6h1.9c1.5 0 2.8.8 3.6 2.1l1.5 2.5"/><path d="m22 22-4-4 4-4"/><path d="M16 16v.1"/></svg>
+                        Acak Pasangan
+                    </Button>
+                </div>
             </div>
         );
     };

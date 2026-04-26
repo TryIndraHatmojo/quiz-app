@@ -91,6 +91,8 @@ export default function TelaahSoal({ quiz }: Props) {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [catatanToDelete, setCatatanToDelete] =
         useState<CatatanTelaahSoal | null>(null);
+    const [showAddSuccess, setShowAddSuccess] = useState(false);
+    const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
 
     const questions = quiz.questions || [];
     const currentQuestion = questions[currentQuestionIndex];
@@ -123,6 +125,8 @@ export default function TelaahSoal({ quiz }: Props) {
                 onSuccess: () => {
                     setNewCatatan('');
                     setSubmitting(false);
+                    setShowAddSuccess(true);
+                    setTimeout(() => setShowAddSuccess(false), 3000);
                 },
                 onError: () => {
                     setSubmitting(false);
@@ -145,6 +149,8 @@ export default function TelaahSoal({ quiz }: Props) {
                 onSuccess: () => {
                     setDeleteDialogOpen(false);
                     setCatatanToDelete(null);
+                    setShowDeleteSuccess(true);
+                    setTimeout(() => setShowDeleteSuccess(false), 3000);
                 },
             },
         );
@@ -404,10 +410,8 @@ export default function TelaahSoal({ quiz }: Props) {
                         Soal:
                     </span>
                     {questions.map((q, idx) => {
-                        const hasOpenNotes =
-                            (q.catatan_telaah_count ?? 0) > 0;
-                        const hasCatatan =
-                            (q.catatan_telaah?.length ?? 0) > 0;
+                        const hasOpenNotes = (q.catatan_telaah_count ?? 0) > 0;
+                        const hasCatatan = (q.catatan_telaah?.length ?? 0) > 0;
                         return (
                             <button
                                 key={idx}
@@ -605,7 +609,7 @@ export default function TelaahSoal({ quiz }: Props) {
                                                                 catatan,
                                                             )
                                                         }
-                                                        className="rounded p-1 text-red-400 opacity-0 transition-opacity hover:bg-red-50 hover:text-red-600 group-hover:opacity-100"
+                                                        className="rounded p-1 text-red-400 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-red-50 hover:text-red-600"
                                                         title="Hapus catatan"
                                                     >
                                                         <Trash2 className="h-3.5 w-3.5" />
@@ -614,7 +618,7 @@ export default function TelaahSoal({ quiz }: Props) {
                                             </div>
 
                                             {/* Catatan Body */}
-                                            <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                                            <p className="text-sm leading-relaxed whitespace-pre-wrap text-gray-700 dark:text-gray-300">
                                                 {catatan.catatan}
                                             </p>
                                         </div>
@@ -653,6 +657,24 @@ export default function TelaahSoal({ quiz }: Props) {
                     </div>
                 </DialogContent>
             </Dialog>
+
+            {showAddSuccess && (
+                <div className="fixed right-6 bottom-6 z-50 flex animate-in items-center gap-2 rounded-lg bg-green-500 px-4 py-3 text-white shadow-lg transition-all slide-in-from-bottom-5 fade-in">
+                    <CheckCircle2 className="h-5 w-5" />
+                    <span className="font-medium">
+                        Catatan telaah berhasil ditambahkan!
+                    </span>
+                </div>
+            )}
+
+            {showDeleteSuccess && (
+                <div className="fixed right-6 bottom-6 z-50 flex animate-in items-center gap-2 rounded-lg bg-red-500 px-4 py-3 text-white shadow-lg transition-all slide-in-from-bottom-5 fade-in">
+                    <Trash2 className="h-5 w-5" />
+                    <span className="font-medium">
+                        Catatan telaah berhasil dihapus!
+                    </span>
+                </div>
+            )}
         </AppSidebarLayout>
     );
 }

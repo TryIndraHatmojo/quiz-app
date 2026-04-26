@@ -14,9 +14,9 @@ class QuizQuestionOptionSeeder extends Seeder
     {
         $options = [];
 
-        // Get all multiple choice questions
+        // Get all multiple choice AND true_false questions
         $questions = DB::table('quiz_questions')
-            ->where('question_type', 'multiple_choice')
+            ->whereIn('question_type', ['multiple_choice', 'true_false'])
             ->get();
 
         foreach ($questions as $question) {
@@ -30,6 +30,24 @@ class QuizQuestionOptionSeeder extends Seeder
     private function getOptionsForQuestion($question)
     {
         $questionText = $question->question_text;
+        
+        // --- True / False Base Option ---
+        if ($question->question_type === 'true_false') {
+            // Kita set 'Benar' sebagai jawaban benar sementara agar tidak error saat seed. 
+            // Pastikan jika ada spesifik string, di override di bawah
+            $isTrueCorrect = true;
+            
+            // Check specific text if needed for True/False correct answer
+            if (strpos($questionText, 'adalah ibukota') !== false && strpos($questionText, 'Bandung') !== false) {
+                // Contoh jika Soal: "Bandung adalah ibukota Indonesia", maka isian "Benar" itu salah, is_correct 'Benar' = false
+                $isTrueCorrect = false;
+            }
+
+            return [
+                ['quiz_question_id' => $question->id, 'option_text' => 'Benar', 'is_correct' => $isTrueCorrect, 'order' => 1, 'created_at' => now(), 'updated_at' => now()],
+                ['quiz_question_id' => $question->id, 'option_text' => 'Salah', 'is_correct' => !$isTrueCorrect, 'order' => 2, 'created_at' => now(), 'updated_at' => now()],
+            ];
+        }
 
         // Math Quiz Options
         if (strpos($questionText, '15 + 27') !== false) {

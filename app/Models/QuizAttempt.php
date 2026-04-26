@@ -108,22 +108,12 @@ class QuizAttempt extends Model
             $this->duration_seconds = $this->started_at->diffInSeconds(now());
         }
         
-        // Calculate scores from non-matching answers and matching detail answers.
-        $answers = $this->answers()->with('question')->get();
-        $matchingDetailAnswers = $this->matchingPairAnswers;
+        // Calculate scores from answers
+        $answers = $this->answers()->get();
 
-        $nonMatchingAnswers = $answers->filter(function (QuizAnswer $answer) {
-            return $answer->question?->question_type !== QuizQuestion::TYPE_MATCHING_PAIRS;
-        });
-
-        $this->correct_count = $nonMatchingAnswers->where('is_correct', true)->count()
-            + $matchingDetailAnswers->where('is_correct', true)->count();
-
-        $this->wrong_count = $nonMatchingAnswers->where('is_correct', false)->count()
-            + $matchingDetailAnswers->where('is_correct', false)->count();
-
-        $this->total_points = (int) $nonMatchingAnswers->sum('awarded_points')
-            + (int) $matchingDetailAnswers->sum('awarded_points');
+        $this->correct_count = $answers->where('is_correct', true)->count();
+        $this->wrong_count = $answers->where('is_correct', false)->count();
+        $this->total_points = (int) $answers->sum('awarded_points');
         
         $this->save();
     }

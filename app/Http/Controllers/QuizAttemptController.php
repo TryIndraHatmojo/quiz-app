@@ -176,26 +176,38 @@ class QuizAttemptController extends Controller
                 break;
                 
             case 'short_answer':
-                $field = $question->shortAnswerFields()->first();
-                if ($field && $request->answer_text) {
-                    $expectedAnswer = $field->case_sensitive 
-                        ? $field->expected_answer 
-                        : strtolower($field->expected_answer);
-                    $givenAnswer = $field->case_sensitive 
-                        ? $request->answer_text 
-                        : strtolower($request->answer_text);
+                $fields = $question->shortAnswerFields()->orderBy('order')->get();
+                if ($fields->isNotEmpty() && $request->answer_text !== null) {
+                    $givenAnswers = explode('|||', $request->answer_text);
+                    $correctCount = 0;
+                    $totalFields = $fields->count();
+                    
+                    foreach ($fields as $index => $field) {
+                        $givenAnswer = $givenAnswers[$index] ?? '';
                         
-                    if ($field->trim_whitespace) {
-                        $expectedAnswer = trim($expectedAnswer);
-                        $givenAnswer = trim($givenAnswer);
+                        $expectedAnswer = $field->case_sensitive 
+                            ? $field->expected_answer 
+                            : strtolower($field->expected_answer);
+                        $given = $field->case_sensitive 
+                            ? $givenAnswer 
+                            : strtolower($givenAnswer);
+                            
+                        if ($field->trim_whitespace) {
+                            $expectedAnswer = trim($expectedAnswer);
+                            $given = trim($given);
+                        }
+                        
+                        if ($expectedAnswer === $given) {
+                            $correctCount++;
+                        }
                     }
                     
-                    $isCorrect = $expectedAnswer === $givenAnswer;
-                    $awardedPoints = $isCorrect ? $question->points : 0;
+                    $isCorrect = $totalFields > 0 && $correctCount === $totalFields;
+                    $awardedPoints = $totalFields > 0 ? (int) round(($correctCount / $totalFields) * $question->points) : 0;
                     
                     Log::info('saveAnswer: Short answer processed', [
-                        'expected_answer' => $expectedAnswer,
-                        'given_answer' => $givenAnswer,
+                        'correct_count' => $correctCount,
+                        'total_fields' => $totalFields,
                         'is_correct' => $isCorrect,
                         'awarded_points' => $awardedPoints
                     ]);
@@ -242,7 +254,7 @@ class QuizAttemptController extends Controller
                     }
 
                     $pairCorrect = !$isDuplicateRight
-                        && $leftPair->right_text === $selectedRightPair->right_text;
+                        && $leftPair->id === $selectedRightPair->id;
 
                     $matchingDetailRows[] = [
                         'quiz_attempt_id' => $attempt->id,
@@ -255,10 +267,9 @@ class QuizAttemptController extends Controller
                     ];
                 }
 
-                $awardedPoints = (int) collect($matchingDetailRows)->sum('awarded_points');
-                $isCorrect = $pairsCount > 0
-                    && count($matchingDetailRows) === $pairsCount
-                    && collect($matchingDetailRows)->every(fn (array $row) => $row['is_correct']);
+                $correctPairsCount = collect($matchingDetailRows)->where('is_correct', true)->count();
+                $isCorrect = $pairsCount > 0 && count($matchingDetailRows) === $pairsCount && $correctPairsCount === $pairsCount;
+                $awardedPoints = $pairsCount > 0 ? (int) round(($correctPairsCount / $pairsCount) * $question->points) : 0;
 
                 Log::info('saveAnswer: Matching pairs processed', [
                     'pairs_count' => $pairsCount,
@@ -382,6 +393,8 @@ class QuizAttemptController extends Controller
             'quiz.questions.shortAnswerFields',
             'quiz.background',
             'answers.selectedOption',
+            'answers.matchingPairAnswers.leftPair',
+            'answers.matchingPairAnswers.selectedRightPair',
         ]);
         
         Log::info('result: Data loaded for result page', [

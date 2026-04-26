@@ -182,10 +182,16 @@ export default function QuizAttemptPage({
         const shuffledQuestions = shuffleArray(rawQuestions);
         // Shuffle options for multiple choice and matching pairs questions
         return shuffledQuestions.map((q) => {
-            if (q.question_type === 'multiple_choice' && q.options?.length > 0) {
+            if (
+                q.question_type === 'multiple_choice' &&
+                q.options?.length > 0
+            ) {
                 return { ...q, options: shuffleArray(q.options) };
             }
-            if (q.question_type === 'matching_pairs' && q.matching_pairs?.length) {
+            if (
+                q.question_type === 'matching_pairs' &&
+                q.matching_pairs?.length
+            ) {
                 return { ...q, matching_pairs: shuffleArray(q.matching_pairs) };
             }
             return q;
@@ -323,8 +329,8 @@ export default function QuizAttemptPage({
 
     // Initialize timer based on quiz time_mode
     useEffect(() => {
-        if (quiz.time_mode === 'per_question' && quiz.duration) {
-            setTimeLeft(quiz.duration);
+        if (quiz.time_mode === 'per_question' && currentQuestion) {
+            setTimeLeft(currentQuestion.time_limit || 60);
         } else if (quiz.time_mode === 'total' && quiz.duration) {
             // For total time, calculate remaining time based on started_at
             const startedAt = new Date(attempt.started_at);
@@ -339,6 +345,7 @@ export default function QuizAttemptPage({
         }
     }, [
         currentQuestionIndex,
+        currentQuestion,
         quiz.time_mode,
         quiz.duration,
         attempt.started_at,
@@ -349,21 +356,26 @@ export default function QuizAttemptPage({
         if (timeLeft === null || timeLeft <= 0) return;
 
         const timer = setInterval(() => {
-            setTimeLeft((prev) => {
-                if (prev === null || prev <= 0) {
-                    clearInterval(timer);
-                    // Auto-submit if time runs out for total time mode
-                    if (quiz.time_mode === 'total') {
-                        handleSubmit();
-                    }
-                    return 0;
-                }
-                return prev - 1;
-            });
+            setTimeLeft((prev) => (prev !== null && prev > 0 ? prev - 1 : 0));
         }, 1000);
 
         return () => clearInterval(timer);
-    }, [timeLeft, quiz.time_mode]);
+    }, [timeLeft]);
+
+    // Handle timer expiration
+    useEffect(() => {
+        if (timeLeft === 0) {
+            if (quiz.time_mode === 'total') {
+                handleSubmit();
+            } else if (quiz.time_mode === 'per_question') {
+                if (currentQuestionIndex < questions.length - 1) {
+                    goToNext();
+                } else {
+                    handleSubmit();
+                }
+            }
+        }
+    }, [timeLeft, quiz.time_mode, currentQuestionIndex, questions.length]);
 
     const formatTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60);

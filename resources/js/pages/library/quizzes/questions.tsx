@@ -576,16 +576,20 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
         formData.append('title', `Question ${currentIndex + 1} Media`);
 
         try {
+            const getXsrfToken = () => {
+                const match = document.cookie.match(
+                    new RegExp('(^| )XSRF-TOKEN=([^;]+)'),
+                );
+                return match ? decodeURIComponent(match[2]) : '';
+            };
+
             const response = await fetch(route('master.galleries.store'), {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
                     Accept: 'application/json',
-                    'X-CSRF-TOKEN':
-                        document
-                            .querySelector('meta[name="csrf-token"]')
-                            ?.getAttribute('content') || '',
+                    'X-XSRF-TOKEN': getXsrfToken(),
                 },
                 body: formData,
             });
@@ -793,7 +797,8 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                         }}
                         className={`flex items-center justify-center gap-3 rounded-xl p-8 transition-all ${
                             currentQuestion.options[0]?.is_correct === true ||
-                            currentQuestion.options[0]?.is_correct === 1
+                            (currentQuestion.options[0]
+                                ?.is_correct as unknown) === 1
                                 ? 'bg-green-500 text-white ring-4 ring-green-300'
                                 : 'bg-white text-gray-700 shadow-sm ring-1 ring-gray-200 hover:ring-green-300'
                         }`}
@@ -827,7 +832,8 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                         }}
                         className={`flex items-center justify-center gap-3 rounded-xl p-8 transition-all ${
                             currentQuestion.options[1]?.is_correct === true ||
-                            currentQuestion.options[1]?.is_correct === 1
+                            (currentQuestion.options[1]
+                                ?.is_correct as unknown) === 1
                                 ? 'bg-red-500 text-white ring-4 ring-red-300'
                                 : 'bg-white text-gray-700 shadow-sm ring-1 ring-gray-200 hover:ring-red-300'
                         }`}

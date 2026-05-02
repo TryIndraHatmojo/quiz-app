@@ -55,7 +55,6 @@ interface Quiz {
     join_code: string;
     description: string;
     status: string;
-    time_mode: 'per_question' | 'total';
     duration: number | null;
     category?: QuizCategory;
     jenjang?: Jenjang;
@@ -531,9 +530,7 @@ export default function QuizIndex({
                                     <p className="mt-2 text-xs text-muted-foreground">
                                         Waktu:{' '}
                                         {quiz.duration
-                                            ? quiz.time_mode === 'per_question'
-                                                ? `${quiz.duration} detik/pertanyaan`
-                                                : `${quiz.duration} menit total`
+                                            ? `${quiz.duration} menit total`
                                             : 'Tidak diatur'}
                                     </p>
                                     <p className="mt-1 text-xs text-muted-foreground">

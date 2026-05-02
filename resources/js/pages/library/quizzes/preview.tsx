@@ -13,7 +13,6 @@ import {
     FileText,
     Link2,
     ListChecks,
-    Timer,
     ToggleLeft,
     X,
 } from 'lucide-react';
@@ -186,14 +185,12 @@ export default function QuizPreview({ quiz, canManageQuestions }: Props) {
         setHoveredRight(null);
     }, [currentQuestionIndex]);
 
-    // Initialize timer based on quiz time_mode
+    // Initialize timer based on total quiz duration
     useEffect(() => {
-        if (quiz.time_mode === 'per_question' && quiz.duration) {
-            setTimeLeft(quiz.duration);
-        } else if (quiz.time_mode === 'total' && quiz.duration) {
+        if (quiz.duration) {
             setTimeLeft(quiz.duration * 60); // Convert minutes to seconds
         }
-    }, [currentQuestionIndex, quiz.time_mode, quiz.duration]);
+    }, [quiz.duration]);
 
     // Timer countdown
     useEffect(() => {
@@ -859,11 +856,7 @@ export default function QuizPreview({ quiz, canManageQuestions }: Props) {
                                     : 'bg-white/20'
                             }`}
                         >
-                            {quiz.time_mode === 'per_question' ? (
-                                <Timer className="h-5 w-5" />
-                            ) : (
-                                <Clock className="h-5 w-5" />
-                            )}
+                            <Clock className="h-5 w-5" />
                             <span className="font-mono text-2xl font-bold">
                                 {formatTime(timeLeft)}
                             </span>

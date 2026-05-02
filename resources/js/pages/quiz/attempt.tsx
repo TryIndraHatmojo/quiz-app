@@ -13,7 +13,6 @@ import {
     Link2,
     ListChecks,
     Send,
-    Timer,
     ToggleLeft,
     X,
 } from 'lucide-react';
@@ -159,7 +158,6 @@ export default function QuizAttemptPage({
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [answers, setAnswers] = useState<Record<number, Answer>>({});
     const [timeLeft, setTimeLeft] = useState<number | null>(null);
-    const [perQuestionTimers, setPerQuestionTimers] = useState<Record<number, number>>({});
     const [isSaving, setIsSaving] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const isAutoSubmittingRef = useRef(false);
@@ -329,24 +327,9 @@ export default function QuizAttemptPage({
         setHoveredRight(null);
     }, [currentQuestionIndex]);
 
-    // Initialize per-question timers once on mount
+    // Initialize timeLeft based on total quiz duration
     useEffect(() => {
-        if (quiz.time_mode === 'per_question') {
-            const timers: Record<number, number> = {};
-            questions.forEach((q, idx) => {
-                timers[idx] = q.time_limit || 60;
-            });
-            setPerQuestionTimers(timers);
-        }
-    }, [quiz.time_mode, questions]);
-
-    // Initialize/update timeLeft based on quiz time_mode
-    useEffect(() => {
-        if (quiz.time_mode === 'per_question') {
-            // Load the saved timer for the current question
-            setTimeLeft(perQuestionTimers[currentQuestionIndex] ?? (currentQuestion?.time_limit || 60));
-        } else if (quiz.time_mode === 'total' && quiz.duration) {
-            // For total time, calculate remaining time based on started_at (only on first render)
+        if (quiz.duration) {
             const startedAt = new Date(attempt.started_at);
             const elapsedSeconds = Math.floor(
                 (Date.now() - startedAt.getTime()) / 1000,
@@ -358,7 +341,7 @@ export default function QuizAttemptPage({
             setTimeLeft(remainingSeconds);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentQuestionIndex, quiz.time_mode]);
+    }, []);
 
     // Timer countdown - runs every second
     useEffect(() => {
@@ -367,41 +350,20 @@ export default function QuizAttemptPage({
         const timer = setInterval(() => {
             setTimeLeft((prev) => {
                 if (prev === null || prev <= 0) return 0;
-                const newVal = prev - 1;
-                // For per_question mode, persist the countdown in the record
-                if (quiz.time_mode === 'per_question') {
-                    setPerQuestionTimers((timers) => ({
-                        ...timers,
-                        [currentQuestionIndex]: newVal,
-                    }));
-                }
-                return newVal;
+                return prev - 1;
             });
         }, 1000);
 
         return () => clearInterval(timer);
-    }, [timeLeft, quiz.time_mode, currentQuestionIndex]);
+    }, [timeLeft]);
 
-    // Handle timer expiration
+    // Handle timer expiration - auto-submit when time runs out
     useEffect(() => {
         if (timeLeft !== 0 || isAutoSubmittingRef.current) return;
 
-        if (quiz.time_mode === 'total') {
-            // Auto-submit immediately, no confirmation dialog
-            isAutoSubmittingRef.current = true;
-            handleAutoSubmit();
-        } else if (quiz.time_mode === 'per_question') {
-            // Save current answer then advance
-            saveCurrentAnswer().then(() => {
-                if (currentQuestionIndex < questions.length - 1) {
-                    setCurrentQuestionIndex((prev) => prev + 1);
-                } else {
-                    // Last question, auto-submit
-                    isAutoSubmittingRef.current = true;
-                    handleAutoSubmit();
-                }
-            });
-        }
+        // Auto-submit immediately, no confirmation dialog
+        isAutoSubmittingRef.current = true;
+        handleAutoSubmit();
     }, [timeLeft]);
 
     const formatTime = (seconds: number) => {
@@ -413,13 +375,6 @@ export default function QuizAttemptPage({
     const goToNext = () => {
         if (currentQuestionIndex < questions.length - 1) {
             saveCurrentAnswer();
-            // Save current timer before switching (per_question mode)
-            if (quiz.time_mode === 'per_question' && timeLeft !== null) {
-                setPerQuestionTimers((prev) => ({
-                    ...prev,
-                    [currentQuestionIndex]: timeLeft,
-                }));
-            }
             setCurrentQuestionIndex(currentQuestionIndex + 1);
         }
     };
@@ -427,24 +382,12 @@ export default function QuizAttemptPage({
     const goToPrevious = () => {
         if (currentQuestionIndex > 0) {
             saveCurrentAnswer();
-            if (quiz.time_mode === 'per_question' && timeLeft !== null) {
-                setPerQuestionTimers((prev) => ({
-                    ...prev,
-                    [currentQuestionIndex]: timeLeft,
-                }));
-            }
             setCurrentQuestionIndex(currentQuestionIndex - 1);
         }
     };
 
     const goToQuestion = (index: number) => {
         saveCurrentAnswer();
-        if (quiz.time_mode === 'per_question' && timeLeft !== null) {
-            setPerQuestionTimers((prev) => ({
-                ...prev,
-                [currentQuestionIndex]: timeLeft,
-            }));
-        }
         setCurrentQuestionIndex(index);
     };
 
@@ -1251,11 +1194,7 @@ export default function QuizAttemptPage({
                                     : 'bg-white/20'
                             }`}
                         >
-                            {quiz.time_mode === 'per_question' ? (
-                                <Timer className="h-5 w-5" />
-                            ) : (
-                                <Clock className="h-5 w-5" />
-                            )}
+                            <Clock className="h-5 w-5" />
                             <span className="font-mono text-2xl font-bold">
                                 {formatTime(timeLeft)}
                             </span>

@@ -28,13 +28,11 @@ class QuizQuestion extends Model
         'question_text',
         'media_path',
         'explanation',
-        'time_limit',
         'points',
         'order',
     ];
 
     protected $casts = [
-        'time_limit' => 'integer',
         'points' => 'integer',
         'order' => 'integer',
     ];

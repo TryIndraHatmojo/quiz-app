@@ -16,9 +16,8 @@ import {
     type QuizBackground,
     type QuizCategory,
 } from '@/types';
-import { type TimeMode } from '@/types/quiz';
 import { Head, useForm } from '@inertiajs/react';
-import { Clock, Timer } from 'lucide-react';
+import { Clock } from 'lucide-react';
 import { FormEventHandler } from 'react';
 
 interface Jenjang {
@@ -69,7 +68,6 @@ export default function QuizCreate({
         kelas_id: '',
         quiz_background_id: '',
         background_file: null as File | null,
-        time_mode: 'per_question' as TimeMode,
         duration: 30,
         starts_at: '',
         ends_at: '',
@@ -266,75 +264,9 @@ export default function QuizCreate({
                                 </Label>
                             </div>
 
-                            <div className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label>Mode Waktu</Label>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                setData((d) => ({
-                                                    ...d,
-                                                    time_mode: 'per_question',
-                                                    duration: 30,
-                                                }))
-                                            }
-                                            className={`flex flex-col items-center gap-2 rounded-lg border-2 p-4 transition-all ${
-                                                data.time_mode ===
-                                                'per_question'
-                                                    ? 'border-primary bg-primary/5'
-                                                    : 'border-gray-200 hover:border-gray-300'
-                                            }`}
-                                        >
-                                            <Timer
-                                                className={`h-6 w-6 ${data.time_mode === 'per_question' ? 'text-primary' : 'text-muted-foreground'}`}
-                                            />
-                                            <span
-                                                className={`font-medium ${data.time_mode === 'per_question' ? 'text-primary' : ''}`}
-                                            >
-                                                Per Pertanyaan
-                                            </span>
-                                            <span className="text-center text-xs text-muted-foreground">
-                                                Setiap pertanyaan memiliki batas
-                                                waktu sendiri
-                                            </span>
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                setData((d) => ({
-                                                    ...d,
-                                                    time_mode: 'total',
-                                                    duration: 15,
-                                                }))
-                                            }
-                                            className={`flex flex-col items-center gap-2 rounded-lg border-2 p-4 transition-all ${
-                                                data.time_mode === 'total'
-                                                    ? 'border-primary bg-primary/5'
-                                                    : 'border-gray-200 hover:border-gray-300'
-                                            }`}
-                                        >
-                                            <Clock
-                                                className={`h-6 w-6 ${data.time_mode === 'total' ? 'text-primary' : 'text-muted-foreground'}`}
-                                            />
-                                            <span
-                                                className={`font-medium ${data.time_mode === 'total' ? 'text-primary' : ''}`}
-                                            >
-                                                Total Waktu
-                                            </span>
-                                            <span className="text-center text-xs text-muted-foreground">
-                                                Waktu dihitung untuk seluruh
-                                                kuis
-                                            </span>
-                                        </button>
-                                    </div>
-                                </div>
-
                                 <div className="space-y-2">
                                     <Label htmlFor="duration">
-                                        {data.time_mode === 'per_question'
-                                            ? 'Durasi per Pertanyaan (detik)'
-                                            : 'Total Durasi (menit)'}
+                                        Total Durasi (menit)
                                     </Label>
                                     <div className="flex items-center gap-2">
                                         <Input
@@ -352,9 +284,7 @@ export default function QuizCreate({
                                             className="w-32"
                                         />
                                         <span className="text-muted-foreground">
-                                            {data.time_mode === 'per_question'
-                                                ? 'detik'
-                                                : 'menit'}
+                                            menit
                                         </span>
                                     </div>
                                     {errors.duration && (
@@ -363,12 +293,6 @@ export default function QuizCreate({
                                         </p>
                                     )}
                                 </div>
-                            </div>
-                            {errors.time_mode && (
-                                <p className="text-sm text-destructive">
-                                    {errors.time_mode}
-                                </p>
-                            )}
                         </div>
 
                         {/* Exam Schedule */}

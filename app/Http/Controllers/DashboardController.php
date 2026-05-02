@@ -37,7 +37,6 @@ class DashboardController extends Controller
                     'title' => $quiz->title,
                     'description' => $quiz->description,
                     'status' => $quiz->status,
-                    'time_mode' => $quiz->time_mode,
                     'duration' => $quiz->duration,
                     'category' => $quiz->category,
                     'background' => $quiz->background,

@@ -11,13 +11,6 @@ class Quiz extends Model
 {
     use HasFactory;
 
-    public const TIME_MODE_PER_QUESTION = 'per_question';
-    public const TIME_MODE_TOTAL = 'total';
-
-    public const TIME_MODES = [
-        self::TIME_MODE_PER_QUESTION,
-        self::TIME_MODE_TOTAL,
-    ];
 
     protected $fillable = [
         'user_id',
@@ -29,7 +22,6 @@ class Quiz extends Model
         'join_code',
         'description',
         'status',
-        'time_mode',
         'duration',
         'starts_at',
         'ends_at',

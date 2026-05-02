@@ -10,7 +10,6 @@ interface StudentQuiz {
     title: string;
     description: string | null;
     status: string;
-    time_mode: 'per_question' | 'total';
     duration: number | null;
     category: QuizCategory | null;
     background: QuizBackground | null;
@@ -35,9 +34,6 @@ export default function Dashboard({ isStudent, studentQuizzes }: Props) {
     // Format duration display
     const formatDuration = (quiz: StudentQuiz) => {
         if (!quiz.duration) return 'Tidak ada batas waktu';
-        if (quiz.time_mode === 'per_question') {
-            return `${quiz.duration} detik/soal`;
-        }
         return `${quiz.duration} menit total`;
     };
 

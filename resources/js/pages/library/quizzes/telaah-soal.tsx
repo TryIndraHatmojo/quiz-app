@@ -23,7 +23,6 @@ import {
     CheckCircle2,
     ChevronLeft,
     ChevronRight,
-    Clock,
     FileText,
     Link2,
     ListChecks,
@@ -178,10 +177,6 @@ export default function TelaahSoal({ quiz }: Props) {
                     >
                         {typeInfo?.icon}
                         {typeInfo?.label}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                        <Clock className="mr-1 inline h-3 w-3" />
-                        {question.time_limit} detik
                     </span>
                     <span className="text-xs text-muted-foreground">
                         {question.points} poin

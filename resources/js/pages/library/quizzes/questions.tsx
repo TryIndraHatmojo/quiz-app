@@ -177,7 +177,6 @@ const createDefaultQuestion = (
         question_type: type,
         question_text: 'Pertanyaan Baru',
         explanation: '',
-        time_limit: 30,
         points: 100,
         order: 0,
         options: [],
@@ -389,7 +388,6 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
         newQuestion.question_text = currentQuestion.question_text;
         newQuestion.media_path = currentQuestion.media_path;
         newQuestion.explanation = currentQuestion.explanation;
-        newQuestion.time_limit = currentQuestion.time_limit;
         newQuestion.points = currentQuestion.points;
         newQuestion.order = currentQuestion.order;
         newQuestions[currentIndex] = newQuestion;
@@ -1529,47 +1527,11 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                         <div className="mx-auto max-w-5xl space-y-6">
                             {/* Question Settings Row */}
                             <div className="flex items-center justify-end gap-4">
-                                {quiz.time_mode === 'per_question' && (
-                                    <div className="flex items-center gap-2">
-                                        <Label className="text-sm">
-                                            Waktu:
-                                        </Label>
-                                        <Select
-                                            value={String(
-                                                currentQuestion.time_limit,
-                                            )}
-                                            onValueChange={(value) =>
-                                                updateCurrentQuestion(
-                                                    'time_limit',
-                                                    parseInt(value),
-                                                )
-                                            }
-                                        >
-                                            <SelectTrigger className="w-24">
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {[
-                                                    10, 20, 30, 45, 60, 90, 120,
-                                                ].map((sec) => (
-                                                    <SelectItem
-                                                        key={sec}
-                                                        value={String(sec)}
-                                                    >
-                                                        {sec} dtk
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                )}
-                                {quiz.time_mode === 'total' && (
-                                    <div className="flex items-center gap-2 rounded-md bg-blue-50 px-3 py-1.5 text-sm text-blue-700">
-                                        <span>
-                                            Total waktu: {quiz.duration} menit
-                                        </span>
-                                    </div>
-                                )}
+                                <div className="flex items-center gap-2 rounded-md bg-blue-50 px-3 py-1.5 text-sm text-blue-700">
+                                    <span>
+                                        Total waktu: {quiz.duration ? `${quiz.duration} menit` : 'Tidak diatur'}
+                                    </span>
+                                </div>
                                 <div className="flex items-center gap-2">
                                     <Label className="text-sm">Poin:</Label>
                                     <Input

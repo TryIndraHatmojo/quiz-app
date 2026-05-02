@@ -42,7 +42,6 @@ export interface QuizQuestion {
     question_text: string;
     media_path?: string | null;
     explanation?: string | null;
-    time_limit: number;
     points: number;
     order: number;
     options: QuizQuestionOption[];
@@ -52,7 +51,6 @@ export interface QuizQuestion {
     catatan_telaah_count?: number;
 }
 
-export type TimeMode = 'per_question' | 'total';
 
 export interface Quiz {
     id: number;
@@ -60,7 +58,6 @@ export interface Quiz {
     description: string;
     quiz_category_id: number;
     status: string;
-    time_mode: TimeMode;
     duration: number | null;
     starts_at?: string | null;
     ends_at?: string | null;

@@ -322,7 +322,7 @@ export default function TelaahSoal({ quiz }: Props) {
     if (!currentQuestion) {
         return (
             <AppSidebarLayout breadcrumbs={breadcrumbs}>
-                <Head title={`Telaah Soal - ${quiz.title}`} />
+                <Head title={`Telaah Soal - ${quiz?.title}`} />
                 <div className="flex flex-col items-center justify-center p-12">
                     <h2 className="mb-4 text-2xl font-bold">
                         Tidak ada pertanyaan
@@ -380,7 +380,7 @@ export default function TelaahSoal({ quiz }: Props) {
                             Telaah Soal
                         </h1>
                         <p className="text-muted-foreground">
-                            {quiz.title} —{' '}
+                            {quiz?.title} —{' '}
                             <span className="font-medium text-amber-600">
                                 {totalButuhReview} catatan butuh review
                             </span>
@@ -391,12 +391,32 @@ export default function TelaahSoal({ quiz }: Props) {
                             )}
                         </p>
                     </div>
-                    <Button variant="outline" asChild>
-                        <Link href={route('library.quizzes.index')}>
-                            <ArrowLeft className="mr-2 h-4 w-4" />
-                            Kembali
-                        </Link>
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        {quiz?.status !== 'live' && (
+                            <Button
+                                onClick={() => {
+                                    if (quiz?.id) {
+                                        router.patch(
+                                            route('library.quizzes.status.update', {
+                                                quiz: quiz.id,
+                                                redirect_to_index: 1,
+                                            }),
+                                            { status: 'live' },
+                                        );
+                                    }
+                                }}
+                                className="bg-green-600 text-white hover:bg-green-700"
+                            >
+                                <Send className="mr-2 h-4 w-4" /> Publish
+                            </Button>
+                        )}
+                        <Button variant="outline" asChild>
+                            <Link href={route('library.quizzes.index')}>
+                                <ArrowLeft className="mr-2 h-4 w-4" />
+                                Kembali
+                            </Link>
+                        </Button>
+                    </div>
                 </div>
 
                 {/* Question Navigation */}

@@ -551,13 +551,7 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
     };
 
     const save = () => {
-        post(route('library.quizzes.questions.store', quiz.id), {
-            preserveScroll: true,
-            onSuccess: () => {
-                setShowSuccess(true);
-                setTimeout(() => setShowSuccess(false), 3000);
-            },
-        });
+        post(route('library.quizzes.questions.store', { quiz: quiz.id, redirect_to_index: 1 }));
     };
 
     const handleSelectGalleryItem = (gallery: Gallery) => {
@@ -1481,21 +1475,18 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                                 {quiz.status !== 'live' && (
                                     <Button
                                         onClick={() => {
-                                            router.patch(
-                                                route(
-                                                    'library.quizzes.status.update',
-                                                    quiz.id,
-                                                ),
-                                                { status: 'live' },
-                                                {
-                                                    onSuccess: () =>
-                                                        router.visit(
-                                                            route(
-                                                                'library.quizzes.index',
-                                                            ),
+                                            post(route('library.quizzes.questions.store', quiz.id), {
+                                                preserveScroll: true,
+                                                onSuccess: () => {
+                                                    router.patch(
+                                                        route(
+                                                            'library.quizzes.status.update',
+                                                            { quiz: quiz.id, redirect_to_index: 1 }
                                                         ),
+                                                        { status: 'live' }
+                                                    );
                                                 },
-                                            );
+                                            });
                                         }}
                                         size="sm"
                                         className="bg-green-600 hover:bg-green-700"

@@ -277,7 +277,7 @@ class QuizController extends Controller
 
     public function updateStatus(Request $request, Quiz $quiz)
     {
-        if (!$this->canEditQuiz($quiz)) {
+        if (!$this->canEditQuiz($quiz) && !$this->canReviewQuiz($quiz)) {
             abort(403);
         }
 
@@ -286,6 +286,11 @@ class QuizController extends Controller
         ]);
 
         $quiz->update(['status' => $request->status]);
+
+        if ($request->query('redirect_to_index')) {
+            return redirect()->route('library.quizzes.index')
+                ->with('success', 'Status kuis berhasil diperbarui.');
+        }
 
         return back()->with('success', 'Status kuis berhasil diperbarui.');
     }
@@ -488,6 +493,11 @@ class QuizController extends Controller
                     ]);
                 }
             }
+        }
+
+        if ($request->query('redirect_to_index')) {
+            return redirect()->route('library.quizzes.index')
+                ->with('success', 'Pertanyaan berhasil disimpan.');
         }
 
         return back()->with('success', 'Pertanyaan berhasil disimpan.');

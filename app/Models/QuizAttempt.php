@@ -11,12 +11,14 @@ class QuizAttempt extends Model
     protected $fillable = [
         'quiz_id',
         'user_id',
+        'attempt_number',
         'started_at',
         'completed_at',
         'total_points',
         'correct_count',
         'wrong_count',
         'duration_seconds',
+        'is_graded',
     ];
 
     protected $casts = [
@@ -26,6 +28,8 @@ class QuizAttempt extends Model
         'correct_count' => 'integer',
         'wrong_count' => 'integer',
         'duration_seconds' => 'integer',
+        'attempt_number' => 'integer',
+        'is_graded' => 'boolean',
     ];
 
     /**
@@ -98,6 +102,7 @@ class QuizAttempt extends Model
 
     /**
      * Complete the attempt and calculate scores.
+     * If this is the first completed attempt for this user+quiz, mark it as graded.
      */
     public function complete(): void
     {
@@ -115,6 +120,36 @@ class QuizAttempt extends Model
         $this->wrong_count = $answers->where('is_correct', false)->count();
         $this->total_points = (int) $answers->sum('awarded_points');
         
+        // Check if this should be the graded attempt (first completed for this user+quiz)
+        $hasGradedAttempt = static::where('quiz_id', $this->quiz_id)
+            ->where('user_id', $this->user_id)
+            ->where('is_graded', true)
+            ->exists();
+            
+        if (!$hasGradedAttempt) {
+            $this->is_graded = true;
+        }
+        
         $this->save();
+    }
+
+    /**
+     * Scope to only graded attempts (ones that count toward Nilai).
+     */
+    public function scopeGraded($query)
+    {
+        return $query->where('is_graded', true);
+    }
+
+    /**
+     * Get the next attempt number for a user+quiz combo.
+     */
+    public static function getNextAttemptNumber(int $quizId, int $userId): int
+    {
+        $maxNumber = static::where('quiz_id', $quizId)
+            ->where('user_id', $userId)
+            ->max('attempt_number');
+
+        return ($maxNumber ?? 0) + 1;
     }
 }

@@ -13,8 +13,10 @@ import {
     ClipboardCheck,
     Eye,
     GraduationCap,
+    Medal,
     PencilLine,
     RefreshCw,
+    RotateCcw,
     Trophy,
     XCircle,
 } from 'lucide-react';
@@ -28,6 +30,9 @@ interface JenjangInfo {
 
 interface AttemptItem {
     id: number;
+    attempt_number: number;
+    is_graded: boolean;
+    total_attempts: number;
     quiz: {
         id: number;
         title: string;
@@ -242,11 +247,25 @@ function QuizScoreCard({
                                             className="border-b border-sidebar-border/40 transition-colors hover:bg-accent/20"
                                         >
                                             <td className="px-4 py-2.5">
-                                                <div className="font-medium">
-                                                    {attempt.student.name}
+                                                <div className="flex items-center gap-2">
+                                                    <div className="font-medium">
+                                                        {attempt.student.name}
+                                                    </div>
+                                                    {attempt.is_graded && (
+                                                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400">
+                                                            <Medal className="h-2.5 w-2.5" />
+                                                            Nilai Resmi
+                                                        </span>
+                                                    )}
                                                 </div>
-                                                <div className="text-xs text-muted-foreground">
-                                                    {attempt.student.email}
+                                                <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+                                                    <span>{attempt.student.email}</span>
+                                                    {attempt.total_attempts > 1 && (
+                                                        <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground/70">
+                                                            <RotateCcw className="h-2.5 w-2.5" />
+                                                            {attempt.total_attempts}x percobaan
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </td>
                                             <td className="px-4 py-2.5">

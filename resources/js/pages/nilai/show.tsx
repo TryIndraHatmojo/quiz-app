@@ -6,10 +6,13 @@ import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
+    Award,
     CheckCircle2,
     Eye,
+    Medal,
     PencilLine,
     RefreshCw,
+    RotateCcw,
     Save,
     Trophy,
     XCircle,
@@ -18,6 +21,9 @@ import { useMemo, useState } from 'react';
 
 interface AttemptDetail {
     id: number;
+    attempt_number: number;
+    is_graded: boolean;
+    total_attempts: number;
     quiz: {
         id: number;
         title: string;
@@ -139,6 +145,28 @@ export default function NilaiShow({
                             Quiz: {attempt.quiz.title} | Siswa:{' '}
                             {attempt.student.name}
                         </p>
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-accent px-2.5 py-0.5 text-xs font-medium">
+                                <RotateCcw className="h-3 w-3" />
+                                Percobaan ke-{attempt.attempt_number}
+                            </span>
+                            {attempt.is_graded ? (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                                    <Medal className="h-3 w-3" />
+                                    Nilai Resmi
+                                </span>
+                            ) : (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400">
+                                    <Award className="h-3 w-3" />
+                                    Latihan
+                                </span>
+                            )}
+                            {attempt.total_attempts > 1 && (
+                                <span className="text-xs text-muted-foreground">
+                                    ({attempt.total_attempts} total attempt)
+                                </span>
+                            )}
+                        </div>
                     </div>
 
                     <Button variant="outline" asChild>
@@ -148,6 +176,29 @@ export default function NilaiShow({
                         </Link>
                     </Button>
                 </div>
+
+                {/* Graded Info Banner */}
+                {attempt.is_graded && (
+                    <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300">
+                        <div className="flex items-center gap-2">
+                            <Medal className="h-4 w-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                            <span>
+                                Ini adalah <strong>nilai resmi</strong> (percobaan pertama) yang masuk ke penilaian.
+                            </span>
+                        </div>
+                    </div>
+                )}
+
+                {!attempt.is_graded && (
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
+                        <div className="flex items-center gap-2">
+                            <Award className="h-4 w-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+                            <span>
+                                Percobaan ini <strong>tidak masuk penilaian resmi</strong>. Hanya percobaan pertama yang menjadi nilai resmi.
+                            </span>
+                        </div>
+                    </div>
+                )}
 
                 {/* Score Summary Card */}
                 <div className="overflow-hidden rounded-xl border border-sidebar-border bg-sidebar">

@@ -2,19 +2,25 @@ import { Button } from '@/components/ui/button';
 import { Quiz } from '@/types/quiz';
 import { Head, router } from '@inertiajs/react';
 import {
+    Award,
     BarChart3,
     Check,
     Clock,
+    History,
     Home,
+    Medal,
     RotateCcw,
     Trophy,
     X,
+    Zap,
 } from 'lucide-react';
 
 interface QuizAttempt {
     id: number;
     quiz_id: number;
     user_id: number;
+    attempt_number: number;
+    is_graded: boolean;
     started_at: string;
     completed_at: string;
     total_points: number;
@@ -55,9 +61,11 @@ interface QuizAnswer {
 
 interface Props {
     attempt: QuizAttempt;
+    totalAttempts: number;
+    quizIsLive: boolean;
 }
 
-export default function QuizResult({ attempt }: Props) {
+export default function QuizResult({ attempt, totalAttempts, quizIsLive }: Props) {
     const quiz = attempt.quiz;
     const questions = quiz.questions || [];
     const answers = attempt.answers || [];
@@ -105,6 +113,26 @@ export default function QuizResult({ attempt }: Props) {
                         Quiz Selesai! 🎉
                     </h1>
                     <p className="text-lg text-white/80">{quiz.title}</p>
+
+                    {/* Attempt badge */}
+                    <div className="mt-3 flex items-center justify-center gap-2 flex-wrap">
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 backdrop-blur-sm px-3 py-1 text-sm font-medium text-white">
+                            <RotateCcw className="h-3.5 w-3.5" />
+                            Percobaan ke-{attempt.attempt_number}
+                        </span>
+                        {attempt.is_graded && (
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600 px-3 py-1 text-sm font-bold text-white shadow-lg shadow-emerald-500/30">
+                                <Medal className="h-3.5 w-3.5" />
+                                Nilai Resmi
+                            </span>
+                        )}
+                        {!attempt.is_graded && (
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 backdrop-blur-sm px-3 py-1 text-sm text-white/70">
+                                <Award className="h-3.5 w-3.5" />
+                                Latihan (tidak masuk penilaian)
+                            </span>
+                        )}
+                    </div>
                 </div>
 
                 {/* Score Card */}
@@ -200,19 +228,60 @@ export default function QuizResult({ attempt }: Props) {
                                     <Home className="mr-2 h-4 w-4" />
                                     Kembali ke Dashboard
                                 </Button>
-                                <Button
-                                    variant="outline"
-                                    className="flex-1"
-                                    onClick={() =>
-                                        router.visit(
-                                            route('quiz.start', quiz.id),
-                                        )
-                                    }
-                                >
-                                    <RotateCcw className="mr-2 h-4 w-4" />
-                                    Coba Lagi
-                                </Button>
+
+                                {totalAttempts > 0 && (
+                                    <Button
+                                        variant="outline"
+                                        className="flex-1"
+                                        onClick={() =>
+                                            router.visit(
+                                                route('quiz.history', quiz.id),
+                                            )
+                                        }
+                                    >
+                                        <History className="mr-2 h-4 w-4" />
+                                        Riwayat ({totalAttempts} percobaan)
+                                    </Button>
+                                )}
+
+                                {quizIsLive && (
+                                    <Button
+                                        variant="outline"
+                                        className="flex-1 border-indigo-200 text-indigo-600 hover:bg-indigo-50"
+                                        onClick={() =>
+                                            router.visit(
+                                                route('quiz.start', quiz.id),
+                                            )
+                                        }
+                                    >
+                                        <Zap className="mr-2 h-4 w-4" />
+                                        Coba Lagi
+                                    </Button>
+                                )}
                             </div>
+
+                            {/* Graded info text */}
+                            {!attempt.is_graded && (
+                                <div className="mt-4 rounded-xl bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800">
+                                    <div className="flex items-center gap-2">
+                                        <Award className="h-4 w-4 text-amber-600 flex-shrink-0" />
+                                        <span>
+                                            Percobaan ini <strong>tidak masuk penilaian</strong>. Hanya percobaan pertama yang menjadi nilai resmi.
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {attempt.is_graded && (
+                                <div className="mt-4 rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-sm text-emerald-800">
+                                    <div className="flex items-center gap-2">
+                                        <Medal className="h-4 w-4 text-emerald-600 flex-shrink-0" />
+                                        <span>
+                                            Percobaan ini adalah <strong>nilai resmi</strong> yang masuk ke penilaian.
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

@@ -15,6 +15,7 @@ import {
     Send,
     ToggleLeft,
     X,
+    RotateCcw,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -22,6 +23,7 @@ interface QuizAttempt {
     id: number;
     quiz_id: number;
     user_id: number;
+    attempt_number: number;
     started_at: string;
     completed_at: string | null;
     total_points: number;
@@ -1151,8 +1153,14 @@ export default function QuizAttemptPage({
             <div className="flex items-center justify-between bg-black/40 p-4 text-white backdrop-blur-sm">
                 <div className="flex items-center gap-4">
                     <div>
-                        <h1 className="text-xl font-bold">{quiz.title}</h1>
-                        <div className="flex items-center gap-2 text-sm text-white/80">
+                        <div className="flex items-center gap-3">
+                            <h1 className="text-xl font-bold">{quiz.title}</h1>
+                            <span className="flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-xs font-medium backdrop-blur-md">
+                                <RotateCcw className="h-3 w-3" />
+                                Percobaan #{attempt.attempt_number}
+                            </span>
+                        </div>
+                        <div className="mt-1 flex items-center gap-2 text-sm text-white/80">
                             <span
                                 className={`flex items-center gap-1 rounded px-2 py-0.5 ${questionTypeLabels[currentQuestion.question_type]?.color || 'bg-gray-500'}`}
                             >

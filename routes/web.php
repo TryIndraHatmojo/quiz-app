@@ -54,6 +54,7 @@ Route::middleware(['auth', 'verified'])->prefix('quiz')->name('quiz.')->group(fu
     Route::post('attempt/{attempt}/answer', [App\Http\Controllers\QuizAttemptController::class, 'saveAnswer'])->name('answer');
     Route::post('attempt/{attempt}/complete', [App\Http\Controllers\QuizAttemptController::class, 'complete'])->name('complete');
     Route::get('attempt/{attempt}/result', [App\Http\Controllers\QuizAttemptController::class, 'result'])->name('result');
+    Route::get('{quiz}/history', [App\Http\Controllers\QuizAttemptController::class, 'history'])->name('history');
 });
 
 Route::middleware(['auth', 'verified'])->prefix('nilai')->name('nilai.')->group(function () {

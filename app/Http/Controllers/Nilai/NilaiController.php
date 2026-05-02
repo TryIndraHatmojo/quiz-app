@@ -27,10 +27,11 @@ class NilaiController extends Controller
         }
 
         // -------------------------------------------------------
-        // Base query: completed attempts with eager loads
+        // Base query: only graded (first completed) attempts
         // -------------------------------------------------------
         $query = QuizAttempt::query()
             ->whereNotNull('completed_at')
+            ->where('is_graded', true)
             ->with([
                 'quiz:id,title,user_id,jenjang_id,kelas_id,passing_score,starts_at',
                 'quiz.questions:id,quiz_id,points',
@@ -157,8 +158,17 @@ class NilaiController extends Controller
 
             $isPassed = $maxPoints > 0 && $scorePercentage >= $passingScore;
 
+            // Count total attempts for this student + quiz
+            $totalAttempts = QuizAttempt::where('quiz_id', $attempt->quiz_id)
+                ->where('user_id', $attempt->user_id)
+                ->whereNotNull('completed_at')
+                ->count();
+
             return [
                 'id' => $attempt->id,
+                'attempt_number' => (int) $attempt->attempt_number,
+                'is_graded' => (bool) $attempt->is_graded,
+                'total_attempts' => $totalAttempts,
                 'quiz' => [
                     'id' => $quiz?->id,
                     'title' => $quiz?->title,
@@ -287,9 +297,18 @@ class NilaiController extends Controller
             : 0;
         $isPassed = $maxPoints > 0 && $scorePercentage >= $passingScore;
 
+        // Count total attempts for this student + quiz
+        $totalAttempts = QuizAttempt::where('quiz_id', $attempt->quiz_id)
+            ->where('user_id', $attempt->user_id)
+            ->whereNotNull('completed_at')
+            ->count();
+
         return Inertia::render('nilai/show', [
             'attempt' => [
                 'id' => $attempt->id,
+                'attempt_number' => (int) $attempt->attempt_number,
+                'is_graded' => (bool) $attempt->is_graded,
+                'total_attempts' => $totalAttempts,
                 'quiz' => [
                     'id' => $attempt->quiz->id,
                     'title' => $attempt->quiz->title,

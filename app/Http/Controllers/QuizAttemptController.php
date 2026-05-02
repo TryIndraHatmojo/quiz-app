@@ -14,6 +14,7 @@ class QuizAttemptController extends Controller
 {
     /**
      * Start a new quiz attempt or continue existing one.
+     * Students can attempt multiple times as long as quiz is live.
      */
     public function start(Quiz $quiz)
     {
@@ -34,17 +35,6 @@ class QuizAttemptController extends Controller
                 ->with('error', 'Quiz belum tersedia.');
         }
         
-        // Check if user has already completed this quiz
-        $completedAttempt = QuizAttempt::where('quiz_id', $quiz->id)
-            ->where('user_id', $user->id)
-            ->whereNotNull('completed_at')
-            ->first();
-            
-        if ($completedAttempt) {
-            return redirect()->route('quiz.result', $completedAttempt->id)
-                ->with('error', 'Anda sudah menyelesaikan kuis ini dan hanya dapat dikerjakan sekali.');
-        }
-        
         // Check for existing incomplete attempt
         $attempt = QuizAttempt::where('quiz_id', $quiz->id)
             ->where('user_id', $user->id)
@@ -53,9 +43,12 @@ class QuizAttemptController extends Controller
             
         // If no active attempt, create new one
         if (!$attempt) {
+            $attemptNumber = QuizAttempt::getNextAttemptNumber($quiz->id, $user->id);
+            
             $attempt = QuizAttempt::create([
                 'quiz_id' => $quiz->id,
                 'user_id' => $user->id,
+                'attempt_number' => $attemptNumber,
                 'started_at' => now(),
             ]);
             
@@ -363,6 +356,8 @@ class QuizAttemptController extends Controller
         
         Log::info('complete: Attempt completed successfully', [
             'attempt_id' => $attempt->id,
+            'attempt_number' => $attempt->attempt_number,
+            'is_graded' => $attempt->is_graded,
             'completed_at' => $attempt->completed_at
         ]);
         
@@ -397,6 +392,12 @@ class QuizAttemptController extends Controller
             'answers.matchingPairAnswers.selectedRightPair',
         ]);
         
+        // Get total attempts count for this user+quiz
+        $totalAttempts = QuizAttempt::where('quiz_id', $attempt->quiz_id)
+            ->where('user_id', $user->id)
+            ->whereNotNull('completed_at')
+            ->count();
+        
         Log::info('result: Data loaded for result page', [
             'quiz_id' => $attempt->quiz->id,
             'total_score' => $attempt->total_score,
@@ -405,6 +406,69 @@ class QuizAttemptController extends Controller
         
         return Inertia::render('quiz/result', [
             'attempt' => $attempt,
+            'totalAttempts' => $totalAttempts,
+            'quizIsLive' => $attempt->quiz->status === 'live',
+        ]);
+    }
+
+    /**
+     * Show attempt history for a quiz.
+     */
+    public function history(Quiz $quiz)
+    {
+        $user = auth()->user();
+
+        // Check if user has access to this quiz
+        $hasAccess = QuizStudentAccess::where('quiz_id', $quiz->id)
+            ->where('user_id', $user->id)
+            ->exists();
+
+        if (!$hasAccess) {
+            abort(403, 'Anda tidak memiliki akses ke quiz ini.');
+        }
+
+        $quiz->load(['background', 'questions']);
+
+        $attempts = QuizAttempt::where('quiz_id', $quiz->id)
+            ->where('user_id', $user->id)
+            ->whereNotNull('completed_at')
+            ->orderBy('attempt_number', 'asc')
+            ->get();
+
+        $maxPoints = $quiz->questions->sum('points');
+        $passingScore = (int) ($quiz->passing_score ?: 70);
+
+        $attemptsData = $attempts->map(function ($attempt) use ($maxPoints, $passingScore) {
+            $scorePercentage = $maxPoints > 0
+                ? round(($attempt->total_points / $maxPoints) * 100, 2)
+                : 0;
+
+            return [
+                'id' => $attempt->id,
+                'attempt_number' => $attempt->attempt_number,
+                'is_graded' => $attempt->is_graded,
+                'total_points' => (int) $attempt->total_points,
+                'max_points' => $maxPoints,
+                'score_percentage' => $scorePercentage,
+                'correct_count' => (int) $attempt->correct_count,
+                'wrong_count' => (int) $attempt->wrong_count,
+                'duration_seconds' => $attempt->duration_seconds,
+                'started_at' => $attempt->started_at?->toDateTimeString(),
+                'completed_at' => $attempt->completed_at?->toDateTimeString(),
+                'is_passed' => $maxPoints > 0 && $scorePercentage >= $passingScore,
+            ];
+        });
+
+        return Inertia::render('quiz/history', [
+            'quiz' => [
+                'id' => $quiz->id,
+                'title' => $quiz->title,
+                'status' => $quiz->status,
+                'passing_score' => $passingScore,
+                'background' => $quiz->background,
+            ],
+            'attempts' => $attemptsData,
+            'maxPoints' => $maxPoints,
         ]);
     }
 }

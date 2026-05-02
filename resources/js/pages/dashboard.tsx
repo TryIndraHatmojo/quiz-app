@@ -3,7 +3,7 @@ import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
 import { type BreadcrumbItem, type QuizCategory, type QuizBackground } from '@/types';
 import { Head, Link } from '@inertiajs/react';
-import { BookOpen, Clock, HelpCircle, Play, CheckCircle2 } from 'lucide-react';
+import { BookOpen, Clock, HelpCircle, History, Play, CheckCircle2, Zap } from 'lucide-react';
 
 interface StudentQuiz {
     id: number;
@@ -111,12 +111,21 @@ export default function Dashboard({ isStudent, studentQuizzes }: Props) {
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
                                                     {quiz.attempt_count > 0 ? (
-                                                        <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
-                                                            <CheckCircle2 className="h-3 w-3" />
-                                                            {quiz.attempt_count}x dikerjakan
-                                                        </span>
+                                                        <>
+                                                            <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                                                <CheckCircle2 className="h-3 w-3" />
+                                                                {quiz.attempt_count}x dikerjakan
+                                                            </span>
+                                                            <Link
+                                                                href={`/quiz/${quiz.id}/history`}
+                                                                className="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-medium text-indigo-700 transition-colors hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400"
+                                                            >
+                                                                <History className="h-2.5 w-2.5" />
+                                                                Riwayat
+                                                            </Link>
+                                                        </>
                                                     ) : (
-                                                        <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">
+                                                        <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
                                                             Belum dikerjakan
                                                         </span>
                                                     )}
@@ -125,8 +134,17 @@ export default function Dashboard({ isStudent, studentQuizzes }: Props) {
                                                 {quiz.status === 'live' ? (
                                                     <Button size="sm" asChild>
                                                         <Link href={`/quiz/${quiz.id}/start`}>
-                                                            <Play className="mr-1.5 h-3.5 w-3.5" />
-                                                            Mulai
+                                                            {quiz.attempt_count > 0 ? (
+                                                                <>
+                                                                    <Zap className="mr-1.5 h-3.5 w-3.5" />
+                                                                    Coba Lagi
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <Play className="mr-1.5 h-3.5 w-3.5" />
+                                                                    Mulai
+                                                                </>
+                                                            )}
                                                         </Link>
                                                     </Button>
                                                 ) : (

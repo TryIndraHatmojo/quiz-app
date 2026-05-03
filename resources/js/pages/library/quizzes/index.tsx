@@ -311,6 +311,50 @@ export default function QuizIndex({
                         >
                             Rancangan
                         </Button>
+                        <Button
+                            variant={
+                                statusFilter === 'finished' ? 'default' : 'outline'
+                            }
+                            onClick={() => {
+                                setStatusFilter('finished');
+                                router.get(
+                                    route('library.quizzes.index'),
+                                    {
+                                        status: 'finished',
+                                        category: categoryFilter,
+                                        search,
+                                    },
+                                    {
+                                        preserveState: true,
+                                        preserveScroll: true,
+                                    },
+                                );
+                            }}
+                        >
+                            Selesai
+                        </Button>
+                        <Button
+                            variant={
+                                statusFilter === 'archived' ? 'default' : 'outline'
+                            }
+                            onClick={() => {
+                                setStatusFilter('archived');
+                                router.get(
+                                    route('library.quizzes.index'),
+                                    {
+                                        status: 'archived',
+                                        category: categoryFilter,
+                                        search,
+                                    },
+                                    {
+                                        preserveState: true,
+                                        preserveScroll: true,
+                                    },
+                                );
+                            }}
+                        >
+                            Arsip
+                        </Button>
                     </div>
 
                     {/* Filters and Search */}
@@ -634,7 +678,7 @@ export default function QuizIndex({
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                                            className="text-destructive"
                                             onClick={() =>
                                                 handleDelete(quiz.id)
                                             }

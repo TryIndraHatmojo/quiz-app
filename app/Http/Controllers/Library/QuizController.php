@@ -35,6 +35,8 @@ class QuizController extends Controller
         // Filter by status
         if ($request->filled('status')) {
             $query->where('status', $request->status);
+        } else {
+            $query->where('status', '!=', 'archived');
         }
 
         // Filter by category
@@ -301,10 +303,10 @@ class QuizController extends Controller
             abort(403);
         }
 
-        $quiz->delete();
+        $quiz->update(['status' => 'archived']);
 
         return redirect()->route('library.quizzes.index')
-            ->with('success', 'Kuis berhasil dihapus.');
+            ->with('success', 'Kuis berhasil diarsipkan.');
     }
 
     public function questions(Quiz $quiz)

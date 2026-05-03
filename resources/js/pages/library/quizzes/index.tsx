@@ -27,6 +27,7 @@ import {
     Plus,
     Search,
     Trash2,
+    Users,
     XCircle,
 } from 'lucide-react';
 import { FormEventHandler, useEffect, useRef, useState } from 'react';
@@ -65,6 +66,7 @@ interface Quiz {
     can_manage_questions?: boolean;
     can_delete?: boolean;
     can_review?: boolean;
+    can_manage_access?: boolean;
     catatan_butuh_review_count?: number;
 }
 
@@ -671,6 +673,22 @@ export default function QuizIndex({
                                                 )}
                                             >
                                                 Edit
+                                            </Link>
+                                        </Button>
+                                    )}
+                                    {quiz.can_manage_access && (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            asChild
+                                        >
+                                            <Link
+                                                href={route(
+                                                    'library.quizzes.access',
+                                                    quiz.id,
+                                                )}
+                                            >
+                                                <Users className="h-4 w-4" />
                                             </Link>
                                         </Button>
                                     )}

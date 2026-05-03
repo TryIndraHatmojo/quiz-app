@@ -661,28 +661,32 @@ export default function QuizAccess({
                                                     <p className="text-sm font-medium">
                                                         {access.user?.name}
                                                     </p>
-                                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                                        <span>
-                                                            {access.user?.email}
+                                                    <div className="mt-1 flex flex-col gap-0.5 text-xs text-muted-foreground">
+                                                        <span className="font-medium text-foreground/70 mt-0.5">
+                                                            Data Siswa:
                                                         </span>
-                                                        {access.user
-                                                            ?.jenjang && (
+                                                        <span>• {access.user?.email}</span>
+                                                        {access.user?.jenjang && (
+                                                            <span>
+                                                                • {access.user.jenjang.jenjang} -{' '}
+                                                                {access.user.jenjang.nama_sekolah}
+                                                            </span>
+                                                        )}
+                                                        {access.user?.kelas && (
+                                                            <span>
+                                                                • Kelas: {access.user.kelas.nama_kelas}
+                                                            </span>
+                                                        )}
+                                                        {access.user?.orang_tua && (
                                                             <>
-                                                                <span>•</span>
+                                                                <span className="font-medium text-foreground/70 mt-0.5">
+                                                                    Data Orang Tua:
+                                                                </span>
                                                                 <span>
-                                                                    {
-                                                                        access
-                                                                            .user
-                                                                            .jenjang
-                                                                            .jenjang
-                                                                    }{' '}
-                                                                    -{' '}
-                                                                    {
-                                                                        access
-                                                                            .user
-                                                                            .jenjang
-                                                                            .nama_sekolah
-                                                                    }
+                                                                    • {access.user.orang_tua.name}
+                                                                </span>
+                                                                <span>
+                                                                    • {access.user.orang_tua.email}
                                                                 </span>
                                                             </>
                                                         )}

@@ -101,6 +101,7 @@ class QuizController extends Controller
                     'can_manage_questions' => $canEdit,
                     'can_delete' => $quiz->user_id === $userId,
                     'can_review' => $canReview,
+                    'can_manage_access' => $quiz->user_id === $userId,
                     'catatan_butuh_review_count' => $catatanButuhReviewCount,
                 ];
             });
@@ -518,6 +519,7 @@ class QuizController extends Controller
             'teacherAccess.user.roles',
             'studentAccess.user.jenjang',
             'studentAccess.user.kelas',
+            'studentAccess.user.orangTua',
         ]);
 
         // Get available teachers (users with role_id 2 or 3)
@@ -533,7 +535,7 @@ class QuizController extends Controller
         $students = \App\Models\User::whereHas('roles', function ($q) {
             $q->where('roles.id', 4); // Siswa (id=4)
         })
-        ->with(['jenjang', 'kelas'])
+        ->with(['jenjang', 'kelas', 'orangTua'])
         ->get();
 
         // Get all jenjangs for bulk student access
@@ -542,7 +544,7 @@ class QuizController extends Controller
         $kelases = \App\Models\Kelas::orderBy('nama_kelas')->get();
 
         // Ensure studentAccess has user.jenjang loaded
-        $studentAccessList = $quiz->studentAccess()->with(['user.jenjang', 'user.kelas'])->get();
+        $studentAccessList = $quiz->studentAccess()->with(['user.jenjang', 'user.kelas', 'user.orangTua'])->get();
         $teacherAccessList = $quiz->teacherAccess()->with(['user.roles', 'user.jenjang', 'user.kelas'])->get();
 
         return Inertia::render('library/quizzes/access', [

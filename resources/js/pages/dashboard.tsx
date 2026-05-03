@@ -3,7 +3,7 @@ import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
 import { type BreadcrumbItem, type QuizCategory, type QuizBackground } from '@/types';
 import { Head, Link } from '@inertiajs/react';
-import { BookOpen, Clock, HelpCircle, History, Play, CheckCircle2, Zap } from 'lucide-react';
+import { BookOpen, Calendar, Clock, HelpCircle, History, Play, CheckCircle2, Zap } from 'lucide-react';
 
 interface StudentQuiz {
     id: number;
@@ -11,6 +11,7 @@ interface StudentQuiz {
     description: string | null;
     status: string;
     duration: number | null;
+    starts_at: string | null;
     category: QuizCategory | null;
     background: QuizBackground | null;
     questions_count: number;
@@ -34,7 +35,16 @@ export default function Dashboard({ isStudent, studentQuizzes }: Props) {
     // Format duration display
     const formatDuration = (quiz: StudentQuiz) => {
         if (!quiz.duration) return 'Tidak ada batas waktu';
-        return `${quiz.duration} menit total`;
+        return `${quiz.duration} menit`;
+    };
+
+    const formatDate = (dateString: string | null) => {
+        if (!dateString) return '-';
+        return new Date(dateString).toLocaleDateString('id-ID', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric'
+        });
     };
 
     return (
@@ -96,7 +106,7 @@ export default function Dashboard({ isStudent, studentQuizzes }: Props) {
                                             )}
 
                                             {/* Quiz Info */}
-                                            <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+                                            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-4">
                                                 <div className="flex items-center gap-1.5">
                                                     <HelpCircle className="h-4 w-4" />
                                                     <span>{quiz.questions_count} soal</span>
@@ -104,6 +114,10 @@ export default function Dashboard({ isStudent, studentQuizzes }: Props) {
                                                 <div className="flex items-center gap-1.5">
                                                     <Clock className="h-4 w-4" />
                                                     <span>{formatDuration(quiz)}</span>
+                                                </div>
+                                                <div className="flex items-center gap-1.5">
+                                                    <Calendar className="h-4 w-4" />
+                                                    <span>{formatDate(quiz.starts_at)}</span>
                                                 </div>
                                             </div>
 
@@ -131,27 +145,21 @@ export default function Dashboard({ isStudent, studentQuizzes }: Props) {
                                                     )}
                                                 </div>
                                                 
-                                                {quiz.status === 'live' ? (
-                                                    <Button size="sm" asChild>
-                                                        <Link href={`/quiz/${quiz.id}/start`}>
-                                                            {quiz.attempt_count > 0 ? (
-                                                                <>
-                                                                    <Zap className="mr-1.5 h-3.5 w-3.5" />
-                                                                    Coba Lagi
-                                                                </>
-                                                            ) : (
-                                                                <>
-                                                                    <Play className="mr-1.5 h-3.5 w-3.5" />
-                                                                    Mulai
-                                                                </>
-                                                            )}
-                                                        </Link>
-                                                    </Button>
-                                                ) : (
-                                                    <span className="text-xs text-muted-foreground">
-                                                        Belum tersedia
-                                                    </span>
-                                                )}
+                                                <Button size="sm" asChild>
+                                                    <Link href={`/quiz/${quiz.id}/start`}>
+                                                        {quiz.attempt_count > 0 ? (
+                                                            <>
+                                                                <Zap className="mr-1.5 h-3.5 w-3.5" />
+                                                                Coba Lagi
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <Play className="mr-1.5 h-3.5 w-3.5" />
+                                                                Mulai
+                                                            </>
+                                                        )}
+                                                    </Link>
+                                                </Button>
                                             </div>
                                         </div>
                                     </div>

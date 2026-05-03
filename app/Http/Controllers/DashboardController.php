@@ -23,6 +23,9 @@ class DashboardController extends Controller
             $studentQuizzes = Quiz::whereHas('studentAccess', function ($q) use ($user) {
                 $q->where('user_id', $user->id);
             })
+            ->where('status', 'live')
+            ->orderByDesc('starts_at')
+            ->orderByDesc('created_at')
             ->with(['category', 'background', 'questions'])
             ->withCount('questions')
             ->get()
@@ -38,6 +41,7 @@ class DashboardController extends Controller
                     'description' => $quiz->description,
                     'status' => $quiz->status,
                     'duration' => $quiz->duration,
+                    'starts_at' => $quiz->starts_at,
                     'category' => $quiz->category,
                     'background' => $quiz->background,
                     'questions_count' => $quiz->questions_count,

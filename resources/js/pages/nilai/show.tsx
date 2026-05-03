@@ -3,7 +3,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import AppSidebarLayout from '@/layouts/app/app-sidebar-layout';
 import { type BreadcrumbItem, type SharedData } from '@/types';
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage, useForm } from '@inertiajs/react';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import {
     ArrowLeft,
     Award,
@@ -74,11 +83,32 @@ export default function NilaiShow({
 }: Props) {
     const { flash } = usePage<SharedData>().props;
     const [scoreDrafts, setScoreDrafts] = useState<Record<number, string>>({});
+    const [isManualStatsModalOpen, setIsManualStatsModalOpen] = useState(false);
+
+    const manualStatsForm = useForm({
+        correct_count: attempt.correct_count.toString(),
+        wrong_count: attempt.wrong_count.toString(),
+    });
+
+    const handleManualStatsSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        manualStatsForm.patch(route('nilai.manual-stats.update', attempt.id), {
+            onSuccess: () => {
+                setIsManualStatsModalOpen(false);
+            },
+        });
+    };
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Nilai', href: '/nilai' },
         { title: `Detail #${attempt.id}`, href: `/nilai/${attempt.id}` },
     ];
+
+    const ungradedCount = useMemo(() => {
+        return questionScores.filter((q) => 
+            (q.question_type === 'short_answer' || q.question_type === 'long_answer') && q.awarded_points === 0
+        ).length;
+    }, [questionScores]);
 
     const titleText = useMemo(() => {
         if (permissions.isSiswa) return 'Detail Nilai Saya';
@@ -238,18 +268,40 @@ export default function NilaiShow({
                             </p>
                         </div>
 
-                        {/* Correct / Wrong */}
+                        {/* Correct / Wrong / Ungraded */}
                         <div className="p-4 text-center">
-                            <p className="text-xs font-medium text-muted-foreground">
-                                Benar / Salah
-                            </p>
+                            <div className="flex items-center justify-center gap-2">
+                                <p className="text-xs font-medium text-muted-foreground">
+                                    Benar / Salah / Belum Dinilai
+                                </p>
+                                {permissions.canEdit && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            manualStatsForm.setData({
+                                                correct_count: attempt.correct_count.toString(),
+                                                wrong_count: attempt.wrong_count.toString(),
+                                            });
+                                            setIsManualStatsModalOpen(true);
+                                        }}
+                                        className="rounded-full p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+                                        title="Atur Benar/Salah Manual"
+                                    >
+                                        <PencilLine className="h-3 w-3" />
+                                    </button>
+                                )}
+                            </div>
                             <p className="mt-1 text-2xl font-bold">
-                                <span className="text-emerald-600">
+                                <span className="text-emerald-600" title="Benar">
                                     {attempt.correct_count}
                                 </span>
                                 {' / '}
-                                <span className="text-red-500">
+                                <span className="text-red-500" title="Salah">
                                     {attempt.wrong_count}
+                                </span>
+                                {' / '}
+                                <span className="text-orange-500" title="Belum Dinilai">
+                                    {ungradedCount}
                                 </span>
                             </p>
                         </div>
@@ -445,6 +497,59 @@ export default function NilaiShow({
                     )}
                 </div>
             </div>
+
+            {/* Manual Stats Modal */}
+            <Dialog open={isManualStatsModalOpen} onOpenChange={setIsManualStatsModalOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Atur Benar/Salah Manual</DialogTitle>
+                        <DialogDescription>
+                            Ubah jumlah benar dan salah secara manual untuk {attempt.student.name}.
+                            Poin total akan tetap, hanya statistik benar/salah yang diubah.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleManualStatsSubmit} className="space-y-4 py-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="correct_count" className="text-emerald-600">Benar</Label>
+                                <Input
+                                    id="correct_count"
+                                    type="number"
+                                    min="0"
+                                    value={manualStatsForm.data.correct_count}
+                                    onChange={(e) => manualStatsForm.setData('correct_count', e.target.value)}
+                                    required
+                                />
+                                {manualStatsForm.errors.correct_count && (
+                                    <p className="text-xs text-red-500">{manualStatsForm.errors.correct_count}</p>
+                                )}
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="wrong_count" className="text-red-500">Salah</Label>
+                                <Input
+                                    id="wrong_count"
+                                    type="number"
+                                    min="0"
+                                    value={manualStatsForm.data.wrong_count}
+                                    onChange={(e) => manualStatsForm.setData('wrong_count', e.target.value)}
+                                    required
+                                />
+                                {manualStatsForm.errors.wrong_count && (
+                                    <p className="text-xs text-red-500">{manualStatsForm.errors.wrong_count}</p>
+                                )}
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button type="button" variant="outline" onClick={() => setIsManualStatsModalOpen(false)} disabled={manualStatsForm.processing}>
+                                Batal
+                            </Button>
+                            <Button type="submit" disabled={manualStatsForm.processing}>
+                                {manualStatsForm.processing ? 'Menyimpan...' : 'Simpan Perubahan'}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
         </AppSidebarLayout>
     );
 }

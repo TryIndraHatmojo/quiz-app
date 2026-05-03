@@ -114,10 +114,24 @@ class QuizAttempt extends Model
         }
         
         // Calculate scores from answers
-        $answers = $this->answers()->get();
+        $answers = $this->answers()->with('question')->get();
 
-        $this->correct_count = $answers->where('is_correct', true)->count();
-        $this->wrong_count = $answers->where('is_correct', false)->count();
+        $this->correct_count = $answers->filter(function ($answer) {
+            if ($answer->question && in_array($answer->question->question_type, ['short_answer', 'long_answer'])) {
+                return $answer->awarded_points > 0;
+            }
+            return $answer->is_correct;
+        })->count();
+
+        $this->wrong_count = $answers->filter(function ($answer) {
+            if ($answer->question && in_array($answer->question->question_type, ['short_answer', 'long_answer'])) {
+                // If it has 0 points, we consider it ungraded until a teacher explicitly marks it. 
+                // Since we don't have is_graded on answers, we assume 0 points = ungraded, so not wrong.
+                return false; 
+            }
+            return !$answer->is_correct;
+        })->count();
+
         $this->total_points = (int) $answers->sum('awarded_points');
         
         // Check if this should be the graded attempt (first completed for this user+quiz)

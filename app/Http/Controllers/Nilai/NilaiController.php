@@ -196,6 +196,7 @@ class NilaiController extends Controller
                 'score_percentage' => $scorePercentage,
                 'correct_count' => (int) $attempt->correct_count,
                 'wrong_count' => (int) $attempt->wrong_count,
+                'ungraded_count' => max(0, ($quiz ? $quiz->questions->count() : 0) - ((int) $attempt->correct_count + (int) $attempt->wrong_count)),
                 'completed_at' => optional($attempt->completed_at)?->toDateTimeString(),
                 'can_edit' => $canEdit,
                 'is_passed' => $isPassed,
@@ -395,6 +396,38 @@ class NilaiController extends Controller
         $this->recalculateAttemptTotals($attempt);
 
         return back()->with('success', 'Nilai per soal berhasil diperbarui.');
+    }
+
+    public function updateManualStats(Request $request, QuizAttempt $attempt): RedirectResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+        $roles = $this->resolveRoles($user);
+
+        if (!$roles['admin'] && !$roles['guru']) {
+            abort(403, 'Hanya guru yang dapat mengubah nilai.');
+        }
+
+        $attempt->load([
+            'quiz:id,title,user_id',
+            'quiz.teacherAccess:id,quiz_id,user_id,permission',
+        ]);
+
+        if (!$this->canEditAttempt($user, $roles, $attempt)) {
+            abort(403, 'Anda tidak memiliki izin untuk mengedit nilai ini.');
+        }
+
+        $validated = $request->validate([
+            'correct_count' => ['required', 'integer', 'min:0'],
+            'wrong_count' => ['required', 'integer', 'min:0'],
+        ]);
+
+        $attempt->update([
+            'correct_count' => (int) $validated['correct_count'],
+            'wrong_count' => (int) $validated['wrong_count'],
+        ]);
+
+        return back()->with('success', 'Statistik benar/salah berhasil diperbarui secara manual.');
     }
 
     private function recalculateAttemptTotals(QuizAttempt $attempt): void

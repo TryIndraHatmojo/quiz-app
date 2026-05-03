@@ -37,6 +37,7 @@ interface AttemptData {
     score_percentage: number;
     correct_count: number;
     wrong_count: number;
+    ungraded_count: number;
     duration_seconds: number | null;
     started_at: string | null;
     completed_at: string | null;
@@ -279,6 +280,12 @@ export default function QuizHistory({ quiz, attempts, maxPoints }: Props) {
                                                             {attempt.wrong_count}
                                                         </span>
                                                     </div>
+                                                    <div className="flex items-center gap-1.5 text-orange-500">
+                                                        <Clock className="h-4 w-4" />
+                                                        <span className="font-medium" title="Belum Dinilai">
+                                                            {attempt.ungraded_count}
+                                                        </span>
+                                                    </div>
                                                     <div className="flex items-center gap-1.5 text-gray-500">
                                                         <Clock className="h-4 w-4" />
                                                         <span className="font-medium">
@@ -340,6 +347,10 @@ export default function QuizHistory({ quiz, attempts, maxPoints }: Props) {
                                             <div className="flex items-center gap-1.5 text-red-500">
                                                 <X className="h-3.5 w-3.5" />
                                                 <span>{attempt.wrong_count} salah</span>
+                                            </div>
+                                            <div className="flex items-center gap-1.5 text-orange-500">
+                                                <Clock className="h-3.5 w-3.5" />
+                                                <span>{attempt.ungraded_count} belum dinilai</span>
                                             </div>
                                             <div className="flex items-center gap-1.5 text-gray-500">
                                                 <Clock className="h-3.5 w-3.5" />

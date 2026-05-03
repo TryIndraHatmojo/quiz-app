@@ -61,6 +61,7 @@ Route::middleware(['auth', 'verified'])->prefix('nilai')->name('nilai.')->group(
     Route::get('/', [App\Http\Controllers\Nilai\NilaiController::class, 'index'])->name('index');
     Route::get('/{attempt}', [App\Http\Controllers\Nilai\NilaiController::class, 'show'])->name('show');
     Route::patch('/{attempt}/question-score', [App\Http\Controllers\Nilai\NilaiController::class, 'updateQuestionScore'])->name('question-score.update');
+    Route::patch('/{attempt}/manual-stats', [App\Http\Controllers\Nilai\NilaiController::class, 'updateManualStats'])->name('manual-stats.update');
 });
 
 require __DIR__.'/settings.php';

@@ -169,42 +169,10 @@ class QuizAttemptController extends Controller
                 break;
                 
             case 'short_answer':
-                $fields = $question->shortAnswerFields()->orderBy('order')->get();
-                if ($fields->isNotEmpty() && $request->answer_text !== null) {
-                    $givenAnswers = explode('|||', $request->answer_text);
-                    $correctCount = 0;
-                    $totalFields = $fields->count();
-                    
-                    foreach ($fields as $index => $field) {
-                        $givenAnswer = $givenAnswers[$index] ?? '';
-                        
-                        $expectedAnswer = $field->case_sensitive 
-                            ? $field->expected_answer 
-                            : strtolower($field->expected_answer);
-                        $given = $field->case_sensitive 
-                            ? $givenAnswer 
-                            : strtolower($givenAnswer);
-                            
-                        if ($field->trim_whitespace) {
-                            $expectedAnswer = trim($expectedAnswer);
-                            $given = trim($given);
-                        }
-                        
-                        if ($expectedAnswer === $given) {
-                            $correctCount++;
-                        }
-                    }
-                    
-                    $isCorrect = $totalFields > 0 && $correctCount === $totalFields;
-                    $awardedPoints = $totalFields > 0 ? (int) round(($correctCount / $totalFields) * $question->points) : 0;
-                    
-                    Log::info('saveAnswer: Short answer processed', [
-                        'correct_count' => $correctCount,
-                        'total_fields' => $totalFields,
-                        'is_correct' => $isCorrect,
-                        'awarded_points' => $awardedPoints
-                    ]);
-                }
+                // Short answers need manual grading as per user request
+                $isCorrect = false;
+                $awardedPoints = 0;
+                Log::info('saveAnswer: Short answer saved (needs manual grading)');
                 break;
                 
             case 'matching_pairs':
@@ -452,6 +420,7 @@ class QuizAttemptController extends Controller
                 'score_percentage' => $scorePercentage,
                 'correct_count' => (int) $attempt->correct_count,
                 'wrong_count' => (int) $attempt->wrong_count,
+                'ungraded_count' => max(0, $quiz->questions->count() - ((int) $attempt->correct_count + (int) $attempt->wrong_count)),
                 'duration_seconds' => $attempt->duration_seconds,
                 'started_at' => $attempt->started_at?->toDateTimeString(),
                 'completed_at' => $attempt->completed_at?->toDateTimeString(),

@@ -3,8 +3,19 @@ import { Button } from '@/components/ui/button';
 import { NilaiFilterBar } from '@/components/nilai/nilai-filter-bar';
 import { SummaryCard } from '@/components/nilai/summary-card';
 import AppSidebarLayout from '@/layouts/app/app-sidebar-layout';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { type BreadcrumbItem, type SharedData } from '@/types';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, usePage, useForm } from '@inertiajs/react';
 import {
     BarChart3,
     CheckCircle2,
@@ -54,6 +65,7 @@ interface AttemptItem {
     score_percentage: number;
     correct_count: number;
     wrong_count: number;
+    ungraded_count: number;
     completed_at: string | null;
     can_edit: boolean;
     is_passed: boolean;
@@ -106,6 +118,84 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 // Group attempts by quiz ID
+function ManualStatsModal({
+    attempt,
+    isOpen,
+    onOpenChange,
+}: {
+    attempt: AttemptItem;
+    isOpen: boolean;
+    onOpenChange: (open: boolean) => void;
+}) {
+    const { data, setData, patch, processing, errors } = useForm({
+        correct_count: attempt.correct_count.toString(),
+        wrong_count: attempt.wrong_count.toString(),
+    });
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        patch(route('nilai.manual-stats.update', attempt.id), {
+            onSuccess: () => {
+                onOpenChange(false);
+            },
+        });
+    };
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                    <DialogTitle>Atur Benar/Salah Manual</DialogTitle>
+                    <DialogDescription>
+                        Ubah jumlah benar dan salah secara manual untuk {attempt.student.name}.
+                        Poin total akan tetap, hanya statistik benar/salah yang diubah.
+                    </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4 py-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="correct_count" className="text-emerald-600">Benar</Label>
+                            <Input
+                                id="correct_count"
+                                type="number"
+                                min="0"
+                                value={data.correct_count}
+                                onChange={(e) => setData('correct_count', e.target.value)}
+                                required
+                            />
+                            {errors.correct_count && (
+                                <p className="text-xs text-red-500">{errors.correct_count}</p>
+                            )}
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="wrong_count" className="text-red-500">Salah</Label>
+                            <Input
+                                id="wrong_count"
+                                type="number"
+                                min="0"
+                                value={data.wrong_count}
+                                onChange={(e) => setData('wrong_count', e.target.value)}
+                                required
+                            />
+                            {errors.wrong_count && (
+                                <p className="text-xs text-red-500">{errors.wrong_count}</p>
+                            )}
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={processing}>
+                            Batal
+                        </Button>
+                        <Button type="submit" disabled={processing}>
+                            {processing ? 'Menyimpan...' : 'Simpan Perubahan'}
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 function groupByQuiz(attempts: AttemptItem[]) {
     const groups: Record<
         number,
@@ -160,6 +250,7 @@ function QuizScoreCard({
     permissions: Props['permissions'];
 }) {
     const [expanded, setExpanded] = useState(true);
+    const [editingStatsAttempt, setEditingStatsAttempt] = useState<AttemptItem | null>(null);
 
     return (
         <div className="overflow-hidden rounded-xl border border-sidebar-border bg-sidebar shadow-sm transition-shadow hover:shadow-md">
@@ -216,7 +307,7 @@ function QuizScoreCard({
                                         Kelas
                                     </th>
                                     <th className="px-4 py-2.5 font-medium">
-                                        Benar / Salah
+                                        Benar / Salah / Blm. Dinilai
                                     </th>
                                     <th className="px-4 py-2.5 font-medium">
                                         Skor
@@ -278,13 +369,31 @@ function QuizScoreCard({
                                                 </div>
                                             </td>
                                             <td className="px-4 py-2.5">
-                                                <span className="text-emerald-600">
-                                                    {attempt.correct_count}
-                                                </span>
-                                                {' / '}
-                                                <span className="text-red-500">
-                                                    {attempt.wrong_count}
-                                                </span>
+                                                <div className="flex items-center gap-1.5">
+                                                    <div>
+                                                        <span className="text-emerald-600" title="Benar">
+                                                            {attempt.correct_count}
+                                                        </span>
+                                                        {' / '}
+                                                        <span className="text-red-500" title="Salah">
+                                                            {attempt.wrong_count}
+                                                        </span>
+                                                        {' / '}
+                                                        <span className="text-orange-500" title="Belum Dinilai">
+                                                            {attempt.ungraded_count}
+                                                        </span>
+                                                    </div>
+                                                    {canEditRow && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setEditingStatsAttempt(attempt)}
+                                                            className="rounded-full p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+                                                            title="Atur Benar/Salah Manual"
+                                                        >
+                                                            <PencilLine className="h-3.5 w-3.5" />
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="px-4 py-2.5">
                                                 <span className="font-medium">
@@ -357,6 +466,14 @@ function QuizScoreCard({
                         </table>
                     </div>
                 </div>
+            )}
+            
+            {editingStatsAttempt && (
+                <ManualStatsModal
+                    attempt={editingStatsAttempt}
+                    isOpen={!!editingStatsAttempt}
+                    onOpenChange={(open) => !open && setEditingStatsAttempt(null)}
+                />
             )}
         </div>
     );

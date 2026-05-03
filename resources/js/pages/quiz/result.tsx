@@ -77,6 +77,12 @@ export default function QuizResult({ attempt, totalAttempts, quizIsLive }: Props
             ? Math.round((attempt.total_points / totalPossiblePoints) * 100)
             : 0;
 
+    // Calculate ungraded count
+    const ungradedCount = answers.filter((answer) => {
+        const question = questions.find((q) => q.id === answer.quiz_question_id);
+        return question && (question.question_type === 'short_answer' || question.question_type === 'long_answer') && answer.awarded_points === 0;
+    }).length;
+
     // Format duration
     const formatDuration = (seconds: number) => {
         const mins = Math.floor(seconds / 60);
@@ -140,7 +146,7 @@ export default function QuizResult({ attempt, totalAttempts, quizIsLive }: Props
                     <div className="overflow-hidden rounded-3xl bg-white shadow-2xl">
                         {/* Score Details */}
                         <div className="p-6">
-                            <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
+                            <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-5">
                                 <div className="rounded-xl bg-green-50 p-4 text-center">
                                     <div className="mb-2 flex items-center justify-center">
                                         <Check className="h-6 w-6 text-green-600" />
@@ -162,6 +168,18 @@ export default function QuizResult({ attempt, totalAttempts, quizIsLive }: Props
                                     </div>
                                     <div className="text-sm text-gray-500">
                                         Salah
+                                    </div>
+                                </div>
+
+                                <div className="rounded-xl bg-orange-50 p-4 text-center">
+                                    <div className="mb-2 flex items-center justify-center">
+                                        <Clock className="h-6 w-6 text-orange-600" />
+                                    </div>
+                                    <div className="text-2xl font-bold text-orange-600">
+                                        {ungradedCount}
+                                    </div>
+                                    <div className="text-sm text-gray-500">
+                                        Belum Dinilai
                                     </div>
                                 </div>
 

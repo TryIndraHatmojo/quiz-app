@@ -503,8 +503,8 @@ export default function QuizEdit({
                                     <SelectValue placeholder="Pilih status" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="draft">Draf</SelectItem>
-                                    <SelectItem value="live">Tayang</SelectItem>
+                                    <SelectItem value="draft">Rancangan</SelectItem>
+                                    <SelectItem value="live">Publikasi</SelectItem>
                                     <SelectItem value="finished">
                                         Selesai
                                     </SelectItem>

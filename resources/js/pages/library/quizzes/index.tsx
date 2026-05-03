@@ -287,7 +287,7 @@ export default function QuizIndex({
                                 );
                             }}
                         >
-                            Tayang
+                            Publikasi
                         </Button>
                         <Button
                             variant={
@@ -309,7 +309,7 @@ export default function QuizIndex({
                                 );
                             }}
                         >
-                            Draf
+                            Rancangan
                         </Button>
                     </div>
 
@@ -508,7 +508,7 @@ export default function QuizIndex({
                                             }`}
                                         >
                                             {quiz.status === 'live'
-                                                ? 'Tayang'
+                                                ? 'Publikasi'
                                                 : quiz.status === 'finished'
                                                   ? 'Selesai'
                                                   : quiz.status === 'archived'

@@ -1068,6 +1068,8 @@ export default function QuizAttemptPage({
                             <span>{part}</span>
                             {idx < parts.length - 1 && (
                                 <Input
+                                    onPaste={(e) => e.preventDefault()}
+                                    autoComplete="off"
                                     value={shortAnswers[idx] || ''}
                                     onChange={(e) => {
                                         const newAnswers = [...shortAnswers];
@@ -1114,6 +1116,8 @@ export default function QuizAttemptPage({
         return (
             <div className="rounded-2xl bg-white p-8 shadow-xl">
                 <Textarea
+                    onPaste={(e) => e.preventDefault()}
+                    autoComplete="off"
                     value={currentAnswer.longAnswer || ''}
                     onChange={(e) =>
                         updateAnswer({ longAnswer: e.target.value })
@@ -1138,7 +1142,9 @@ export default function QuizAttemptPage({
 
     return (
         <div
-            className="flex min-h-screen flex-col"
+            className="flex min-h-screen flex-col select-none"
+            onCopy={(e) => e.preventDefault()}
+            onCut={(e) => e.preventDefault()}
             style={{
                 backgroundImage: quiz.background?.image_path
                     ? `url(${quiz.background.image_path})`

@@ -149,7 +149,7 @@ class NilaiController extends Controller
             $canEdit = $roles['admin']
                 || ($roles['guru'] && $quiz && (
                     (int) $quiz->user_id === (int) $user->id
-                    || ($teacherAccess && $teacherAccess->permission === 'edit')
+                    || ($teacherAccess && in_array($teacherAccess->permission, ['edit', 'telaah_soal'], true))
                 ));
 
             $scorePercentage = $maxPoints > 0
@@ -487,7 +487,7 @@ class NilaiController extends Controller
             return (int) $attempt->quiz->user_id === (int) $user->id
                 || $attempt->quiz->teacherAccess
                     ->where('user_id', $user->id)
-                    ->whereIn('permission', ['view', 'edit'])
+                    ->whereIn('permission', ['view', 'edit', 'telaah_soal'])
                     ->isNotEmpty();
         }
 
@@ -520,7 +520,7 @@ class NilaiController extends Controller
         return (int) $attempt->quiz->user_id === (int) $user->id
             || $attempt->quiz->teacherAccess
                 ->where('user_id', $user->id)
-                ->where('permission', 'edit')
+                ->whereIn('permission', ['edit', 'telaah_soal'])
                 ->isNotEmpty();
     }
 

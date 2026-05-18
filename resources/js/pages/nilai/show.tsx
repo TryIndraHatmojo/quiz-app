@@ -519,8 +519,9 @@ export default function NilaiShow({
                     {permissions.canEdit ? (
                         <span className="inline-flex items-center">
                             <PencilLine className="mr-2 h-4 w-4" />
-                            Guru dengan izin edit dapat mengatur skor setiap
-                            soal. Total nilai akan diperbarui otomatis.
+                            Guru dengan izin edit atau telaah soal dapat
+                            mengatur skor setiap soal. Total nilai akan
+                            diperbarui otomatis.
                         </span>
                     ) : (
                         <span>

@@ -21,9 +21,12 @@ class QuizController extends Controller
     public function index(Request $request)
     {
         $userId = $request->user()?->id;
+        $isAdmin = $this->isAdmin();
 
-        $query = Quiz::with(['category', 'jenjang', 'kelas'])
-            ->where(function ($q) use ($userId) {
+        $query = Quiz::with(['category', 'jenjang', 'kelas']);
+
+        if (!$isAdmin) {
+            $query->where(function ($q) use ($userId) {
                 $q->where('user_id', $userId)
                     ->orWhereHas('teacherAccess', function ($teacherAccess) use ($userId) {
                         $teacherAccess->where('user_id', $userId);
@@ -32,6 +35,7 @@ class QuizController extends Controller
                         $studentAccess->where('user_id', $userId);
                     });
             });
+        }
 
         // Filter by status
         if ($request->filled('status')) {
@@ -65,14 +69,15 @@ class QuizController extends Controller
         }
 
         $quizzes = $query->latest()->paginate(12)
-            ->through(function (Quiz $quiz) use ($userId) {
-                $canEdit = $quiz->user_id === $userId || $quiz->hasTeacherAccess($userId, 'edit');
-                $canPreview = $quiz->user_id === $userId
+            ->through(function (Quiz $quiz) use ($userId, $isAdmin) {
+                $canEdit = $isAdmin || $quiz->user_id === $userId || $quiz->hasTeacherAccess($userId, 'edit');
+                $canPreview = $isAdmin
+                    || $quiz->user_id === $userId
                     || $quiz->teacherAccess()
                         ->where('user_id', $userId)
                         ->whereIn('permission', ['view', 'edit', 'telaah_soal'])
                         ->exists();
-                $canReview = $quiz->hasTeacherAccess($userId, 'telaah_soal');
+                $canReview = $isAdmin || $quiz->hasTeacherAccess($userId, 'telaah_soal');
 
                 // Hitung catatan telaah yang masih butuh review pada quiz ini
                 $catatanButuhReviewCount = 0;
@@ -100,9 +105,9 @@ class QuizController extends Controller
                     'can_edit' => $canEdit,
                     'can_preview' => $canPreview,
                     'can_manage_questions' => $canEdit,
-                    'can_delete' => $quiz->user_id === $userId,
+                    'can_delete' => $isAdmin || $quiz->user_id === $userId,
                     'can_review' => $canReview,
-                    'can_manage_access' => $quiz->user_id === $userId,
+                    'can_manage_access' => $isAdmin || $quiz->user_id === $userId,
                     'catatan_butuh_review_count' => $catatanButuhReviewCount,
                 ];
             });
@@ -301,7 +306,7 @@ class QuizController extends Controller
 
     public function destroy(Quiz $quiz)
     {
-        if ($quiz->user_id !== auth()->id()) {
+        if (!$this->isAdmin() && $quiz->user_id !== auth()->id()) {
             abort(403);
         }
 
@@ -694,7 +699,9 @@ class QuizController extends Controller
             return false;
         }
 
-        return $quiz->user_id === $userId || $quiz->hasTeacherAccess($userId, 'edit');
+        return $this->isAdmin()
+            || $quiz->user_id === $userId
+            || $quiz->hasTeacherAccess($userId, 'edit');
     }
 
     private function canPreviewQuiz(Quiz $quiz): bool
@@ -704,7 +711,8 @@ class QuizController extends Controller
             return false;
         }
 
-        return $quiz->user_id === $userId
+        return $this->isAdmin()
+            || $quiz->user_id === $userId
             || $quiz->teacherAccess()
                 ->where('user_id', $userId)
                 ->whereIn('permission', ['view', 'edit', 'telaah_soal'])
@@ -718,11 +726,22 @@ class QuizController extends Controller
             return false;
         }
 
-        return $quiz->hasTeacherAccess($userId, 'telaah_soal');
+        return $this->isAdmin()
+            || $quiz->hasTeacherAccess($userId, 'telaah_soal');
     }
 
     private function canManageAccess(Quiz $quiz): bool
     {
-        return $quiz->user_id === auth()->id();
+        return $this->isAdmin()
+            || $quiz->user_id === auth()->id();
+    }
+
+    private function isAdmin(): bool
+    {
+        $user = auth()->user();
+
+        return $user
+            ? $user->roles()->where('slug', 'admin')->exists()
+            : false;
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Library;
 
 use App\Http\Controllers\Controller;
 use App\Models\Quiz;
+use App\Models\QuizAttempt;
 use App\Models\QuizCategory;
 use App\Models\QuizBackground;
 use App\Models\Gallery;
@@ -546,6 +547,18 @@ class QuizController extends Controller
         // Ensure studentAccess has user.jenjang loaded
         $studentAccessList = $quiz->studentAccess()->with(['user.jenjang', 'user.kelas', 'user.orangTua'])->get();
         $teacherAccessList = $quiz->teacherAccess()->with(['user.roles', 'user.jenjang', 'user.kelas'])->get();
+
+        $completedAttemptCounts = QuizAttempt::query()
+            ->where('quiz_id', $quiz->id)
+            ->whereIn('user_id', $studentAccessList->pluck('user_id'))
+            ->whereNotNull('completed_at')
+            ->selectRaw('user_id, COUNT(*) as total')
+            ->groupBy('user_id')
+            ->pluck('total', 'user_id');
+
+        $studentAccessList->each(function ($access) use ($completedAttemptCounts) {
+            $access->setAttribute('attempt_count', (int) ($completedAttemptCounts[$access->user_id] ?? 0));
+        });
 
         return Inertia::render('library/quizzes/access', [
             'quiz' => $quiz,

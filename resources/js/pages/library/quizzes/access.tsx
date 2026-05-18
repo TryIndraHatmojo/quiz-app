@@ -219,7 +219,12 @@ export default function QuizAccess({
                             </Link>
                         </Button>
                         <Button asChild>
-                            <Link href={route('library.quizzes.questions', quiz.id)}>
+                            <Link
+                                href={route(
+                                    'library.quizzes.questions',
+                                    quiz.id,
+                                )}
+                            >
                                 Lanjut ke Edit Pertanyaan
                                 <ArrowRight className="ml-2 h-4 w-4" />
                             </Link>
@@ -428,7 +433,7 @@ export default function QuizAccess({
                                                         'edit'
                                                             ? 'bg-green-100 text-green-700'
                                                             : access.permission ===
-                                                              'telaah_soal'
+                                                                'telaah_soal'
                                                               ? 'bg-amber-100 text-amber-700'
                                                               : 'bg-gray-100 text-gray-700'
                                                     }`}
@@ -437,7 +442,7 @@ export default function QuizAccess({
                                                     'edit'
                                                         ? 'Edit'
                                                         : access.permission ===
-                                                          'telaah_soal'
+                                                            'telaah_soal'
                                                           ? 'Telaah Soal'
                                                           : 'Lihat'}
                                                 </span>
@@ -662,31 +667,64 @@ export default function QuizAccess({
                                                         {access.user?.name}
                                                     </p>
                                                     <div className="mt-1 flex flex-col gap-0.5 text-xs text-muted-foreground">
-                                                        <span className="font-medium text-foreground/70 mt-0.5">
+                                                        <span className="mt-0.5 font-medium text-foreground/70">
                                                             Data Siswa:
                                                         </span>
-                                                        <span>• {access.user?.email}</span>
-                                                        {access.user?.jenjang && (
+                                                        <span>
+                                                            •{' '}
+                                                            {access.user?.email}
+                                                        </span>
+                                                        {access.user
+                                                            ?.jenjang && (
                                                             <span>
-                                                                • {access.user.jenjang.jenjang} -{' '}
-                                                                {access.user.jenjang.nama_sekolah}
+                                                                •{' '}
+                                                                {
+                                                                    access.user
+                                                                        .jenjang
+                                                                        .jenjang
+                                                                }{' '}
+                                                                -{' '}
+                                                                {
+                                                                    access.user
+                                                                        .jenjang
+                                                                        .nama_sekolah
+                                                                }
                                                             </span>
                                                         )}
                                                         {access.user?.kelas && (
                                                             <span>
-                                                                • Kelas: {access.user.kelas.nama_kelas}
+                                                                • Kelas:{' '}
+                                                                {
+                                                                    access.user
+                                                                        .kelas
+                                                                        .nama_kelas
+                                                                }
                                                             </span>
                                                         )}
-                                                        {access.user?.orang_tua && (
+                                                        {access.user
+                                                            ?.orang_tua && (
                                                             <>
-                                                                <span className="font-medium text-foreground/70 mt-0.5">
-                                                                    Data Orang Tua:
+                                                                <span className="mt-0.5 font-medium text-foreground/70">
+                                                                    Data Orang
+                                                                    Tua:
                                                                 </span>
                                                                 <span>
-                                                                    • {access.user.orang_tua.name}
+                                                                    •{' '}
+                                                                    {
+                                                                        access
+                                                                            .user
+                                                                            .orang_tua
+                                                                            .name
+                                                                    }
                                                                 </span>
                                                                 <span>
-                                                                    • {access.user.orang_tua.email}
+                                                                    •{' '}
+                                                                    {
+                                                                        access
+                                                                            .user
+                                                                            .orang_tua
+                                                                            .email
+                                                                    }
                                                                 </span>
                                                             </>
                                                         )}
@@ -694,12 +732,17 @@ export default function QuizAccess({
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-2">
-                                                {access.attempt_count > 0 && (
-                                                    <span className="rounded bg-blue-100 px-2 py-1 text-xs text-blue-700">
-                                                        {access.attempt_count}x
-                                                        dikerjakan
-                                                    </span>
-                                                )}
+                                                <span
+                                                    className={`rounded px-2 py-1 text-xs ${
+                                                        access.attempt_count > 0
+                                                            ? 'bg-blue-100 text-blue-700'
+                                                            : 'bg-amber-100 text-amber-700'
+                                                    }`}
+                                                >
+                                                    {access.attempt_count > 0
+                                                        ? `${access.attempt_count}x dikerjakan`
+                                                        : 'Belum dikerjakan'}
+                                                </span>
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"

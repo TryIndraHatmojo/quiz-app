@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Quiz;
+use App\Models\QuizAttempt;
 use App\Models\QuizStudentAccess;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -28,8 +29,17 @@ class DashboardController extends Controller
             ->orderByDesc('created_at')
             ->with(['category', 'background', 'questions'])
             ->withCount('questions')
-            ->get()
-            ->map(function ($quiz) use ($user) {
+            ->get();
+
+            $completedAttemptCounts = QuizAttempt::query()
+                ->where('user_id', $user->id)
+                ->whereIn('quiz_id', $studentQuizzes->pluck('id'))
+                ->whereNotNull('completed_at')
+                ->selectRaw('quiz_id, COUNT(*) as total')
+                ->groupBy('quiz_id')
+                ->pluck('total', 'quiz_id');
+
+            $studentQuizzes = $studentQuizzes->map(function ($quiz) use ($user, $completedAttemptCounts) {
                 // Get student's access record for attempt count
                 $access = QuizStudentAccess::where('quiz_id', $quiz->id)
                     ->where('user_id', $user->id)
@@ -45,7 +55,7 @@ class DashboardController extends Controller
                     'category' => $quiz->category,
                     'background' => $quiz->background,
                     'questions_count' => $quiz->questions_count,
-                    'attempt_count' => $access ? $access->attempt_count : 0,
+                    'attempt_count' => (int) ($completedAttemptCounts[$quiz->id] ?? 0),
                     'accessed_at' => $access ? $access->accessed_at : null,
                 ];
             });

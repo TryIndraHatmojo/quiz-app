@@ -12,10 +12,10 @@ import {
     FileText,
     Link2,
     ListChecks,
+    RotateCcw,
     Send,
     ToggleLeft,
     X,
-    RotateCcw,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -38,6 +38,7 @@ interface ExistingAnswer {
     quiz_question_option_id: number | null;
     quiz_matching_pair_id: number | null;
     answer_text: string | null;
+    answer_explanation?: string | null;
     matching_pair_answers?: Array<{
         left_quiz_matching_pair_id: number | null;
         selected_right_quiz_matching_pair_id: number | null;
@@ -137,6 +138,7 @@ const questionTypeLabels: Record<
 type Answer = {
     selectedOption?: number | null;
     trueFalseAnswer?: boolean | null;
+    trueFalseExplanation?: string;
     matchingAnswers?: Record<number, number | null>;
     shortAnswers?: string[];
     longAnswer?: string;
@@ -225,6 +227,8 @@ export default function QuizAttemptPage({
                                 initialAnswers[idx] = {
                                     trueFalseAnswer:
                                         existing.answer_text === 'true',
+                                    trueFalseExplanation:
+                                        existing.answer_explanation || '',
                                 };
                             }
                             break;
@@ -405,6 +409,7 @@ export default function QuizAttemptPage({
             quiz_question_option_id?: number | null;
             quiz_matching_pair_id?: number | null;
             answer_text?: string | null;
+            answer_explanation?: string | null;
             matching_answers?: Array<{
                 left_quiz_matching_pair_id: number;
                 selected_right_quiz_matching_pair_id: number;
@@ -439,6 +444,8 @@ export default function QuizAttemptPage({
                     answerData.quiz_question_option_id = option?.id || null;
                     answerData.answer_text =
                         currentAnswer.trueFalseAnswer.toString();
+                    answerData.answer_explanation =
+                        currentAnswer.trueFalseExplanation?.trim() || null;
                 }
                 break;
             case 'short_answer':
@@ -777,29 +784,53 @@ export default function QuizAttemptPage({
 
     const renderTrueFalse = (currentAnswer: Answer) => {
         return (
-            <div className="grid grid-cols-2 gap-6">
-                <button
-                    onClick={() => updateAnswer({ trueFalseAnswer: true })}
-                    className={`flex items-center justify-center gap-4 rounded-2xl p-12 shadow-xl transition-all ${
-                        currentAnswer.trueFalseAnswer === true
-                            ? 'scale-105 bg-green-500 text-white ring-4 ring-green-300'
-                            : 'bg-white text-gray-700 hover:bg-green-50 hover:ring-2 hover:ring-green-300'
-                    }`}
-                >
-                    <Check className="h-12 w-12" />
-                    <span className="text-3xl font-bold">Benar</span>
-                </button>
-                <button
-                    onClick={() => updateAnswer({ trueFalseAnswer: false })}
-                    className={`flex items-center justify-center gap-4 rounded-2xl p-12 shadow-xl transition-all ${
-                        currentAnswer.trueFalseAnswer === false
-                            ? 'scale-105 bg-red-500 text-white ring-4 ring-red-300'
-                            : 'bg-white text-gray-700 hover:bg-red-50 hover:ring-2 hover:ring-red-300'
-                    }`}
-                >
-                    <X className="h-12 w-12" />
-                    <span className="text-3xl font-bold">Salah</span>
-                </button>
+            <div className="space-y-6">
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                    <button
+                        onClick={() => updateAnswer({ trueFalseAnswer: true })}
+                        className={`flex items-center justify-center gap-4 rounded-2xl p-12 shadow-xl transition-all ${
+                            currentAnswer.trueFalseAnswer === true
+                                ? 'scale-105 bg-green-500 text-white ring-4 ring-green-300'
+                                : 'bg-white text-gray-700 hover:bg-green-50 hover:ring-2 hover:ring-green-300'
+                        }`}
+                    >
+                        <Check className="h-12 w-12" />
+                        <span className="text-3xl font-bold">Benar</span>
+                    </button>
+                    <button
+                        onClick={() => updateAnswer({ trueFalseAnswer: false })}
+                        className={`flex items-center justify-center gap-4 rounded-2xl p-12 shadow-xl transition-all ${
+                            currentAnswer.trueFalseAnswer === false
+                                ? 'scale-105 bg-red-500 text-white ring-4 ring-red-300'
+                                : 'bg-white text-gray-700 hover:bg-red-50 hover:ring-2 hover:ring-red-300'
+                        }`}
+                    >
+                        <X className="h-12 w-12" />
+                        <span className="text-3xl font-bold">Salah</span>
+                    </button>
+                </div>
+
+                <div className="rounded-2xl bg-white p-6 shadow-xl">
+                    <label
+                        htmlFor={`true-false-explanation-${currentQuestion.id}`}
+                        className="mb-2 block text-sm font-semibold text-gray-700"
+                    >
+                        Keterangan jawaban
+                    </label>
+                    <Textarea
+                        id={`true-false-explanation-${currentQuestion.id}`}
+                        onPaste={(e) => e.preventDefault()}
+                        autoComplete="off"
+                        value={currentAnswer.trueFalseExplanation || ''}
+                        onChange={(e) =>
+                            updateAnswer({
+                                trueFalseExplanation: e.target.value,
+                            })
+                        }
+                        placeholder="Tuliskan alasan atau keterangan singkat untuk jawaban Benar/Salah..."
+                        className="min-h-[120px] resize-none border-2 text-base focus-visible:border-pink-500 focus-visible:ring-0"
+                    />
+                </div>
             </div>
         );
     };

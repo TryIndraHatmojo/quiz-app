@@ -238,7 +238,7 @@ class NilaiController extends Controller
             'user:id,name,email,jenjang_id,kelas_id,orang_tua_id',
             'user.jenjang:id,jenjang,nama_sekolah',
             'user.kelas:id,nama_kelas',
-            'answers:id,quiz_attempt_id,quiz_question_id,quiz_question_option_id,answer_text,is_correct,awarded_points',
+            'answers:id,quiz_attempt_id,quiz_question_id,quiz_question_option_id,answer_text,answer_explanation,is_correct,awarded_points',
             'answers.selectedOption:id,option_text',
             'answers.matchingPairAnswers:id,quiz_answer_id,left_quiz_matching_pair_id,selected_right_quiz_matching_pair_id,is_correct,awarded_points',
             'answers.matchingPairAnswers.leftPair:id,left_text',
@@ -261,8 +261,15 @@ class NilaiController extends Controller
 
             $answerPreview = '-';
             if ($answer) {
-                if (in_array($question->question_type, [QuizQuestion::TYPE_MULTIPLE_CHOICE, QuizQuestion::TYPE_TRUE_FALSE], true)) {
+                if ($question->question_type === QuizQuestion::TYPE_MULTIPLE_CHOICE) {
                     $answerPreview = $answer->selectedOption?->option_text ?? '-';
+                } elseif ($question->question_type === QuizQuestion::TYPE_TRUE_FALSE) {
+                    $answerPreview = $answer->selectedOption?->option_text
+                        ?? match ($answer->answer_text) {
+                            'true' => 'Benar',
+                            'false' => 'Salah',
+                            default => '-',
+                        };
                 } elseif (in_array($question->question_type, [QuizQuestion::TYPE_SHORT_ANSWER, QuizQuestion::TYPE_LONG_ANSWER], true)) {
                     $answerPreview = $answer->answer_text ?: '-';
                 } elseif ($question->question_type === QuizQuestion::TYPE_MATCHING_PAIRS) {
@@ -285,6 +292,7 @@ class NilaiController extends Controller
                 'question_type' => $question->question_type,
                 'answer_preview' => $answerPreview,
                 'answer_key' => $this->formatAnswerKey($question),
+                'answer_explanation' => $answer?->answer_explanation,
                 'awarded_points' => $awardedPoints,
                 'max_points' => $maxPoints,
                 'is_correct' => $maxPoints > 0 ? $awardedPoints >= $maxPoints : false,

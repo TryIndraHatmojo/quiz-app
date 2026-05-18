@@ -37,6 +37,7 @@ interface QuizAnswer {
     is_correct: boolean;
     awarded_points: number;
     answer_text: string | null;
+    answer_explanation?: string | null;
     selected_option?: {
         id: number;
         option_text: string;
@@ -65,7 +66,11 @@ interface Props {
     quizIsLive: boolean;
 }
 
-export default function QuizResult({ attempt, totalAttempts, quizIsLive }: Props) {
+export default function QuizResult({
+    attempt,
+    totalAttempts,
+    quizIsLive,
+}: Props) {
     const quiz = attempt.quiz;
     const questions = quiz.questions || [];
     const answers = attempt.answers || [];
@@ -79,8 +84,15 @@ export default function QuizResult({ attempt, totalAttempts, quizIsLive }: Props
 
     // Calculate ungraded count
     const ungradedCount = answers.filter((answer) => {
-        const question = questions.find((q) => q.id === answer.quiz_question_id);
-        return question && (question.question_type === 'short_answer' || question.question_type === 'long_answer') && answer.awarded_points === 0;
+        const question = questions.find(
+            (q) => q.id === answer.quiz_question_id,
+        );
+        return (
+            question &&
+            (question.question_type === 'short_answer' ||
+                question.question_type === 'long_answer') &&
+            answer.awarded_points === 0
+        );
     }).length;
 
     // Format duration
@@ -121,8 +133,8 @@ export default function QuizResult({ attempt, totalAttempts, quizIsLive }: Props
                     <p className="text-lg text-white/80">{quiz.title}</p>
 
                     {/* Attempt badge */}
-                    <div className="mt-3 flex items-center justify-center gap-2 flex-wrap">
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 backdrop-blur-sm px-3 py-1 text-sm font-medium text-white">
+                    <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-sm font-medium text-white backdrop-blur-sm">
                             <RotateCcw className="h-3.5 w-3.5" />
                             Percobaan ke-{attempt.attempt_number}
                         </span>
@@ -133,7 +145,7 @@ export default function QuizResult({ attempt, totalAttempts, quizIsLive }: Props
                             </span>
                         )}
                         {!attempt.is_graded && (
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 backdrop-blur-sm px-3 py-1 text-sm text-white/70">
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-sm text-white/70 backdrop-blur-sm">
                                 <Award className="h-3.5 w-3.5" />
                                 Latihan (tidak masuk penilaian)
                             </span>
@@ -280,22 +292,29 @@ export default function QuizResult({ attempt, totalAttempts, quizIsLive }: Props
 
                             {/* Graded info text */}
                             {!attempt.is_graded && (
-                                <div className="mt-4 rounded-xl bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800">
+                                <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
                                     <div className="flex items-center gap-2">
-                                        <Award className="h-4 w-4 text-amber-600 flex-shrink-0" />
+                                        <Award className="h-4 w-4 flex-shrink-0 text-amber-600" />
                                         <span>
-                                            Percobaan ini <strong>tidak masuk penilaian</strong>. Hanya percobaan pertama yang menjadi nilai resmi.
+                                            Percobaan ini{' '}
+                                            <strong>
+                                                tidak masuk penilaian
+                                            </strong>
+                                            . Hanya percobaan pertama yang
+                                            menjadi nilai resmi.
                                         </span>
                                     </div>
                                 </div>
                             )}
 
                             {attempt.is_graded && (
-                                <div className="mt-4 rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-sm text-emerald-800">
+                                <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
                                     <div className="flex items-center gap-2">
-                                        <Medal className="h-4 w-4 text-emerald-600 flex-shrink-0" />
+                                        <Medal className="h-4 w-4 flex-shrink-0 text-emerald-600" />
                                         <span>
-                                            Percobaan ini adalah <strong>nilai resmi</strong> yang masuk ke penilaian.
+                                            Percobaan ini adalah{' '}
+                                            <strong>nilai resmi</strong> yang
+                                            masuk ke penilaian.
                                         </span>
                                     </div>
                                 </div>
@@ -314,15 +333,31 @@ export default function QuizResult({ attempt, totalAttempts, quizIsLive }: Props
 
                         <div className="space-y-8">
                             {/* Soal Pilihan Ganda, Benar/Salah, Mencocokkan */}
-                            {questions.some(q => q.question_type !== 'short_answer' && q.question_type !== 'long_answer') && (
+                            {questions.some(
+                                (q) =>
+                                    q.question_type !== 'short_answer' &&
+                                    q.question_type !== 'long_answer',
+                            ) && (
                                 <div className="space-y-4">
                                     {questions
-                                        .map((q, idx) => ({ ...q, originalIndex: idx }))
-                                        .filter(q => q.question_type !== 'short_answer' && q.question_type !== 'long_answer')
+                                        .map((q, idx) => ({
+                                            ...q,
+                                            originalIndex: idx,
+                                        }))
+                                        .filter(
+                                            (q) =>
+                                                q.question_type !==
+                                                    'short_answer' &&
+                                                q.question_type !==
+                                                    'long_answer',
+                                        )
                                         .map((question) => {
                                             const idx = question.originalIndex;
-                                            const answer = getAnswerForQuestion(question.id!);
-                                            const isCorrect = answer?.is_correct || false;
+                                            const answer = getAnswerForQuestion(
+                                                question.id!,
+                                            );
+                                            const isCorrect =
+                                                answer?.is_correct || false;
 
                                             return (
                                                 <div
@@ -351,7 +386,8 @@ export default function QuizResult({ attempt, totalAttempts, quizIsLive }: Props
                                                         <div className="flex-1">
                                                             <div className="mb-2 flex items-center justify-between">
                                                                 <span className="text-sm font-medium text-gray-500">
-                                                                    Pertanyaan {idx + 1}
+                                                                    Pertanyaan{' '}
+                                                                    {idx + 1}
                                                                 </span>
                                                                 <span
                                                                     className={`text-sm font-bold ${
@@ -360,86 +396,183 @@ export default function QuizResult({ attempt, totalAttempts, quizIsLive }: Props
                                                                             : 'text-red-600'
                                                                     }`}
                                                                 >
-                                                                    {answer?.awarded_points || 0} / {question.points} poin
+                                                                    {answer?.awarded_points ||
+                                                                        0}{' '}
+                                                                    /{' '}
+                                                                    {
+                                                                        question.points
+                                                                    }{' '}
+                                                                    poin
                                                                 </span>
                                                             </div>
 
                                                             <p className="mb-2 font-medium text-gray-800">
-                                                                {question.question_text}
+                                                                {
+                                                                    question.question_text
+                                                                }
                                                             </p>
 
                                                             {/* Show answer for multiple choice */}
-                                                            {question.question_type === 'multiple_choice' && answer?.selected_option && (
-                                                                <div className="mt-2 space-y-1">
-                                                                    <p className="text-sm">
-                                                                        <span className="text-gray-500">Jawaban Anda: </span>
-                                                                        <span className={isCorrect ? 'text-green-700' : 'text-red-700'}>
-                                                                            {answer.selected_option.option_text}
-                                                                        </span>
-                                                                    </p>
-                                                                    {!isCorrect && (
+                                                            {question.question_type ===
+                                                                'multiple_choice' &&
+                                                                answer?.selected_option && (
+                                                                    <div className="mt-2 space-y-1">
                                                                         <p className="text-sm">
-                                                                            <span className="text-gray-500">Jawaban Benar: </span>
-                                                                            <span className="text-green-700">
-                                                                                {question.options.find(o => o.is_correct)?.option_text}
+                                                                            <span className="text-gray-500">
+                                                                                Jawaban
+                                                                                Anda:{' '}
+                                                                            </span>
+                                                                            <span
+                                                                                className={
+                                                                                    isCorrect
+                                                                                        ? 'text-green-700'
+                                                                                        : 'text-red-700'
+                                                                                }
+                                                                            >
+                                                                                {
+                                                                                    answer
+                                                                                        .selected_option
+                                                                                        .option_text
+                                                                                }
                                                                             </span>
                                                                         </p>
-                                                                    )}
-                                                                </div>
-                                                            )}
+                                                                        {!isCorrect && (
+                                                                            <p className="text-sm">
+                                                                                <span className="text-gray-500">
+                                                                                    Jawaban
+                                                                                    Benar:{' '}
+                                                                                </span>
+                                                                                <span className="text-green-700">
+                                                                                    {
+                                                                                        question.options.find(
+                                                                                            (
+                                                                                                o,
+                                                                                            ) =>
+                                                                                                o.is_correct,
+                                                                                        )
+                                                                                            ?.option_text
+                                                                                    }
+                                                                                </span>
+                                                                            </p>
+                                                                        )}
+                                                                    </div>
+                                                                )}
 
                                                             {/* Show answer for true/false */}
-                                                            {question.question_type === 'true_false' && answer?.answer_text && (
-                                                                <div className="mt-2 space-y-1">
-                                                                    <p className="text-sm">
-                                                                        <span className="text-gray-500">Jawaban Anda: </span>
-                                                                        <span className={isCorrect ? 'text-green-700' : 'text-red-700'}>
-                                                                            {answer.answer_text === 'true' ? 'Benar' : 'Salah'}
-                                                                        </span>
-                                                                    </p>
-                                                                    {!isCorrect && (
+                                                            {question.question_type ===
+                                                                'true_false' &&
+                                                                answer?.answer_text && (
+                                                                    <div className="mt-2 space-y-1">
                                                                         <p className="text-sm">
-                                                                            <span className="text-gray-500">Jawaban Benar: </span>
-                                                                            <span className="text-green-700">
-                                                                                {question.options.find(o => o.is_correct)?.option_text}
+                                                                            <span className="text-gray-500">
+                                                                                Jawaban
+                                                                                Anda:{' '}
+                                                                            </span>
+                                                                            <span
+                                                                                className={
+                                                                                    isCorrect
+                                                                                        ? 'text-green-700'
+                                                                                        : 'text-red-700'
+                                                                                }
+                                                                            >
+                                                                                {answer.answer_text ===
+                                                                                'true'
+                                                                                    ? 'Benar'
+                                                                                    : 'Salah'}
                                                                             </span>
                                                                         </p>
-                                                                    )}
-                                                                </div>
-                                                            )}
+                                                                        {!isCorrect && (
+                                                                            <p className="text-sm">
+                                                                                <span className="text-gray-500">
+                                                                                    Jawaban
+                                                                                    Benar:{' '}
+                                                                                </span>
+                                                                                <span className="text-green-700">
+                                                                                    {
+                                                                                        question.options.find(
+                                                                                            (
+                                                                                                o,
+                                                                                            ) =>
+                                                                                                o.is_correct,
+                                                                                        )
+                                                                                            ?.option_text
+                                                                                    }
+                                                                                </span>
+                                                                            </p>
+                                                                        )}
+                                                                        {answer.answer_explanation && (
+                                                                            <div className="mt-3 rounded-lg bg-white/80 p-3 text-sm text-gray-700">
+                                                                                <span className="mb-1 block text-xs font-medium text-gray-500">
+                                                                                    Keterangan:
+                                                                                </span>
+                                                                                <p className="whitespace-pre-wrap">
+                                                                                    {
+                                                                                        answer.answer_explanation
+                                                                                    }
+                                                                                </p>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                )}
 
                                                             {/* Show answer for matching pairs */}
-                                                            {question.question_type === 'matching_pairs' && answer?.matching_pair_answers && (
-                                                                <div className="mt-4 space-y-2">
-                                                                    <p className="text-sm font-medium text-gray-700">
-                                                                        Pasangan yang dipilih:
-                                                                    </p>
-                                                                    <div className="grid gap-2">
-                                                                        {answer.matching_pair_answers.map(mpa => (
-                                                                            <div key={mpa.id} className="flex items-center rounded border border-gray-100 bg-white p-2 text-sm shadow-sm">
-                                                                                <div className="flex-1 border-r pr-4 text-right font-medium text-gray-800">
-                                                                                    {mpa.left_pair?.left_text || '(tidak ada)'}
-                                                                                </div>
-                                                                                <div className="flex items-center justify-center px-3">
-                                                                                    {mpa.is_correct ? (
-                                                                                        <Check className="h-4 w-4 text-green-500" />
-                                                                                    ) : (
-                                                                                        <X className="h-4 w-4 text-red-500" />
-                                                                                    )}
-                                                                                </div>
-                                                                                <div className={`flex-1 pl-4 ${mpa.is_correct ? 'text-green-700' : 'text-red-700'}`}>
-                                                                                    {mpa.selected_right_pair?.right_text || '(tidak dijawab)'}
-                                                                                    {!mpa.is_correct && (
-                                                                                        <div className="mt-1 text-xs text-green-600">
-                                                                                            Benar: {mpa.left_pair?.right_text}
+                                                            {question.question_type ===
+                                                                'matching_pairs' &&
+                                                                answer?.matching_pair_answers && (
+                                                                    <div className="mt-4 space-y-2">
+                                                                        <p className="text-sm font-medium text-gray-700">
+                                                                            Pasangan
+                                                                            yang
+                                                                            dipilih:
+                                                                        </p>
+                                                                        <div className="grid gap-2">
+                                                                            {answer.matching_pair_answers.map(
+                                                                                (
+                                                                                    mpa,
+                                                                                ) => (
+                                                                                    <div
+                                                                                        key={
+                                                                                            mpa.id
+                                                                                        }
+                                                                                        className="flex items-center rounded border border-gray-100 bg-white p-2 text-sm shadow-sm"
+                                                                                    >
+                                                                                        <div className="flex-1 border-r pr-4 text-right font-medium text-gray-800">
+                                                                                            {mpa
+                                                                                                .left_pair
+                                                                                                ?.left_text ||
+                                                                                                '(tidak ada)'}
                                                                                         </div>
-                                                                                    )}
-                                                                                </div>
-                                                                            </div>
-                                                                        ))}
+                                                                                        <div className="flex items-center justify-center px-3">
+                                                                                            {mpa.is_correct ? (
+                                                                                                <Check className="h-4 w-4 text-green-500" />
+                                                                                            ) : (
+                                                                                                <X className="h-4 w-4 text-red-500" />
+                                                                                            )}
+                                                                                        </div>
+                                                                                        <div
+                                                                                            className={`flex-1 pl-4 ${mpa.is_correct ? 'text-green-700' : 'text-red-700'}`}
+                                                                                        >
+                                                                                            {mpa
+                                                                                                .selected_right_pair
+                                                                                                ?.right_text ||
+                                                                                                '(tidak dijawab)'}
+                                                                                            {!mpa.is_correct && (
+                                                                                                <div className="mt-1 text-xs text-green-600">
+                                                                                                    Benar:{' '}
+                                                                                                    {
+                                                                                                        mpa
+                                                                                                            .left_pair
+                                                                                                            ?.right_text
+                                                                                                    }
+                                                                                                </div>
+                                                                                            )}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                ),
+                                                                            )}
+                                                                        </div>
                                                                     </div>
-                                                                </div>
-                                                            )}
+                                                                )}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -449,19 +582,36 @@ export default function QuizResult({ attempt, totalAttempts, quizIsLive }: Props
                             )}
 
                             {/* Soal Isian */}
-                            {questions.some(q => q.question_type === 'short_answer' || q.question_type === 'long_answer') && (
+                            {questions.some(
+                                (q) =>
+                                    q.question_type === 'short_answer' ||
+                                    q.question_type === 'long_answer',
+                            ) && (
                                 <div>
-                                    <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-gray-800 border-b pb-2">
+                                    <h3 className="mb-4 flex items-center gap-2 border-b pb-2 text-lg font-bold text-gray-800">
                                         <Clock className="h-5 w-5 text-amber-500" />
                                         Soal Isian (Menunggu Penilaian Guru)
                                     </h3>
                                     <div className="space-y-4">
                                         {questions
-                                            .map((q, idx) => ({ ...q, originalIndex: idx }))
-                                            .filter(q => q.question_type === 'short_answer' || q.question_type === 'long_answer')
+                                            .map((q, idx) => ({
+                                                ...q,
+                                                originalIndex: idx,
+                                            }))
+                                            .filter(
+                                                (q) =>
+                                                    q.question_type ===
+                                                        'short_answer' ||
+                                                    q.question_type ===
+                                                        'long_answer',
+                                            )
                                             .map((question) => {
-                                                const idx = question.originalIndex;
-                                                const answer = getAnswerForQuestion(question.id!);
+                                                const idx =
+                                                    question.originalIndex;
+                                                const answer =
+                                                    getAnswerForQuestion(
+                                                        question.id!,
+                                                    );
 
                                                 return (
                                                     <div
@@ -476,24 +626,44 @@ export default function QuizResult({ attempt, totalAttempts, quizIsLive }: Props
                                                             <div className="flex-1">
                                                                 <div className="mb-2 flex items-center justify-between">
                                                                     <span className="text-sm font-medium text-gray-500">
-                                                                        Pertanyaan {idx + 1}
+                                                                        Pertanyaan{' '}
+                                                                        {idx +
+                                                                            1}
                                                                     </span>
                                                                     <span className="text-sm font-bold text-amber-600">
-                                                                        Maks. {question.points} poin
+                                                                        Maks.{' '}
+                                                                        {
+                                                                            question.points
+                                                                        }{' '}
+                                                                        poin
                                                                     </span>
                                                                 </div>
 
                                                                 <p className="mb-2 font-medium text-gray-800">
-                                                                    {question.question_text}
+                                                                    {
+                                                                        question.question_text
+                                                                    }
                                                                 </p>
 
                                                                 <div className="mt-2 rounded bg-white p-3 shadow-sm">
                                                                     <p className="text-sm">
-                                                                        <span className="text-gray-500 block mb-1">Jawaban Anda:</span>
-                                                                        <span className="text-gray-800 whitespace-pre-wrap">
-                                                                            {question.question_type === 'short_answer' && answer?.answer_text
-                                                                                ? answer.answer_text.split('|||').join(', ')
-                                                                                : answer?.answer_text || '(tidak dijawab)'}
+                                                                        <span className="mb-1 block text-gray-500">
+                                                                            Jawaban
+                                                                            Anda:
+                                                                        </span>
+                                                                        <span className="whitespace-pre-wrap text-gray-800">
+                                                                            {question.question_type ===
+                                                                                'short_answer' &&
+                                                                            answer?.answer_text
+                                                                                ? answer.answer_text
+                                                                                      .split(
+                                                                                          '|||',
+                                                                                      )
+                                                                                      .join(
+                                                                                          ', ',
+                                                                                      )
+                                                                                : answer?.answer_text ||
+                                                                                  '(tidak dijawab)'}
                                                                         </span>
                                                                     </p>
                                                                 </div>

@@ -1,9 +1,5 @@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import AppSidebarLayout from '@/layouts/app/app-sidebar-layout';
-import { type BreadcrumbItem, type SharedData } from '@/types';
-import { Head, Link, router, usePage, useForm } from '@inertiajs/react';
 import {
     Dialog,
     DialogContent,
@@ -12,7 +8,11 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import AppSidebarLayout from '@/layouts/app/app-sidebar-layout';
+import { type BreadcrumbItem, type SharedData } from '@/types';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
     Award,
@@ -61,6 +61,7 @@ interface QuestionScoreItem {
     question_type: string;
     answer_preview: string;
     answer_key: string;
+    answer_explanation: string | null;
     awarded_points: number;
     max_points: number;
     is_correct: boolean;
@@ -105,8 +106,11 @@ export default function NilaiShow({
     ];
 
     const ungradedCount = useMemo(() => {
-        return questionScores.filter((q) => 
-            (q.question_type === 'short_answer' || q.question_type === 'long_answer') && q.awarded_points === 0
+        return questionScores.filter(
+            (q) =>
+                (q.question_type === 'short_answer' ||
+                    q.question_type === 'long_answer') &&
+                q.awarded_points === 0,
         ).length;
     }, [questionScores]);
 
@@ -211,9 +215,10 @@ export default function NilaiShow({
                 {attempt.is_graded && (
                     <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300">
                         <div className="flex items-center gap-2">
-                            <Medal className="h-4 w-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                            <Medal className="h-4 w-4 flex-shrink-0 text-emerald-600 dark:text-emerald-400" />
                             <span>
-                                Ini adalah <strong>nilai resmi</strong> (percobaan pertama) yang masuk ke penilaian.
+                                Ini adalah <strong>nilai resmi</strong>{' '}
+                                (percobaan pertama) yang masuk ke penilaian.
                             </span>
                         </div>
                     </div>
@@ -222,9 +227,12 @@ export default function NilaiShow({
                 {!attempt.is_graded && (
                     <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
                         <div className="flex items-center gap-2">
-                            <Award className="h-4 w-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+                            <Award className="h-4 w-4 flex-shrink-0 text-amber-600 dark:text-amber-400" />
                             <span>
-                                Percobaan ini <strong>tidak masuk penilaian resmi</strong>. Hanya percobaan pertama yang menjadi nilai resmi.
+                                Percobaan ini{' '}
+                                <strong>tidak masuk penilaian resmi</strong>.
+                                Hanya percobaan pertama yang menjadi nilai
+                                resmi.
                             </span>
                         </div>
                     </div>
@@ -279,8 +287,10 @@ export default function NilaiShow({
                                         type="button"
                                         onClick={() => {
                                             manualStatsForm.setData({
-                                                correct_count: attempt.correct_count.toString(),
-                                                wrong_count: attempt.wrong_count.toString(),
+                                                correct_count:
+                                                    attempt.correct_count.toString(),
+                                                wrong_count:
+                                                    attempt.wrong_count.toString(),
                                             });
                                             setIsManualStatsModalOpen(true);
                                         }}
@@ -292,7 +302,10 @@ export default function NilaiShow({
                                 )}
                             </div>
                             <p className="mt-1 text-2xl font-bold">
-                                <span className="text-emerald-600" title="Benar">
+                                <span
+                                    className="text-emerald-600"
+                                    title="Benar"
+                                >
                                     {attempt.correct_count}
                                 </span>
                                 {' / '}
@@ -300,7 +313,10 @@ export default function NilaiShow({
                                     {attempt.wrong_count}
                                 </span>
                                 {' / '}
-                                <span className="text-orange-500" title="Belum Dinilai">
+                                <span
+                                    className="text-orange-500"
+                                    title="Belum Dinilai"
+                                >
                                     {ungradedCount}
                                 </span>
                             </p>
@@ -396,10 +412,28 @@ export default function NilaiShow({
                                                 </span>
                                             </td>
                                             <td className="max-w-[200px] px-4 py-3 text-xs text-muted-foreground">
-                                                <p className="line-clamp-3">{item.answer_preview}</p>
+                                                <p className="line-clamp-3">
+                                                    {item.answer_preview}
+                                                </p>
+                                                {item.question_type ===
+                                                    'true_false' &&
+                                                    item.answer_explanation && (
+                                                        <div className="mt-2 rounded-md bg-accent/50 p-2">
+                                                            <span className="mb-1 block font-medium text-foreground">
+                                                                Keterangan:
+                                                            </span>
+                                                            <p className="line-clamp-4 whitespace-pre-wrap">
+                                                                {
+                                                                    item.answer_explanation
+                                                                }
+                                                            </p>
+                                                        </div>
+                                                    )}
                                             </td>
                                             <td className="max-w-[200px] px-4 py-3 text-xs text-muted-foreground">
-                                                <p className="line-clamp-3">{item.answer_key}</p>
+                                                <p className="line-clamp-3">
+                                                    {item.answer_key}
+                                                </p>
                                             </td>
                                             <td className="px-4 py-3">
                                                 {isEditable ? (
@@ -428,8 +462,7 @@ export default function NilaiShow({
                                                             }}
                                                         />
                                                         <span className="text-xs text-muted-foreground">
-                                                            /{' '}
-                                                            {item.max_points}
+                                                            / {item.max_points}
                                                         </span>
                                                     </div>
                                                 ) : (
@@ -499,52 +532,93 @@ export default function NilaiShow({
             </div>
 
             {/* Manual Stats Modal */}
-            <Dialog open={isManualStatsModalOpen} onOpenChange={setIsManualStatsModalOpen}>
+            <Dialog
+                open={isManualStatsModalOpen}
+                onOpenChange={setIsManualStatsModalOpen}
+            >
                 <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
                         <DialogTitle>Atur Benar/Salah Manual</DialogTitle>
                         <DialogDescription>
-                            Ubah jumlah benar dan salah secara manual untuk {attempt.student.name}.
-                            Poin total akan tetap, hanya statistik benar/salah yang diubah.
+                            Ubah jumlah benar dan salah secara manual untuk{' '}
+                            {attempt.student.name}. Poin total akan tetap, hanya
+                            statistik benar/salah yang diubah.
                         </DialogDescription>
                     </DialogHeader>
-                    <form onSubmit={handleManualStatsSubmit} className="space-y-4 py-4">
+                    <form
+                        onSubmit={handleManualStatsSubmit}
+                        className="space-y-4 py-4"
+                    >
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor="correct_count" className="text-emerald-600">Benar</Label>
+                                <Label
+                                    htmlFor="correct_count"
+                                    className="text-emerald-600"
+                                >
+                                    Benar
+                                </Label>
                                 <Input
                                     id="correct_count"
                                     type="number"
                                     min="0"
                                     value={manualStatsForm.data.correct_count}
-                                    onChange={(e) => manualStatsForm.setData('correct_count', e.target.value)}
+                                    onChange={(e) =>
+                                        manualStatsForm.setData(
+                                            'correct_count',
+                                            e.target.value,
+                                        )
+                                    }
                                     required
                                 />
                                 {manualStatsForm.errors.correct_count && (
-                                    <p className="text-xs text-red-500">{manualStatsForm.errors.correct_count}</p>
+                                    <p className="text-xs text-red-500">
+                                        {manualStatsForm.errors.correct_count}
+                                    </p>
                                 )}
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="wrong_count" className="text-red-500">Salah</Label>
+                                <Label
+                                    htmlFor="wrong_count"
+                                    className="text-red-500"
+                                >
+                                    Salah
+                                </Label>
                                 <Input
                                     id="wrong_count"
                                     type="number"
                                     min="0"
                                     value={manualStatsForm.data.wrong_count}
-                                    onChange={(e) => manualStatsForm.setData('wrong_count', e.target.value)}
+                                    onChange={(e) =>
+                                        manualStatsForm.setData(
+                                            'wrong_count',
+                                            e.target.value,
+                                        )
+                                    }
                                     required
                                 />
                                 {manualStatsForm.errors.wrong_count && (
-                                    <p className="text-xs text-red-500">{manualStatsForm.errors.wrong_count}</p>
+                                    <p className="text-xs text-red-500">
+                                        {manualStatsForm.errors.wrong_count}
+                                    </p>
                                 )}
                             </div>
                         </div>
                         <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => setIsManualStatsModalOpen(false)} disabled={manualStatsForm.processing}>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setIsManualStatsModalOpen(false)}
+                                disabled={manualStatsForm.processing}
+                            >
                                 Batal
                             </Button>
-                            <Button type="submit" disabled={manualStatsForm.processing}>
-                                {manualStatsForm.processing ? 'Menyimpan...' : 'Simpan Perubahan'}
+                            <Button
+                                type="submit"
+                                disabled={manualStatsForm.processing}
+                            >
+                                {manualStatsForm.processing
+                                    ? 'Menyimpan...'
+                                    : 'Simpan Perubahan'}
                             </Button>
                         </DialogFooter>
                     </form>

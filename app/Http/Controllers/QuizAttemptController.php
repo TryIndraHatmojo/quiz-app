@@ -127,6 +127,7 @@ class QuizAttemptController extends Controller
             'quiz_question_option_id' => 'nullable|exists:quiz_question_options,id',
             'quiz_matching_pair_id' => 'nullable|exists:quiz_matching_pairs,id',
             'answer_text' => 'nullable|string',
+            'answer_explanation' => 'nullable|string',
             'matching_answers' => 'nullable|array',
             'matching_answers.*.left_quiz_matching_pair_id' => 'required_with:matching_answers|exists:quiz_matching_pairs,id',
             'matching_answers.*.selected_right_quiz_matching_pair_id' => 'required_with:matching_answers|exists:quiz_matching_pairs,id',
@@ -263,6 +264,7 @@ class QuizAttemptController extends Controller
                 'quiz_question_option_id' => $request->quiz_question_option_id,
                 'quiz_matching_pair_id' => $request->quiz_matching_pair_id,
                 'answer_text' => $request->answer_text,
+                'answer_explanation' => $request->answer_explanation,
                 'is_correct' => $isCorrect,
                 'awarded_points' => $awardedPoints,
                 'answered_at' => now(),
@@ -400,16 +402,41 @@ class QuizAttemptController extends Controller
         $attempts = QuizAttempt::where('quiz_id', $quiz->id)
             ->where('user_id', $user->id)
             ->whereNotNull('completed_at')
+            ->with([
+                'answers:id,quiz_attempt_id,quiz_question_id,answer_text,answer_explanation,awarded_points,is_correct',
+            ])
             ->orderBy('attempt_number', 'asc')
             ->get();
 
         $maxPoints = $quiz->questions->sum('points');
+        $questionsCount = $quiz->questions->count();
         $passingScore = (int) ($quiz->passing_score ?: 70);
+        $questionsById = $quiz->questions->keyBy('id');
+        $questionNumbers = $quiz->questions
+            ->sortBy('order')
+            ->values()
+            ->mapWithKeys(fn ($question, $index) => [$question->id => $index + 1]);
 
-        $attemptsData = $attempts->map(function ($attempt) use ($maxPoints, $passingScore) {
+        $attemptsData = $attempts->map(function ($attempt) use ($maxPoints, $questionsCount, $passingScore, $questionsById, $questionNumbers) {
             $scorePercentage = $maxPoints > 0
                 ? round(($attempt->total_points / $maxPoints) * 100, 2)
                 : 0;
+
+            $trueFalseAnswers = $attempt->answers
+                ->filter(function ($answer) use ($questionsById) {
+                    return $questionsById->get($answer->quiz_question_id)?->question_type === 'true_false';
+                })
+                ->map(function ($answer) use ($questionNumbers) {
+                    return [
+                        'question_id' => $answer->quiz_question_id,
+                        'question_number' => (int) ($questionNumbers->get($answer->quiz_question_id) ?? 0),
+                        'answer_text' => $answer->answer_text,
+                        'answer_explanation' => $answer->answer_explanation,
+                        'awarded_points' => (int) $answer->awarded_points,
+                        'is_correct' => (bool) $answer->is_correct,
+                    ];
+                })
+                ->values();
 
             return [
                 'id' => $attempt->id,
@@ -420,11 +447,12 @@ class QuizAttemptController extends Controller
                 'score_percentage' => $scorePercentage,
                 'correct_count' => (int) $attempt->correct_count,
                 'wrong_count' => (int) $attempt->wrong_count,
-                'ungraded_count' => max(0, $quiz->questions->count() - ((int) $attempt->correct_count + (int) $attempt->wrong_count)),
+                'ungraded_count' => max(0, $questionsCount - ((int) $attempt->correct_count + (int) $attempt->wrong_count)),
                 'duration_seconds' => $attempt->duration_seconds,
                 'started_at' => $attempt->started_at?->toDateTimeString(),
                 'completed_at' => $attempt->completed_at?->toDateTimeString(),
                 'is_passed' => $maxPoints > 0 && $scorePercentage >= $passingScore,
+                'true_false_answers' => $trueFalseAnswers,
             ];
         });
 

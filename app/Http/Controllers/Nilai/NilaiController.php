@@ -230,7 +230,7 @@ class NilaiController extends Controller
 
         $attempt->load([
             'quiz:id,title,user_id,passing_score',
-            'quiz.questions:id,quiz_id,question_text,question_type,points,order',
+            'quiz.questions:id,quiz_id,question_text,question_type,explanation,points,order',
             'quiz.questions.options:id,quiz_question_id,option_text,is_correct,order',
             'quiz.questions.matchingPairs:id,quiz_question_id,left_text,right_text,order',
             'quiz.questions.shortAnswerFields:id,quiz_question_id,expected_answer,order',
@@ -258,6 +258,8 @@ class NilaiController extends Controller
             $answer = $answersByQuestionId->get($question->id);
             $awardedPoints = (int) ($answer?->awarded_points ?? 0);
             $maxPoints = (int) $question->points;
+            $answerExplanation = trim((string) ($answer?->answer_explanation ?? ''));
+            $questionExplanation = trim((string) ($question->explanation ?? ''));
 
             $answerPreview = '-';
             if ($answer) {
@@ -292,7 +294,9 @@ class NilaiController extends Controller
                 'question_type' => $question->question_type,
                 'answer_preview' => $answerPreview,
                 'answer_key' => $this->formatAnswerKey($question),
-                'answer_explanation' => $answer?->answer_explanation,
+                'answer_explanation' => $answerExplanation !== ''
+                    ? $answerExplanation
+                    : ($questionExplanation !== '' ? $questionExplanation : null),
                 'awarded_points' => $awardedPoints,
                 'max_points' => $maxPoints,
                 'is_correct' => $maxPoints > 0 ? $awardedPoints >= $maxPoints : false,
@@ -386,7 +390,7 @@ class NilaiController extends Controller
         $maxPoints = (int) $question->points;
 
         if ($awardedPoints > $maxPoints) {
-            $awardedPoints = $maxPoints;
+            return back()->with('error', "Nilai per soal tidak boleh melebihi {$maxPoints}.");
         }
 
         QuizAnswer::query()->updateOrCreate(

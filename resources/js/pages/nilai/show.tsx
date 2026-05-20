@@ -77,6 +77,19 @@ interface Props {
     };
 }
 
+const clampScoreInput = (rawValue: string, maxPoints: number): string => {
+    const digitsOnly = rawValue.replace(/\D/g, '');
+
+    if (digitsOnly === '') {
+        return '';
+    }
+
+    const value = Number.parseInt(digitsOnly, 10);
+    const safeMax = Math.max(0, maxPoints);
+
+    return Math.min(value, safeMax).toString();
+};
+
 export default function NilaiShow({
     attempt,
     questionScores,
@@ -121,6 +134,7 @@ export default function NilaiShow({
             ? 'Atur Nilai Per Soal'
             : 'Detail Nilai Per Soal';
     }, [permissions.canEdit, permissions.isOrangTua, permissions.isSiswa]);
+    const showActionColumn = !permissions.isSiswa;
 
     const submitScore = (item: QuestionScoreItem) => {
         const raw =
@@ -129,6 +143,11 @@ export default function NilaiShow({
 
         if (Number.isNaN(value) || value < 0) {
             alert('Nilai per soal harus berupa angka 0 atau lebih besar.');
+            return;
+        }
+
+        if (value > item.max_points) {
+            alert(`Nilai per soal tidak boleh melebihi ${item.max_points}.`);
             return;
         }
 
@@ -369,16 +388,18 @@ export default function NilaiShow({
                                     <th className="px-4 py-3 font-medium">
                                         Status
                                     </th>
-                                    <th className="px-4 py-3 font-medium">
-                                        Aksi
-                                    </th>
+                                    {showActionColumn && (
+                                        <th className="px-4 py-3 font-medium">
+                                            Aksi
+                                        </th>
+                                    )}
                                 </tr>
                             </thead>
                             <tbody>
                                 {questionScores.length === 0 && (
                                     <tr>
                                         <td
-                                            colSpan={8}
+                                            colSpan={showActionColumn ? 8 : 7}
                                             className="px-4 py-6 text-center text-muted-foreground"
                                         >
                                             Belum ada detail soal pada attempt
@@ -418,11 +439,11 @@ export default function NilaiShow({
                                                 {item.question_type ===
                                                     'true_false' &&
                                                     item.answer_explanation && (
-                                                        <div className="mt-2 rounded-md bg-accent/50 p-2">
-                                                            <span className="mb-1 block font-medium text-foreground">
-                                                                Keterangan:
+                                                        <div className="mt-2 rounded-md border border-sidebar-border bg-background p-2">
+                                                            <span className="mb-1 block text-[11px] font-semibold text-foreground uppercase">
+                                                                Keterangan
                                                             </span>
-                                                            <p className="line-clamp-4 whitespace-pre-wrap">
+                                                            <p className="whitespace-pre-wrap">
                                                                 {
                                                                     item.answer_explanation
                                                                 }
@@ -454,9 +475,12 @@ export default function NilaiShow({
                                                                     (prev) => ({
                                                                         ...prev,
                                                                         [item.question_id]:
-                                                                            e
-                                                                                .target
-                                                                                .value,
+                                                                            clampScoreInput(
+                                                                                e
+                                                                                    .target
+                                                                                    .value,
+                                                                                item.max_points,
+                                                                            ),
                                                                     }),
                                                                 );
                                                             }}
@@ -487,25 +511,29 @@ export default function NilaiShow({
                                                     </span>
                                                 )}
                                             </td>
-                                            <td className="px-4 py-3">
-                                                {isEditable ? (
-                                                    <Button
-                                                        size="sm"
-                                                        className="h-8"
-                                                        onClick={() =>
-                                                            submitScore(item)
-                                                        }
-                                                    >
-                                                        <Save className="mr-1.5 h-3.5 w-3.5" />
-                                                        Simpan
-                                                    </Button>
-                                                ) : (
-                                                    <span className="inline-flex items-center text-xs text-muted-foreground">
-                                                        <Eye className="mr-1 h-3.5 w-3.5" />
-                                                        Lihat saja
-                                                    </span>
-                                                )}
-                                            </td>
+                                            {showActionColumn && (
+                                                <td className="px-4 py-3">
+                                                    {isEditable ? (
+                                                        <Button
+                                                            size="sm"
+                                                            className="h-8"
+                                                            onClick={() =>
+                                                                submitScore(
+                                                                    item,
+                                                                )
+                                                            }
+                                                        >
+                                                            <Save className="mr-1.5 h-3.5 w-3.5" />
+                                                            Simpan
+                                                        </Button>
+                                                    ) : (
+                                                        <span className="inline-flex items-center text-xs text-muted-foreground">
+                                                            <Eye className="mr-1 h-3.5 w-3.5" />
+                                                            Lihat saja
+                                                        </span>
+                                                    )}
+                                                </td>
+                                            )}
                                         </tr>
                                     );
                                 })}

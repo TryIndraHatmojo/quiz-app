@@ -8,6 +8,7 @@ import { UserInfo } from '@/components/user-info';
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
 import { logout } from '@/routes';
 import { edit } from '@/routes/profile';
+import { edit as editPassword } from '@/routes/user-password';
 import { type User } from '@/types';
 import { Link, router } from '@inertiajs/react';
 import { LogOut, Settings } from 'lucide-react';
@@ -18,6 +19,8 @@ interface UserMenuContentProps {
 
 export function UserMenuContent({ user }: UserMenuContentProps) {
     const cleanup = useMobileNavigation();
+    const isAdmin = user.roles?.some((role) => role.slug === 'admin') ?? false;
+    const settingsHref = isAdmin ? edit() : editPassword();
 
     const handleLogout = () => {
         cleanup();
@@ -36,7 +39,7 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
                 <DropdownMenuItem asChild>
                     <Link
                         className="block w-full"
-                        href={edit()}
+                        href={settingsHref}
                         as="button"
                         prefetch
                         onClick={cleanup}

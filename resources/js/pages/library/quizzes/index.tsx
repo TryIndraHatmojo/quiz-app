@@ -49,6 +49,11 @@ interface Kelas {
     nama_kelas: string;
 }
 
+interface QuizCreator {
+    id: number;
+    name: string;
+}
+
 interface Quiz {
     id: number;
     title: string;
@@ -60,6 +65,7 @@ interface Quiz {
     category?: QuizCategory;
     jenjang?: Jenjang;
     kelas?: Kelas;
+    creator?: QuizCreator | null;
     created_at: string;
     can_edit?: boolean;
     can_preview?: boolean;
@@ -578,6 +584,9 @@ export default function QuizIndex({
                                         {quiz.duration
                                             ? `${quiz.duration} menit total`
                                             : 'Tidak diatur'}
+                                    </p>
+                                    <p className="mt-1 text-xs text-muted-foreground">
+                                        Pembuat: {quiz.creator?.name ?? '-'}
                                     </p>
                                     <p className="mt-1 text-xs text-muted-foreground">
                                         Dibuat:{' '}

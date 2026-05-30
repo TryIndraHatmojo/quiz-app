@@ -23,7 +23,7 @@ class QuizController extends Controller
         $userId = $request->user()?->id;
         $isAdmin = $this->isAdmin();
 
-        $query = Quiz::with(['category', 'jenjang', 'kelas']);
+        $query = Quiz::with(['category', 'jenjang', 'kelas', 'user:id,name']);
 
         if (!$isAdmin) {
             $query->where(function ($q) use ($userId) {
@@ -101,6 +101,10 @@ class QuizController extends Controller
                     'category' => $quiz->category,
                     'jenjang' => $quiz->jenjang,
                     'kelas' => $quiz->kelas,
+                    'creator' => $quiz->user ? [
+                        'id' => $quiz->user->id,
+                        'name' => $quiz->user->name,
+                    ] : null,
                     'created_at' => $quiz->created_at,
                     'can_edit' => $canEdit,
                     'can_preview' => $canPreview,

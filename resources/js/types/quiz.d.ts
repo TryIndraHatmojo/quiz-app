@@ -1,4 +1,4 @@
-import { CatatanTelaahSoal, QuizBackground } from './index';
+import { CatatanTelaahSoal, QuizBackground, User } from './index';
 
 export interface QuizQuestionOption {
     id?: number;
@@ -51,7 +51,6 @@ export interface QuizQuestion {
     catatan_telaah_count?: number;
 }
 
-
 export interface Quiz {
     id: number;
     title: string;
@@ -65,6 +64,7 @@ export interface Quiz {
     jenjang_id?: number | null;
     kelas_id?: number | null;
     quiz_background_id?: number | null;
+    user?: User | null;
     background?: QuizBackground;
     questions?: QuizQuestion[];
 }

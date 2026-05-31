@@ -526,6 +526,10 @@ class QuizController extends Controller
         }
 
         $quiz->load([
+            'user:id,name,email,jenjang_id,kelas_id',
+            'user.roles:id,name',
+            'user.jenjang',
+            'user.kelas',
             'teacherAccess.user.roles',
             'studentAccess.user.jenjang',
             'studentAccess.user.kelas',

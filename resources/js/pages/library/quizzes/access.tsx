@@ -103,7 +103,9 @@ export default function QuizAccess({
 
     // Filter teachers not already having access
     let availableTeachers = teachers.filter(
-        (t) => !teacherAccess.find((ta) => ta.user_id === t.id),
+        (t) =>
+            t.id !== quiz.user?.id &&
+            !teacherAccess.find((ta) => ta.user_id === t.id),
     );
 
     // Filter teachers by jenjang and kelas
@@ -266,6 +268,32 @@ export default function QuizAccess({
                             mengedit quiz ini.
                         </p>
 
+                        {quiz.user && (
+                            <div className="mb-4 rounded-lg border bg-background p-3">
+                                <Label className="text-sm text-muted-foreground">
+                                    Guru pembuat soal
+                                </Label>
+                                <div className="mt-2 flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100">
+                                            <Shield className="h-4 w-4 text-blue-600" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-medium">
+                                                {quiz.user.name}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">
+                                                {quiz.user.email}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <span className="rounded bg-blue-100 px-2 py-1 text-xs text-blue-700">
+                                        Pembuat
+                                    </span>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Add Teacher Form */}
                         <div className="mb-6 space-y-4 rounded-lg bg-muted/50 p-4">
                             <div className="grid grid-cols-2 gap-2">
@@ -400,7 +428,7 @@ export default function QuizAccess({
                         {/* Teacher Access List */}
                         <div className="space-y-2">
                             <Label className="text-sm text-muted-foreground">
-                                Guru dengan akses ({teacherAccess.length})
+                                {`Guru dengan akses tambahan (${teacherAccess.length})`}
                             </Label>
                             {teacherAccess.length === 0 ? (
                                 <p className="py-4 text-center text-sm text-muted-foreground italic">

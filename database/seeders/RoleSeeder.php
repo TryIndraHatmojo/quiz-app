@@ -53,8 +53,29 @@ class RoleSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
+            [
+                'name' => 'Guru Tamu',
+                'slug' => 'guru-tamu',
+                'guard_name' => 'web',
+                'description' => 'Guru tamu yang dapat membuat dan mengelola kuis khusus tamu',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'Siswa Tamu',
+                'slug' => 'siswa-tamu',
+                'guard_name' => 'web',
+                'description' => 'Siswa tamu yang hanya dapat mengerjakan kuis khusus tamu',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
         ];
 
-        DB::table('roles')->insert($roles);
+        foreach ($roles as $role) {
+            DB::table('roles')->updateOrInsert(
+                ['slug' => $role['slug']],
+                $role
+            );
+        }
     }
 }

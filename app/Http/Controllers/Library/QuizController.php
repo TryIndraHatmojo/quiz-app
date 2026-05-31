@@ -3,29 +3,36 @@
 namespace App\Http\Controllers\Library;
 
 use App\Http\Controllers\Controller;
-use App\Models\Quiz;
-use App\Models\QuizAttempt;
-use App\Models\QuizCategory;
-use App\Models\QuizBackground;
+use App\Models\CatatanTelaahSoal;
 use App\Models\Gallery;
 use App\Models\Jenjang;
 use App\Models\Kelas;
-use App\Models\CatatanTelaahSoal;
+use App\Models\Quiz;
+use App\Models\QuizAttempt;
+use App\Models\QuizBackground;
+use App\Models\QuizCategory;
+use App\Models\QuizStudentAccess;
+use App\Models\QuizTeacherAccess;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
-use Inertia\Inertia;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Inertia\Inertia;
 
 class QuizController extends Controller
 {
     public function index(Request $request)
     {
-        $userId = $request->user()?->id;
-        $isAdmin = $this->isAdmin();
+        $user = $request->user();
+        $userId = $user?->id;
+        $isAdmin = $user?->isAdmin() ?? false;
 
         $query = Quiz::with(['category', 'jenjang', 'kelas', 'user:id,name']);
 
-        if (!$isAdmin) {
+        if (! $isAdmin && $user) {
+            $query->forUserAudience($user);
+
             $query->where(function ($q) use ($userId) {
                 $q->where('user_id', $userId)
                     ->orWhereHas('teacherAccess', function ($teacherAccess) use ($userId) {
@@ -62,9 +69,9 @@ class QuizController extends Controller
         // Search
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
-                $q->where('title', 'like', '%' . $request->search . '%')
-                  ->orWhere('description', 'like', '%' . $request->search . '%')
-                  ->orWhere('join_code', 'like', '%' . $request->search . '%');
+                $q->where('title', 'like', '%'.$request->search.'%')
+                    ->orWhere('description', 'like', '%'.$request->search.'%')
+                    ->orWhere('join_code', 'like', '%'.$request->search.'%');
             });
         }
 
@@ -94,6 +101,7 @@ class QuizController extends Controller
                     'join_code' => $quiz->join_code,
                     'description' => $quiz->description,
                     'status' => $quiz->status,
+                    'audience' => $quiz->audience ?: Quiz::AUDIENCE_REGULAR,
                     'duration' => $quiz->duration,
                     'starts_at' => $quiz->starts_at?->toIso8601String(),
                     'ends_at' => $quiz->ends_at?->toIso8601String(),
@@ -128,12 +136,16 @@ class QuizController extends Controller
 
     public function create()
     {
+        if (! $this->canCreateQuiz()) {
+            abort(403);
+        }
+
         $categories = QuizCategory::all();
         $backgrounds = QuizBackground::where('is_public', true)
             ->orWhere('user_id', auth()->id())
             ->latest()
             ->get();
-        
+
         return Inertia::render('library/quizzes/create', [
             'categories' => $categories,
             'backgrounds' => $backgrounds,
@@ -144,6 +156,10 @@ class QuizController extends Controller
 
     public function store(Request $request)
     {
+        if (! $this->canCreateQuiz()) {
+            abort(403);
+        }
+
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -162,19 +178,19 @@ class QuizController extends Controller
 
         if ($request->hasFile('background_file')) {
             $file = $request->file('background_file');
-            $fileName = time() . '_' . Str::slug($request->title) . '_bg.' . $file->getClientOriginalExtension();
-            
+            $fileName = time().'_'.Str::slug($request->title).'_bg.'.$file->getClientOriginalExtension();
+
             $destinationPath = public_path('uploads/backgrounds');
-            if (!File::exists($destinationPath)) {
+            if (! File::exists($destinationPath)) {
                 File::makeDirectory($destinationPath, 0755, true);
             }
-            
+
             $file->move($destinationPath, $fileName);
-            $filePath = '/uploads/backgrounds/' . $fileName;
+            $filePath = '/uploads/backgrounds/'.$fileName;
 
             $background = QuizBackground::create([
                 'user_id' => auth()->id(),
-                'name' => 'Background for ' . $request->title,
+                'name' => 'Background for '.$request->title,
                 'image_path' => $filePath,
                 'is_public' => false,
             ]);
@@ -185,10 +201,11 @@ class QuizController extends Controller
         $quiz = Quiz::create([
             'user_id' => auth()->id(),
             'title' => $request->title,
-            'slug' => Str::slug($request->title) . '-' . Str::random(6),
+            'slug' => Str::slug($request->title).'-'.Str::random(6),
             'join_code' => strtoupper(Str::random(6)),
             'description' => $request->description,
             'quiz_category_id' => $request->quiz_category_id,
+            'audience' => $request->user()->quizAudience(),
             'jenjang_id' => $request->jenjang_id,
             'kelas_id' => $request->kelas_id,
             'quiz_background_id' => $backgroundId,
@@ -205,7 +222,7 @@ class QuizController extends Controller
 
     public function edit(Quiz $quiz)
     {
-        if (!$this->canEditQuiz($quiz)) {
+        if (! $this->canEditQuiz($quiz)) {
             abort(403);
         }
 
@@ -227,7 +244,7 @@ class QuizController extends Controller
 
     public function update(Request $request, Quiz $quiz)
     {
-        if (!$this->canEditQuiz($quiz)) {
+        if (! $this->canEditQuiz($quiz)) {
             abort(403);
         }
 
@@ -250,19 +267,19 @@ class QuizController extends Controller
 
         if ($request->hasFile('background_file')) {
             $file = $request->file('background_file');
-            $fileName = time() . '_' . Str::slug($request->title) . '_bg.' . $file->getClientOriginalExtension();
-            
+            $fileName = time().'_'.Str::slug($request->title).'_bg.'.$file->getClientOriginalExtension();
+
             $destinationPath = public_path('uploads/backgrounds');
-            if (!File::exists($destinationPath)) {
+            if (! File::exists($destinationPath)) {
                 File::makeDirectory($destinationPath, 0755, true);
             }
-            
+
             $file->move($destinationPath, $fileName);
-            $filePath = '/uploads/backgrounds/' . $fileName;
+            $filePath = '/uploads/backgrounds/'.$fileName;
 
             $background = QuizBackground::create([
                 'user_id' => auth()->id(),
-                'name' => 'Background for ' . $request->title,
+                'name' => 'Background for '.$request->title,
                 'image_path' => $filePath,
                 'is_public' => false,
             ]);
@@ -290,7 +307,7 @@ class QuizController extends Controller
 
     public function updateStatus(Request $request, Quiz $quiz)
     {
-        if (!$this->canEditQuiz($quiz) && !$this->canReviewQuiz($quiz)) {
+        if (! $this->canEditQuiz($quiz) && ! $this->canReviewQuiz($quiz)) {
             abort(403);
         }
 
@@ -310,7 +327,7 @@ class QuizController extends Controller
 
     public function destroy(Quiz $quiz)
     {
-        if (!$this->isAdmin() && $quiz->user_id !== auth()->id()) {
+        if (! $this->canManageAccess($quiz)) {
             abort(403);
         }
 
@@ -322,11 +339,11 @@ class QuizController extends Controller
 
     public function questions(Quiz $quiz)
     {
-        if (!$this->canEditQuiz($quiz)) {
+        if (! $this->canEditQuiz($quiz)) {
             abort(403);
         }
 
-        $galleries = Gallery::latest()->get();
+        $galleries = $this->visibleGalleriesQuery()->latest()->get();
 
         // Load catatan telaah untuk ditampilkan di editor soal
         $quiz->load([
@@ -351,10 +368,10 @@ class QuizController extends Controller
 
     public function preview(Quiz $quiz)
     {
-        if (!$this->canPreviewQuiz($quiz)) {
+        if (! $this->canPreviewQuiz($quiz)) {
             abort(403);
         }
-        
+
         $quiz->load(['questions.options', 'questions.matchingPairs', 'questions.shortAnswerFields', 'background']);
 
         // Acak urutan soal
@@ -380,7 +397,7 @@ class QuizController extends Controller
      */
     public function telaahSoal(Quiz $quiz)
     {
-        if (!$this->canReviewQuiz($quiz)) {
+        if (! $this->canReviewQuiz($quiz)) {
             abort(403);
         }
 
@@ -409,11 +426,11 @@ class QuizController extends Controller
 
     public function storeQuestions(Request $request, Quiz $quiz)
     {
-        if (!$this->canEditQuiz($quiz)) {
+        if (! $this->canEditQuiz($quiz)) {
             abort(403);
         }
 
-        \Illuminate\Support\Facades\Log::info("storeQuestions called: ", $request->all());
+        Log::info('storeQuestions called: ', $request->all());
 
         $request->validate([
             'questions' => 'array',
@@ -465,7 +482,7 @@ class QuizController extends Controller
             if (in_array($qData['question_type'], ['multiple_choice', 'true_false'])) {
                 $options = $qData['options'] ?? [];
                 foreach ($options as $oIndex => $oData) {
-                    if (!empty($oData['option_text'])) {
+                    if (! empty($oData['option_text'])) {
                         $question->options()->create([
                             'option_text' => $oData['option_text'],
                             'is_correct' => filter_var($oData['is_correct'] ?? false, FILTER_VALIDATE_BOOLEAN),
@@ -479,7 +496,7 @@ class QuizController extends Controller
             if ($qData['question_type'] === 'matching_pairs') {
                 $pairs = $qData['matching_pairs'] ?? [];
                 foreach ($pairs as $pIndex => $pData) {
-                    if (!empty($pData['left_text']) || !empty($pData['right_text'])) {
+                    if (! empty($pData['left_text']) || ! empty($pData['right_text'])) {
                         $question->matchingPairs()->create([
                             'left_text' => $pData['left_text'] ?? '',
                             'right_text' => $pData['right_text'] ?? '',
@@ -521,13 +538,13 @@ class QuizController extends Controller
      */
     public function access(Quiz $quiz)
     {
-        if (!$this->canManageAccess($quiz)) {
+        if (! $this->canManageAccess($quiz)) {
             abort(403);
         }
 
         $quiz->load([
             'user:id,name,email,jenjang_id,kelas_id',
-            'user.roles:id,name',
+            'user.roles:id,name,slug',
             'user.jenjang',
             'user.kelas',
             'teacherAccess.user.roles',
@@ -536,26 +553,26 @@ class QuizController extends Controller
             'studentAccess.user.orangTua',
         ]);
 
-        // Get available teachers (users with role_id 2 or 3)
-        // Query the pivot table 'role_user' where role_id is 2 or 3
-        $teachers = \App\Models\User::whereHas('roles', function ($q) {
-            $q->whereIn('roles.id', [2, 3]); // Guru Telaah Soal (id=2) dan Guru Mata Pelajaran (id=3)
-        })
-        ->where('id', '!=', auth()->id())
-        ->with(['roles', 'jenjang', 'kelas'])
-        ->get();
+        $teacherRoleSlugs = $this->teacherRoleSlugsForQuiz($quiz);
+        $studentRoleSlugs = $this->studentRoleSlugsForQuiz($quiz);
 
-        // Get available students (users with role_id 4)
-        $students = \App\Models\User::whereHas('roles', function ($q) {
-            $q->where('roles.id', 4); // Siswa (id=4)
+        $teachers = User::whereHas('roles', function ($q) use ($teacherRoleSlugs) {
+            $q->whereIn('roles.slug', $teacherRoleSlugs);
         })
-        ->with(['jenjang', 'kelas', 'orangTua'])
-        ->get();
+            ->where('id', '!=', auth()->id())
+            ->with(['roles', 'jenjang', 'kelas'])
+            ->get();
+
+        $students = User::whereHas('roles', function ($q) use ($studentRoleSlugs) {
+            $q->whereIn('roles.slug', $studentRoleSlugs);
+        })
+            ->with(['jenjang', 'kelas', 'orangTua'])
+            ->get();
 
         // Get all jenjangs for bulk student access
-        $jenjangs = \App\Models\Jenjang::orderBy('jenjang')->get();
+        $jenjangs = Jenjang::orderBy('jenjang')->get();
         // Get all kelas for filtering
-        $kelases = \App\Models\Kelas::orderBy('nama_kelas')->get();
+        $kelases = Kelas::orderBy('nama_kelas')->get();
 
         // Ensure studentAccess has user.jenjang loaded
         $studentAccessList = $quiz->studentAccess()->with(['user.jenjang', 'user.kelas', 'user.orangTua'])->get();
@@ -589,7 +606,7 @@ class QuizController extends Controller
      */
     public function grantTeacherAccess(Request $request, Quiz $quiz)
     {
-        if (!$this->canManageAccess($quiz)) {
+        if (! $this->canManageAccess($quiz)) {
             abort(403);
         }
 
@@ -598,7 +615,12 @@ class QuizController extends Controller
             'permission' => 'required|in:view,edit,telaah_soal',
         ]);
 
-        \App\Models\QuizTeacherAccess::updateOrCreate(
+        $teacher = User::findOrFail($request->user_id);
+        if (! $this->canReceiveTeacherAccess($quiz, $teacher)) {
+            return back()->with('error', 'Guru yang dipilih tidak sesuai dengan mode kuis ini.');
+        }
+
+        QuizTeacherAccess::updateOrCreate(
             ['quiz_id' => $quiz->id, 'user_id' => $request->user_id],
             [
                 'permission' => $request->permission,
@@ -615,11 +637,11 @@ class QuizController extends Controller
      */
     public function revokeTeacherAccess(Quiz $quiz, $userId)
     {
-        if (!$this->canManageAccess($quiz)) {
+        if (! $this->canManageAccess($quiz)) {
             abort(403);
         }
 
-        \App\Models\QuizTeacherAccess::where('quiz_id', $quiz->id)
+        QuizTeacherAccess::where('quiz_id', $quiz->id)
             ->where('user_id', $userId)
             ->delete();
 
@@ -631,7 +653,7 @@ class QuizController extends Controller
      */
     public function grantStudentAccess(Request $request, Quiz $quiz)
     {
-        if (!$this->canManageAccess($quiz)) {
+        if (! $this->canManageAccess($quiz)) {
             abort(403);
         }
 
@@ -640,8 +662,23 @@ class QuizController extends Controller
             'user_ids.*' => 'exists:users,id',
         ]);
 
-        foreach ($request->user_ids as $userId) {
-            \App\Models\QuizStudentAccess::updateOrCreate(
+        $requestedUserIds = collect($request->user_ids)
+            ->map(fn ($userId) => (int) $userId)
+            ->unique()
+            ->values();
+
+        $allowedStudentIds = User::whereIn('id', $requestedUserIds)
+            ->whereHas('roles', function ($q) use ($quiz) {
+                $q->whereIn('roles.slug', $this->studentRoleSlugsForQuiz($quiz));
+            })
+            ->pluck('id');
+
+        if ($allowedStudentIds->count() !== $requestedUserIds->count()) {
+            return back()->with('error', 'Ada siswa yang tidak sesuai dengan mode kuis ini.');
+        }
+
+        foreach ($allowedStudentIds as $userId) {
+            QuizStudentAccess::updateOrCreate(
                 ['quiz_id' => $quiz->id, 'user_id' => $userId],
                 [
                     'granted_by' => auth()->id(),
@@ -658,11 +695,11 @@ class QuizController extends Controller
      */
     public function revokeStudentAccess(Quiz $quiz, $userId)
     {
-        if (!$this->canManageAccess($quiz)) {
+        if (! $this->canManageAccess($quiz)) {
             abort(403);
         }
 
-        \App\Models\QuizStudentAccess::where('quiz_id', $quiz->id)
+        QuizStudentAccess::where('quiz_id', $quiz->id)
             ->where('user_id', $userId)
             ->delete();
 
@@ -674,7 +711,7 @@ class QuizController extends Controller
      */
     public function grantStudentAccessByJenjang(Request $request, Quiz $quiz)
     {
-        if (!$this->canManageAccess($quiz)) {
+        if (! $this->canManageAccess($quiz)) {
             abort(403);
         }
 
@@ -682,13 +719,13 @@ class QuizController extends Controller
             'jenjang_id' => 'required|exists:jenjangs,id',
         ]);
 
-        // Get all students with the specified jenjang
-        $students = \App\Models\User::whereHas('roles', function ($q) {
-            $q->where('roles.id', 4); // Siswa (id=4)
+        $studentRoleSlugs = $this->studentRoleSlugsForQuiz($quiz);
+        $students = User::whereHas('roles', function ($q) use ($studentRoleSlugs) {
+            $q->whereIn('roles.slug', $studentRoleSlugs);
         })->where('jenjang_id', $request->jenjang_id)->get();
 
         foreach ($students as $student) {
-            \App\Models\QuizStudentAccess::updateOrCreate(
+            QuizStudentAccess::updateOrCreate(
                 ['quiz_id' => $quiz->id, 'user_id' => $student->id],
                 [
                     'granted_by' => auth()->id(),
@@ -697,59 +734,133 @@ class QuizController extends Controller
             );
         }
 
-        return back()->with('success', 'Akses berhasil diberikan ke ' . $students->count() . ' siswa.');
+        return back()->with('success', 'Akses berhasil diberikan ke '.$students->count().' siswa.');
     }
 
     private function canEditQuiz(Quiz $quiz): bool
     {
-        $userId = auth()->id();
-        if (!$userId) {
+        $user = auth()->user();
+        if (! $user) {
             return false;
         }
 
-        return $this->isAdmin()
-            || $quiz->user_id === $userId
-            || $quiz->hasTeacherAccess($userId, 'edit');
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        if (! $quiz->isInUserAudience($user)) {
+            return false;
+        }
+
+        return $quiz->user_id === $user->id
+            || $quiz->hasTeacherAccess($user->id, 'edit');
     }
 
     private function canPreviewQuiz(Quiz $quiz): bool
     {
-        $userId = auth()->id();
-        if (!$userId) {
+        $user = auth()->user();
+        if (! $user) {
             return false;
         }
 
-        return $this->isAdmin()
-            || $quiz->user_id === $userId
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        if (! $quiz->isInUserAudience($user)) {
+            return false;
+        }
+
+        return $quiz->user_id === $user->id
             || $quiz->teacherAccess()
-                ->where('user_id', $userId)
+                ->where('user_id', $user->id)
                 ->whereIn('permission', ['view', 'edit', 'telaah_soal'])
                 ->exists();
     }
 
     private function canReviewQuiz(Quiz $quiz): bool
     {
-        $userId = auth()->id();
-        if (!$userId) {
+        $user = auth()->user();
+        if (! $user) {
             return false;
         }
 
-        return $this->isAdmin()
-            || $quiz->hasTeacherAccess($userId, 'telaah_soal');
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        if (! $quiz->isInUserAudience($user)) {
+            return false;
+        }
+
+        return $quiz->hasTeacherAccess($user->id, 'telaah_soal');
     }
 
     private function canManageAccess(Quiz $quiz): bool
     {
-        return $this->isAdmin()
-            || $quiz->user_id === auth()->id();
+        $user = auth()->user();
+
+        if (! $user) {
+            return false;
+        }
+
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        return $quiz->isInUserAudience($user)
+            && $quiz->user_id === $user->id;
     }
 
-    private function isAdmin(): bool
+    private function canCreateQuiz(): bool
     {
         $user = auth()->user();
 
-        return $user
-            ? $user->roles()->where('slug', 'admin')->exists()
-            : false;
+        return $user && ($user->isAdmin() || $user->isTeacher());
+    }
+
+    private function teacherRoleSlugsForQuiz(Quiz $quiz): array
+    {
+        return $quiz->isGuestAudience()
+            ? User::GUEST_TEACHER_ROLE_SLUGS
+            : User::REGULAR_TEACHER_ROLE_SLUGS;
+    }
+
+    private function studentRoleSlugsForQuiz(Quiz $quiz): array
+    {
+        return $quiz->isGuestAudience()
+            ? User::GUEST_STUDENT_ROLE_SLUGS
+            : User::REGULAR_STUDENT_ROLE_SLUGS;
+    }
+
+    private function canReceiveTeacherAccess(Quiz $quiz, User $teacher): bool
+    {
+        return $teacher->hasRoleSlug($this->teacherRoleSlugsForQuiz($quiz));
+    }
+
+    private function visibleGalleriesQuery()
+    {
+        $user = auth()->user();
+        $query = Gallery::query();
+
+        if (! $user || $user->isAdmin()) {
+            return $query;
+        }
+
+        return $query->where(function ($visibilityQuery) use ($user) {
+            if ($user->isGuest()) {
+                $visibilityQuery->whereHas('user.roles', function ($rolesQuery) {
+                    $rolesQuery->whereIn('roles.slug', User::GUEST_ROLE_SLUGS);
+                });
+
+                return;
+            }
+
+            $visibilityQuery
+                ->whereDoesntHave('user.roles', function ($rolesQuery) {
+                    $rolesQuery->whereIn('roles.slug', User::GUEST_ROLE_SLUGS);
+                })
+                ->orWhereNull('user_id');
+        });
     }
 }

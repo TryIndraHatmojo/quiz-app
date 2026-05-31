@@ -22,7 +22,7 @@ class NilaiController extends Controller
         $user = $request->user();
         $roles = $this->resolveRoles($user);
 
-        if (!$roles['admin'] && !$roles['guru'] && !$roles['siswa'] && !$roles['orang_tua']) {
+        if (! $roles['admin'] && ! $roles['guru'] && ! $roles['siswa'] && ! $roles['orang_tua']) {
             abort(403, 'Anda tidak memiliki akses ke halaman nilai.');
         }
 
@@ -33,7 +33,7 @@ class NilaiController extends Controller
             ->whereNotNull('completed_at')
             ->where('is_graded', true)
             ->with([
-                'quiz:id,title,user_id,jenjang_id,kelas_id,passing_score,starts_at',
+                'quiz:id,title,user_id,jenjang_id,kelas_id,passing_score,starts_at,audience',
                 'quiz.questions:id,quiz_id,points',
                 'quiz.teacherAccess:id,quiz_id,user_id,permission',
                 'quiz.jenjang:id,jenjang,nama_sekolah',
@@ -47,21 +47,26 @@ class NilaiController extends Controller
         // -------------------------------------------------------
         // Role-based scope
         // -------------------------------------------------------
-        if (!$roles['admin']) {
+        if (! $roles['admin']) {
             if ($roles['guru']) {
                 $query->whereHas('quiz', function ($quizQuery) use ($user) {
-                    $quizQuery->where('user_id', $user->id)
-                        ->orWhereHas('teacherAccess', function ($accessQuery) use ($user) {
-                            $accessQuery->where('user_id', $user->id);
+                    $quizQuery->forUserAudience($user)
+                        ->where(function ($accessScope) use ($user) {
+                            $accessScope->where('user_id', $user->id)
+                                ->orWhereHas('teacherAccess', function ($accessQuery) use ($user) {
+                                    $accessQuery->where('user_id', $user->id);
+                                });
                         });
                 });
             } elseif ($roles['siswa']) {
-                $query->where('user_id', $user->id);
+                $query->where('user_id', $user->id)
+                    ->whereHas('quiz', fn ($quizQuery) => $quizQuery->forUserAudience($user));
             } elseif ($roles['orang_tua']) {
                 $childIds = User::query()
                     ->where('orang_tua_id', $user->id)
                     ->pluck('id');
-                $query->whereIn('user_id', $childIds);
+                $query->whereIn('user_id', $childIds)
+                    ->whereHas('quiz', fn ($quizQuery) => $quizQuery->forUserAudience($user));
             }
         }
 
@@ -229,7 +234,7 @@ class NilaiController extends Controller
         $roles = $this->resolveRoles($user);
 
         $attempt->load([
-            'quiz:id,title,user_id,passing_score',
+            'quiz:id,title,user_id,passing_score,audience',
             'quiz.questions:id,quiz_id,question_text,question_type,explanation,points,order',
             'quiz.questions.options:id,quiz_question_id,option_text,is_correct,order',
             'quiz.questions.matchingPairs:id,quiz_question_id,left_text,right_text,order',
@@ -245,7 +250,7 @@ class NilaiController extends Controller
             'answers.matchingPairAnswers.selectedRightPair:id,right_text',
         ]);
 
-        if (!$this->canViewAttempt($user, $roles, $attempt)) {
+        if (! $this->canViewAttempt($user, $roles, $attempt)) {
             abort(403, 'Anda tidak memiliki akses untuk melihat detail nilai ini.');
         }
 
@@ -279,7 +284,8 @@ class NilaiController extends Controller
                         ->map(function ($pair) {
                             $left = $pair->leftPair?->left_text ?? '-';
                             $right = $pair->selectedRightPair?->right_text ?? '-';
-                            return $left . ' => ' . $right;
+
+                            return $left.' => '.$right;
                         })
                         ->implode('; ');
 
@@ -357,17 +363,17 @@ class NilaiController extends Controller
         $user = $request->user();
         $roles = $this->resolveRoles($user);
 
-        if (!$roles['admin'] && !$roles['guru']) {
+        if (! $roles['admin'] && ! $roles['guru']) {
             abort(403, 'Hanya guru yang dapat mengubah nilai.');
         }
 
         $attempt->load([
-            'quiz:id,title,user_id',
+            'quiz:id,title,user_id,audience',
             'quiz.questions:id,quiz_id,points',
             'quiz.teacherAccess:id,quiz_id,user_id,permission',
         ]);
 
-        if (!$this->canEditAttempt($user, $roles, $attempt)) {
+        if (! $this->canEditAttempt($user, $roles, $attempt)) {
             abort(403, 'Anda tidak memiliki izin untuk mengedit nilai ini.');
         }
 
@@ -382,7 +388,7 @@ class NilaiController extends Controller
             ->where('quiz_id', $attempt->quiz_id)
             ->first();
 
-        if (!$question) {
+        if (! $question) {
             return back()->with('error', 'Soal tidak ditemukan pada attempt ini.');
         }
 
@@ -416,16 +422,16 @@ class NilaiController extends Controller
         $user = $request->user();
         $roles = $this->resolveRoles($user);
 
-        if (!$roles['admin'] && !$roles['guru']) {
+        if (! $roles['admin'] && ! $roles['guru']) {
             abort(403, 'Hanya guru yang dapat mengubah nilai.');
         }
 
         $attempt->load([
-            'quiz:id,title,user_id',
+            'quiz:id,title,user_id,audience',
             'quiz.teacherAccess:id,quiz_id,user_id,permission',
         ]);
 
-        if (!$this->canEditAttempt($user, $roles, $attempt)) {
+        if (! $this->canEditAttempt($user, $roles, $attempt)) {
             abort(403, 'Anda tidak memiliki izin untuk mengedit nilai ini.');
         }
 
@@ -482,10 +488,14 @@ class NilaiController extends Controller
         }
 
         $attempt->loadMissing([
-            'quiz:id,user_id',
+            'quiz:id,user_id,audience',
             'quiz.teacherAccess:id,quiz_id,user_id,permission',
             'user:id,orang_tua_id',
         ]);
+
+        if (! $attempt->quiz || ! $attempt->quiz->isInUserAudience($user)) {
+            return false;
+        }
 
         if ($roles['guru']) {
             return (int) $attempt->quiz->user_id === (int) $user->id
@@ -512,14 +522,18 @@ class NilaiController extends Controller
             return true;
         }
 
-        if (!$roles['guru']) {
+        if (! $roles['guru']) {
             return false;
         }
 
         $attempt->loadMissing([
-            'quiz:id,user_id',
+            'quiz:id,user_id,audience',
             'quiz.teacherAccess:id,quiz_id,user_id,permission',
         ]);
+
+        if (! $attempt->quiz || ! $attempt->quiz->isInUserAudience($user)) {
+            return false;
+        }
 
         return (int) $attempt->quiz->user_id === (int) $user->id
             || $attempt->quiz->teacherAccess
@@ -564,7 +578,7 @@ class NilaiController extends Controller
                         return null;
                     }
 
-                    return ($left !== '' ? $left : '-') . ' => ' . ($right !== '' ? $right : '-');
+                    return ($left !== '' ? $left : '-').' => '.($right !== '' ? $right : '-');
                 })
                 ->filter()
                 ->values();
@@ -588,9 +602,13 @@ class NilaiController extends Controller
         return [
             'admin' => in_array('admin', $roleSlugs, true),
             'guru' => in_array('guru-telaah-soal', $roleSlugs, true)
-                || in_array('guru-mata-pelajaran', $roleSlugs, true),
-            'siswa' => in_array('siswa', $roleSlugs, true),
+                || in_array('guru-mata-pelajaran', $roleSlugs, true)
+                || in_array('guru-tamu', $roleSlugs, true),
+            'siswa' => in_array('siswa', $roleSlugs, true)
+                || in_array('siswa-tamu', $roleSlugs, true),
             'orang_tua' => in_array('orang-tua', $roleSlugs, true),
+            'guest' => in_array('guru-tamu', $roleSlugs, true)
+                || in_array('siswa-tamu', $roleSlugs, true),
         ];
     }
 }

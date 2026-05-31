@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Quiz;
 use App\Models\QuizAttempt;
 use App\Models\QuizStudentAccess;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class DashboardController extends Controller
@@ -13,23 +12,23 @@ class DashboardController extends Controller
     public function index()
     {
         $user = auth()->user();
-        
-        // Check if user is a student (role_id = 4)
-        $isStudent = $user->roles()->where('roles.id', 4)->exists();
-        
+
+        $isStudent = $user->isStudent();
+
         $studentQuizzes = [];
-        
+
         if ($isStudent) {
             // Get quizzes that the student has access to
-            $studentQuizzes = Quiz::whereHas('studentAccess', function ($q) use ($user) {
-                $q->where('user_id', $user->id);
-            })
-            ->where('status', 'live')
-            ->orderByDesc('starts_at')
-            ->orderByDesc('created_at')
-            ->with(['category', 'background', 'questions'])
-            ->withCount('questions')
-            ->get();
+            $studentQuizzes = Quiz::forUserAudience($user)
+                ->whereHas('studentAccess', function ($q) use ($user) {
+                    $q->where('user_id', $user->id);
+                })
+                ->where('status', 'live')
+                ->orderByDesc('starts_at')
+                ->orderByDesc('created_at')
+                ->with(['category', 'background', 'questions'])
+                ->withCount('questions')
+                ->get();
 
             $completedAttemptCounts = QuizAttempt::query()
                 ->where('user_id', $user->id)
@@ -44,7 +43,7 @@ class DashboardController extends Controller
                 $access = QuizStudentAccess::where('quiz_id', $quiz->id)
                     ->where('user_id', $user->id)
                     ->first();
-                
+
                 return [
                     'id' => $quiz->id,
                     'title' => $quiz->title,
@@ -60,7 +59,7 @@ class DashboardController extends Controller
                 ];
             });
         }
-        
+
         return Inertia::render('dashboard', [
             'isStudent' => $isStudent,
             'studentQuizzes' => $studentQuizzes,

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -10,8 +11,55 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, TwoFactorAuthenticatable;
+
+    public const ROLE_ADMIN = 'admin';
+
+    public const ROLE_GURU_TELAAH_SOAL = 'guru-telaah-soal';
+
+    public const ROLE_GURU_MATA_PELAJARAN = 'guru-mata-pelajaran';
+
+    public const ROLE_SISWA = 'siswa';
+
+    public const ROLE_ORANG_TUA = 'orang-tua';
+
+    public const ROLE_GURU_TAMU = 'guru-tamu';
+
+    public const ROLE_SISWA_TAMU = 'siswa-tamu';
+
+    public const REGULAR_TEACHER_ROLE_SLUGS = [
+        self::ROLE_GURU_TELAAH_SOAL,
+        self::ROLE_GURU_MATA_PELAJARAN,
+    ];
+
+    public const GUEST_TEACHER_ROLE_SLUGS = [
+        self::ROLE_GURU_TAMU,
+    ];
+
+    public const TEACHER_ROLE_SLUGS = [
+        self::ROLE_GURU_TELAAH_SOAL,
+        self::ROLE_GURU_MATA_PELAJARAN,
+        self::ROLE_GURU_TAMU,
+    ];
+
+    public const REGULAR_STUDENT_ROLE_SLUGS = [
+        self::ROLE_SISWA,
+    ];
+
+    public const GUEST_STUDENT_ROLE_SLUGS = [
+        self::ROLE_SISWA_TAMU,
+    ];
+
+    public const STUDENT_ROLE_SLUGS = [
+        self::ROLE_SISWA,
+        self::ROLE_SISWA_TAMU,
+    ];
+
+    public const GUEST_ROLE_SLUGS = [
+        self::ROLE_GURU_TAMU,
+        self::ROLE_SISWA_TAMU,
+    ];
 
     /**
      * The attributes that are mass assignable.
@@ -52,9 +100,68 @@ class User extends Authenticatable
             'two_factor_confirmed_at' => 'datetime',
         ];
     }
+
     public function roles()
     {
         return $this->belongsToMany(Role::class);
+    }
+
+    public function hasRoleSlug(string|array $slugs): bool
+    {
+        $slugs = is_array($slugs) ? $slugs : [$slugs];
+
+        if ($this->relationLoaded('roles')) {
+            return $this->roles->contains(
+                fn (Role $role) => in_array($role->slug, $slugs, true)
+            );
+        }
+
+        return $this->roles()->whereIn('slug', $slugs)->exists();
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->hasRoleSlug(self::ROLE_ADMIN);
+    }
+
+    public function isTeacher(): bool
+    {
+        return $this->hasRoleSlug(self::TEACHER_ROLE_SLUGS);
+    }
+
+    public function isRegularTeacher(): bool
+    {
+        return $this->hasRoleSlug(self::REGULAR_TEACHER_ROLE_SLUGS);
+    }
+
+    public function isGuestTeacher(): bool
+    {
+        return $this->hasRoleSlug(self::GUEST_TEACHER_ROLE_SLUGS);
+    }
+
+    public function isStudent(): bool
+    {
+        return $this->hasRoleSlug(self::STUDENT_ROLE_SLUGS);
+    }
+
+    public function isRegularStudent(): bool
+    {
+        return $this->hasRoleSlug(self::REGULAR_STUDENT_ROLE_SLUGS);
+    }
+
+    public function isGuestStudent(): bool
+    {
+        return $this->hasRoleSlug(self::GUEST_STUDENT_ROLE_SLUGS);
+    }
+
+    public function isGuest(): bool
+    {
+        return $this->hasRoleSlug(self::GUEST_ROLE_SLUGS);
+    }
+
+    public function quizAudience(): string
+    {
+        return $this->isGuest() ? Quiz::AUDIENCE_GUEST : Quiz::AUDIENCE_REGULAR;
     }
 
     public function jenjang()

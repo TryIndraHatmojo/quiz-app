@@ -17,6 +17,7 @@ class QuizQuestionSeeder extends Seeder
         $scienceQuizId = DB::table('quizzes')->where('join_code', 'SCI002')->value('id');
         $englishQuizId = DB::table('quizzes')->where('join_code', 'ENG003')->value('id');
         $arabicQuizId = DB::table('quizzes')->where('join_code', 'ARB004')->value('id');
+        $guestQuizId = DB::table('quizzes')->where('join_code', 'GST001')->value('id');
 
         $questions = [];
 
@@ -209,6 +210,34 @@ class QuizQuestionSeeder extends Seeder
                     'explanation' => 'Huruf ain adalah huruf khas dalam abjad Arab yang tidak memiliki padanan pasti di alfabet Latin.',
                     'points' => 150,
                     'order' => 3,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ],
+            ]);
+        }
+
+        // Guest Quiz Questions
+        if ($guestQuizId) {
+            $questions = array_merge($questions, [
+                [
+                    'quiz_id' => $guestQuizId,
+                    'question_type' => 'true_false',
+                    'question_text' => 'Bilangan genap selalu habis dibagi 2. Benar atau Salah?',
+                    'media_path' => null,
+                    'explanation' => 'Bilangan genap adalah bilangan yang habis dibagi 2.',
+                    'points' => 100,
+                    'order' => 1,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ],
+                [
+                    'quiz_id' => $guestQuizId,
+                    'question_type' => 'multiple_choice',
+                    'question_text' => 'Berapakah hasil dari 15 + 27?',
+                    'media_path' => null,
+                    'explanation' => null,
+                    'points' => 100,
+                    'order' => 2,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ],

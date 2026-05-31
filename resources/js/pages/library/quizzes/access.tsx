@@ -69,6 +69,11 @@ export default function QuizAccess({
     const [studentJenjangFilter, setStudentJenjangFilter] =
         useState<string>('all');
     const [studentKelasFilter, setStudentKelasFilter] = useState<string>('all');
+    const isGuestQuiz = quiz.audience === 'guest';
+    const teacherLabel = isGuestQuiz ? 'Guru Tamu' : 'Guru';
+    const teacherLabelLower = teacherLabel.toLowerCase();
+    const studentLabel = isGuestQuiz ? 'Siswa Tamu' : 'Siswa';
+    const studentLabelLower = studentLabel.toLowerCase();
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Koleksi', href: '#' },
@@ -138,7 +143,11 @@ export default function QuizAccess({
     };
 
     const handleRevokeTeacherAccess = (userId: number) => {
-        if (confirm('Apakah Anda yakin ingin mencabut akses guru ini?')) {
+        if (
+            confirm(
+                `Apakah Anda yakin ingin mencabut akses ${teacherLabelLower} ini?`,
+            )
+        ) {
             router.delete(
                 route('library.quizzes.access.teacher.revoke', [
                     quiz.id,
@@ -164,7 +173,11 @@ export default function QuizAccess({
     };
 
     const handleRevokeStudentAccess = (userId: number) => {
-        if (confirm('Apakah Anda yakin ingin mencabut akses siswa ini?')) {
+        if (
+            confirm(
+                `Apakah Anda yakin ingin mencabut akses ${studentLabelLower} ini?`,
+            )
+        ) {
             router.delete(
                 route('library.quizzes.access.student.revoke', [
                     quiz.id,
@@ -210,7 +223,8 @@ export default function QuizAccess({
                         </h1>
                         <p className="text-muted-foreground">
                             Kelola siapa saja yang dapat mengakses quiz "
-                            {quiz.title}"
+                            {quiz.title}" dalam mode{' '}
+                            {isGuestQuiz ? 'tamu' : 'reguler'}.
                         </p>
                     </div>
                     <div className="flex gap-2">
@@ -260,18 +274,18 @@ export default function QuizAccess({
                         <div className="mb-4 flex items-center gap-2">
                             <Shield className="h-5 w-5 text-blue-600" />
                             <h2 className="text-lg font-semibold">
-                                Akses Guru
+                                Akses {teacherLabel}
                             </h2>
                         </div>
                         <p className="mb-4 text-sm text-muted-foreground">
-                            Berikan akses kepada guru lain untuk melihat atau
-                            mengedit quiz ini.
+                            Berikan akses kepada {teacherLabelLower} lain untuk
+                            melihat atau mengedit quiz ini.
                         </p>
 
                         {quiz.user && (
                             <div className="mb-4 rounded-lg border bg-background p-3">
                                 <Label className="text-sm text-muted-foreground">
-                                    Guru pembuat soal
+                                    {teacherLabel} pembuat soal
                                 </Label>
                                 <div className="mt-2 flex items-center justify-between gap-3">
                                     <div className="flex items-center gap-3">
@@ -353,13 +367,15 @@ export default function QuizAccess({
                             </div>
 
                             <div className="space-y-2">
-                                <Label>Pilih Guru</Label>
+                                <Label>Pilih {teacherLabel}</Label>
                                 <Select
                                     value={selectedTeacher}
                                     onValueChange={setSelectedTeacher}
                                 >
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Pilih guru..." />
+                                        <SelectValue
+                                            placeholder={`Pilih ${teacherLabelLower}...`}
+                                        />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {availableTeachers.map((teacher) => (
@@ -421,18 +437,19 @@ export default function QuizAccess({
                                 className="w-full"
                             >
                                 <UserPlus className="mr-2 h-4 w-4" />
-                                Tambah Akses Guru
+                                Tambah Akses {teacherLabel}
                             </Button>
                         </div>
 
                         {/* Teacher Access List */}
                         <div className="space-y-2">
                             <Label className="text-sm text-muted-foreground">
-                                {`Guru dengan akses tambahan (${teacherAccess.length})`}
+                                {`${teacherLabel} dengan akses tambahan (${teacherAccess.length})`}
                             </Label>
                             {teacherAccess.length === 0 ? (
                                 <p className="py-4 text-center text-sm text-muted-foreground italic">
-                                    Belum ada guru yang diberi akses
+                                    Belum ada {teacherLabelLower} yang diberi
+                                    akses
                                 </p>
                             ) : (
                                 <div className="max-h-64 space-y-2 overflow-y-auto">
@@ -499,12 +516,12 @@ export default function QuizAccess({
                         <div className="mb-4 flex items-center gap-2">
                             <GraduationCap className="h-5 w-5 text-green-600" />
                             <h2 className="text-lg font-semibold">
-                                Akses Siswa
+                                Akses {studentLabel}
                             </h2>
                         </div>
                         <p className="mb-4 text-sm text-muted-foreground">
-                            Berikan akses kepada siswa untuk mengerjakan quiz
-                            ini.
+                            Berikan akses kepada {studentLabelLower} untuk
+                            mengerjakan quiz ini.
                         </p>
 
                         {/* Add by Jenjang */}
@@ -549,7 +566,7 @@ export default function QuizAccess({
                             <div className="mb-2 flex items-center gap-2">
                                 <Users className="h-4 w-4" />
                                 <Label className="font-medium">
-                                    Tambah Siswa Individual
+                                    Tambah {studentLabel} Individual
                                 </Label>
                             </div>
 
@@ -610,7 +627,7 @@ export default function QuizAccess({
                             </div>
 
                             <Input
-                                placeholder="Cari siswa..."
+                                placeholder={`Cari ${studentLabelLower}...`}
                                 value={studentSearchTerm}
                                 onChange={(e) =>
                                     setStudentSearchTerm(e.target.value)
@@ -620,7 +637,7 @@ export default function QuizAccess({
                             <div className="max-h-40 space-y-1 overflow-y-auto rounded-lg border p-2">
                                 {filteredStudents.length === 0 ? (
                                     <p className="py-2 text-center text-sm text-muted-foreground">
-                                        Tidak ada siswa ditemukan
+                                        Tidak ada {studentLabelLower} ditemukan
                                     </p>
                                 ) : (
                                     filteredStudents
@@ -665,7 +682,8 @@ export default function QuizAccess({
                                     className="w-full"
                                 >
                                     <UserPlus className="mr-2 h-4 w-4" />
-                                    Tambah {selectedStudents.length} Siswa
+                                    Tambah {selectedStudents.length}{' '}
+                                    {studentLabel}
                                 </Button>
                             )}
                         </div>
@@ -673,11 +691,13 @@ export default function QuizAccess({
                         {/* Student Access List */}
                         <div className="space-y-2">
                             <Label className="text-sm text-muted-foreground">
-                                Siswa dengan akses ({studentAccess.length})
+                                {studentLabel} dengan akses (
+                                {studentAccess.length})
                             </Label>
                             {studentAccess.length === 0 ? (
                                 <p className="py-4 text-center text-sm text-muted-foreground italic">
-                                    Belum ada siswa yang diberi akses
+                                    Belum ada {studentLabelLower} yang diberi
+                                    akses
                                 </p>
                             ) : (
                                 <div className="max-h-64 space-y-2 overflow-y-auto">
@@ -696,7 +716,7 @@ export default function QuizAccess({
                                                     </p>
                                                     <div className="mt-1 flex flex-col gap-0.5 text-xs text-muted-foreground">
                                                         <span className="mt-0.5 font-medium text-foreground/70">
-                                                            Data Siswa:
+                                                            Data {studentLabel}:
                                                         </span>
                                                         <span>
                                                             •{' '}

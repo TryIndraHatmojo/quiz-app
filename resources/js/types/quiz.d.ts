@@ -57,6 +57,7 @@ export interface Quiz {
     description: string;
     quiz_category_id: number;
     status: string;
+    audience?: 'regular' | 'guest';
     duration: number | null;
     starts_at?: string | null;
     ends_at?: string | null;

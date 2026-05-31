@@ -11,6 +11,9 @@ class Quiz extends Model
 {
     use HasFactory;
 
+    public const AUDIENCE_REGULAR = 'regular';
+
+    public const AUDIENCE_GUEST = 'guest';
 
     protected $fillable = [
         'user_id',
@@ -22,6 +25,7 @@ class Quiz extends Model
         'join_code',
         'description',
         'status',
+        'audience',
         'duration',
         'starts_at',
         'ends_at',
@@ -35,6 +39,34 @@ class Quiz extends Model
         'ends_at' => 'datetime',
         'passing_score' => 'integer',
     ];
+
+    public function scopeForUserAudience($query, User $user)
+    {
+        if ($user->isAdmin()) {
+            return $query;
+        }
+
+        $audience = $user->quizAudience();
+
+        return $query->where(function ($audienceQuery) use ($audience) {
+            $audienceQuery->where('audience', $audience);
+
+            if ($audience === self::AUDIENCE_REGULAR) {
+                $audienceQuery->orWhereNull('audience');
+            }
+        });
+    }
+
+    public function isGuestAudience(): bool
+    {
+        return ($this->audience ?: self::AUDIENCE_REGULAR) === self::AUDIENCE_GUEST;
+    }
+
+    public function isInUserAudience(User $user): bool
+    {
+        return $user->isAdmin()
+            || ($this->audience ?: self::AUDIENCE_REGULAR) === $user->quizAudience();
+    }
 
     public function user(): BelongsTo
     {

@@ -61,6 +61,7 @@ interface Quiz {
     join_code: string;
     description: string;
     status: string;
+    audience?: 'regular' | 'guest';
     duration: number | null;
     category?: QuizCategory;
     jenjang?: Jenjang;
@@ -547,26 +548,36 @@ export default function QuizIndex({
                                                 </span>
                                             </CardDescription>
                                         </div>
-                                        <span
-                                            className={`ml-2 rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                                                quiz.status === 'live'
-                                                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-                                                    : quiz.status === 'finished'
-                                                      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
+                                        <div className="ml-2 flex flex-col items-end gap-1">
+                                            <span
+                                                className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                                                    quiz.status === 'live'
+                                                        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                                                        : quiz.status ===
+                                                            'finished'
+                                                          ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
+                                                          : quiz.status ===
+                                                              'archived'
+                                                            ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300'
+                                                            : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
+                                                }`}
+                                            >
+                                                {quiz.status === 'live'
+                                                    ? 'Publikasi'
+                                                    : quiz.status ===
+                                                        'finished'
+                                                      ? 'Selesai'
                                                       : quiz.status ===
                                                           'archived'
-                                                        ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300'
-                                                        : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
-                                            }`}
-                                        >
-                                            {quiz.status === 'live'
-                                                ? 'Publikasi'
-                                                : quiz.status === 'finished'
-                                                  ? 'Selesai'
-                                                  : quiz.status === 'archived'
-                                                    ? 'Arsip'
-                                                    : 'Draf'}
-                                        </span>
+                                                        ? 'Arsip'
+                                                        : 'Draf'}
+                                            </span>
+                                            {quiz.audience === 'guest' && (
+                                                <span className="rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-medium text-violet-800 dark:bg-violet-900 dark:text-violet-300">
+                                                    Tamu
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                 </CardHeader>
                                 <CardContent className="flex-1">

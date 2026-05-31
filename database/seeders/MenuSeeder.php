@@ -153,6 +153,12 @@ class MenuSeeder extends Seeder
             'Orang Tua' => [
                 'Dashboard', 'Nilai'
             ],
+            'Guru Tamu' => [
+                'Dashboard', 'Nilai', 'Buat Baru', 'Semua Kuis'
+            ],
+            'Siswa Tamu' => [
+                'Dashboard', 'Nilai'
+            ],
         ];
 
         // Assign menus to roles

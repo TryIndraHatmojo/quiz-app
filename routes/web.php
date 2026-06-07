@@ -13,6 +13,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 Route::middleware(['auth', 'verified'])->prefix('master')->name('master.')->group(function () {
+    Route::get('users/import-template', [App\Http\Controllers\Master\UserController::class, 'downloadImportTemplate'])->name('users.import-template');
+    Route::post('users/import', [App\Http\Controllers\Master\UserController::class, 'import'])->name('users.import');
     Route::resource('users', App\Http\Controllers\Master\UserController::class);
     Route::resource('roles', App\Http\Controllers\Master\RoleController::class);
     Route::get('roles/{role}/access', [App\Http\Controllers\Master\RoleMenuController::class, 'index'])->name('roles.access');

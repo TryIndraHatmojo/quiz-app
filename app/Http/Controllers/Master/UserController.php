@@ -3,8 +3,15 @@
 namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
+use App\Models\Jenjang;
+use App\Models\Kelas;
+use App\Models\Role;
 use App\Models\User;
+use App\Services\Master\UserBulkImportService;
+use App\Services\Master\UserImportTemplateService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class UserController extends Controller
@@ -26,7 +33,7 @@ class UserController extends Controller
             ->when($request->jenjang, function ($query, $jenjang) {
                 $query->whereHas('jenjang', function ($q) use ($jenjang) {
                     $q->where('jenjang', 'like', "%{$jenjang}%")
-                      ->orWhere('nama_sekolah', 'like', "%{$jenjang}%");
+                        ->orWhere('nama_sekolah', 'like', "%{$jenjang}%");
                 });
             })
             ->when($request->kelas, function ($query, $kelas) {
@@ -51,10 +58,10 @@ class UserController extends Controller
 
     public function create()
     {
-        $roles = \App\Models\Role::all();
-        $jenjangs = \App\Models\Jenjang::all();
-        $kelases = \App\Models\Kelas::all();
-        $orangTuas = User::whereHas('roles', function($q) {
+        $roles = Role::all();
+        $jenjangs = Jenjang::all();
+        $kelases = Kelas::all();
+        $orangTuas = User::whereHas('roles', function ($q) {
             $q->where('name', 'Orang Tua');
         })->get();
 
@@ -81,7 +88,7 @@ class UserController extends Controller
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'password' => \Illuminate\Support\Facades\Hash::make($validated['password']),
+            'password' => Hash::make($validated['password']),
             'jenjang_id' => $validated['jenjang_id'] ?? null,
             'kelas_id' => $validated['kelas_id'] ?? null,
             'orang_tua_id' => $validated['orang_tua_id'] ?? null,
@@ -93,13 +100,36 @@ class UserController extends Controller
             ->with('success', 'Pengguna berhasil dibuat.');
     }
 
+    public function import(Request $request, UserBulkImportService $importer)
+    {
+        $validated = $request->validate([
+            'file' => ['required', 'file', 'mimes:xlsx,xls,csv', 'max:5120'],
+        ]);
+
+        $result = $importer->import($validated['file']);
+
+        if (! $result['success']) {
+            return back()
+                ->with('error', 'Import dibatalkan. Perbaiki data Excel lalu unggah ulang.')
+                ->with('import_errors', $result['errors']);
+        }
+
+        return redirect()->route('master.users.index')
+            ->with('success', "Import selesai. {$result['created_users']} pengguna dibuat, {$result['created_parents']} orang tua baru dibuat, {$result['linked_students']} siswa ditautkan.");
+    }
+
+    public function downloadImportTemplate(UserImportTemplateService $template)
+    {
+        return $template->download();
+    }
+
     public function edit(User $user)
     {
         $user->load('roles', 'jenjang', 'kelas', 'orangTua');
-        $roles = \App\Models\Role::all();
-        $jenjangs = \App\Models\Jenjang::all();
-        $kelases = \App\Models\Kelas::all();
-        $orangTuas = User::whereHas('roles', function($q) {
+        $roles = Role::all();
+        $jenjangs = Jenjang::all();
+        $kelases = Kelas::all();
+        $orangTuas = User::whereHas('roles', function ($q) {
             $q->where('name', 'Orang Tua');
         })->get();
 
@@ -116,7 +146,7 @@ class UserController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', \Illuminate\Validation\Rule::unique('users')->ignore($user->id)],
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
             'role_id' => ['required', 'exists:roles,id'],
             'jenjang_id' => ['nullable', 'exists:jenjangs,id'],
@@ -132,8 +162,8 @@ class UserController extends Controller
             'orang_tua_id' => $validated['orang_tua_id'] ?? null,
         ]);
 
-        if (!empty($validated['password'])) {
-            $user->update(['password' => \Illuminate\Support\Facades\Hash::make($validated['password'])]);
+        if (! empty($validated['password'])) {
+            $user->update(['password' => Hash::make($validated['password'])]);
         }
 
         $user->roles()->sync([$validated['role_id']]);

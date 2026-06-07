@@ -95,6 +95,7 @@ export interface SharedData {
     flash: {
         success: string | null;
         error: string | null;
+        import_errors?: string[];
     };
     [key: string]: unknown;
 }

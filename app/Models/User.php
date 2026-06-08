@@ -69,6 +69,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'nomor_induk_siswa',
         'password',
         'jenjang_id',
         'kelas_id',
@@ -182,6 +183,11 @@ class User extends Authenticatable
     public function anak()
     {
         return $this->hasMany(User::class, 'orang_tua_id');
+    }
+
+    public function passwordResetRequests()
+    {
+        return $this->hasMany(PasswordResetRequest::class);
     }
 
     /**

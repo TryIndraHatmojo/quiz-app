@@ -2,10 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\Menu;
 use App\Models\Role;
+use Illuminate\Database\Seeder;
 
 class MenuSeeder extends Seeder
 {
@@ -110,6 +109,14 @@ class MenuSeeder extends Seeder
                 'parent_title' => 'Master Data',
                 'order' => 11,
             ],
+            [
+                'group_name' => 'Admin',
+                'title' => 'Reset Password',
+                'url' => '/admin/password-reset-requests',
+                'route_name' => 'admin.password-reset-requests.index',
+                'icon' => 'KeyRound',
+                'order' => 12,
+            ],
         ];
 
         // Create Master Data Parent
@@ -137,27 +144,27 @@ class MenuSeeder extends Seeder
         // Define menu assignments for each role
         $roleMenus = [
             'Admin' => [
-                'Master Data', 'Dashboard', 'Nilai', 'Buat Baru', 'Semua Kuis', 
-                'Pengguna', 'Peran', 'Mata Pelajaran', 'Jenjang', 'Kelas', 
-                'Backgrounds', 'Galeri'
+                'Master Data', 'Dashboard', 'Nilai', 'Buat Baru', 'Semua Kuis',
+                'Pengguna', 'Peran', 'Mata Pelajaran', 'Jenjang', 'Kelas',
+                'Backgrounds', 'Galeri', 'Reset Password',
             ],
             'Guru Telaah Soal' => [
-                'Dashboard', 'Nilai', 'Buat Baru', 'Semua Kuis'
+                'Dashboard', 'Nilai', 'Buat Baru', 'Semua Kuis',
             ],
             'Guru Mata Pelajaran' => [
-                'Dashboard', 'Nilai', 'Buat Baru', 'Semua Kuis'
+                'Dashboard', 'Nilai', 'Buat Baru', 'Semua Kuis',
             ],
             'Siswa' => [
-                'Dashboard', 'Nilai'
+                'Dashboard', 'Nilai',
             ],
             'Orang Tua' => [
-                'Dashboard', 'Nilai'
+                'Dashboard', 'Nilai',
             ],
             'Guru Tamu' => [
-                'Dashboard', 'Nilai', 'Buat Baru', 'Semua Kuis'
+                'Dashboard', 'Nilai', 'Buat Baru', 'Semua Kuis',
             ],
             'Siswa Tamu' => [
-                'Dashboard', 'Nilai'
+                'Dashboard', 'Nilai',
             ],
         ];
 

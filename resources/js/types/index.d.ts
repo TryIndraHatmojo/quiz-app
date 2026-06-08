@@ -104,6 +104,7 @@ export interface User {
     id: number;
     name: string;
     email: string;
+    nomor_induk_siswa?: string | null;
     avatar?: string;
     email_verified_at: string | null;
     two_factor_enabled?: boolean;

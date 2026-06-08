@@ -22,6 +22,20 @@ test('users can authenticate using the login screen', function () {
     $response->assertRedirect(route('dashboard', absolute: false));
 });
 
+test('users can authenticate using nomor induk siswa', function () {
+    $user = User::factory()->withoutTwoFactor()->create([
+        'nomor_induk_siswa' => 'SISWA-20260001',
+    ]);
+
+    $response = $this->post(route('login.store'), [
+        'email' => 'siswa-20260001',
+        'password' => 'password',
+    ]);
+
+    $this->assertAuthenticatedAs($user);
+    $response->assertRedirect(route('dashboard', absolute: false));
+});
+
 test('users with two factor enabled are redirected to two factor challenge', function () {
     if (! Features::canManageTwoFactorAuthentication()) {
         $this->markTestSkipped('Two-factor authentication is not enabled.');

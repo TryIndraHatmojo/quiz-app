@@ -20,6 +20,7 @@ class UserImportTemplateService
     private const IMPORT_HEADERS = [
         'nama',
         'email',
+        'nomor_induk_siswa',
         'password',
         'peran',
         'jenjang_id',
@@ -59,31 +60,32 @@ class UserImportTemplateService
         $sheet->setTitle('Import Pengguna');
         $sheet->fromArray(self::IMPORT_HEADERS, null, 'A1');
         $sheet->freezePane('A2');
-        $sheet->setAutoFilter('A1:J1');
-        $sheet->getStyle('A1:J1')->getFont()->setBold(true);
-        $sheet->getStyle('A1:J1')->getFill()
+        $sheet->setAutoFilter('A1:K1');
+        $sheet->getStyle('A1:K1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:K1')->getFill()
             ->setFillType(Fill::FILL_SOLID)
             ->getStartColor()
             ->setARGB('FFE2E8F0');
-        $sheet->getStyle('A1:J1')->getBorders()->getBottom()->setBorderStyle(Border::BORDER_THIN);
-        $sheet->getStyle('A1:J1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('A1:K1')->getBorders()->getBottom()->setBorderStyle(Border::BORDER_THIN);
+        $sheet->getStyle('A1:K1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-        $this->applyDropdown($sheet, 'D2:D500', "'Referensi Role'!\$C\$2:\$C\$200");
-        $this->applyDropdown($sheet, 'E2:E500', "'Referensi Jenjang'!\$A\$2:\$A\$500");
-        $this->applyDropdown($sheet, 'F2:F500', "'Referensi Kelas'!\$A\$2:\$A\$1000");
-        $this->applyDropdown($sheet, 'G2:G500', "'Referensi Orang Tua'!\$A\$2:\$A\$1000");
+        $this->applyDropdown($sheet, 'E2:E500', "'Referensi Role'!\$C\$2:\$C\$200");
+        $this->applyDropdown($sheet, 'F2:F500', "'Referensi Jenjang'!\$A\$2:\$A\$500");
+        $this->applyDropdown($sheet, 'G2:G500', "'Referensi Kelas'!\$A\$2:\$A\$1000");
+        $this->applyDropdown($sheet, 'H2:H500', "'Referensi Orang Tua'!\$A\$2:\$A\$1000");
 
         $widths = [
             'A' => 28,
             'B' => 34,
-            'C' => 18,
-            'D' => 22,
-            'E' => 12,
+            'C' => 20,
+            'D' => 18,
+            'E' => 22,
             'F' => 12,
-            'G' => 14,
-            'H' => 28,
-            'I' => 34,
-            'J' => 22,
+            'G' => 12,
+            'H' => 14,
+            'I' => 28,
+            'J' => 34,
+            'K' => 22,
         ];
 
         foreach ($widths as $column => $width) {
@@ -99,6 +101,7 @@ class UserImportTemplateService
             'id',
             'nama',
             'email',
+            'nomor_induk_siswa',
             'peran',
             'jenjang_id',
             'jenjang',
@@ -117,6 +120,7 @@ class UserImportTemplateService
                 $user->id,
                 $user->name,
                 $user->email,
+                $user->nomor_induk_siswa,
                 $user->roles->pluck('slug')->implode(', '),
                 $user->jenjang_id,
                 $user->jenjang ? "{$user->jenjang->jenjang} - {$user->jenjang->nama_sekolah}" : null,
@@ -220,6 +224,7 @@ class UserImportTemplateService
         $rows = [
             ['Format Import Pengguna'],
             ['Kolom wajib', 'nama, email, password, peran'],
+            ['Nomor induk siswa', 'Isi nomor_induk_siswa bila user adalah siswa dan ingin mengizinkan login/reset password memakai NIS. Kolom ini opsional dan harus unik.'],
             ['Peran', 'Gunakan slug dari sheet Referensi Role, contoh: siswa atau orang-tua.'],
             ['Jenjang dan kelas', 'Isi jenjang_id dan kelas_id dari sheet referensi. Jika hanya kelas_id diisi, jenjang_id akan mengikuti data kelas.'],
             ['Orang tua existing', 'Isi orang_tua_id dari sheet Referensi Orang Tua.'],
@@ -231,10 +236,10 @@ class UserImportTemplateService
         $sheet->fromArray($rows, null, 'A1');
         $sheet->mergeCells('A1:B1');
         $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
-        $sheet->getStyle('A2:A8')->getFont()->setBold(true);
+        $sheet->getStyle('A2:A9')->getFont()->setBold(true);
         $sheet->getColumnDimension('A')->setWidth(24);
         $sheet->getColumnDimension('B')->setWidth(120);
-        $sheet->getStyle('B1:B8')->getAlignment()->setWrapText(true);
+        $sheet->getStyle('B1:B9')->getAlignment()->setWrapText(true);
     }
 
     private function styleReferenceSheet(Worksheet $sheet, int $columnCount): void

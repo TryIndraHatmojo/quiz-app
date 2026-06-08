@@ -25,6 +25,9 @@ class UserController extends Controller
             ->when($request->email, function ($query, $email) {
                 $query->where('email', 'like', "%{$email}%");
             })
+            ->when($request->nomor_induk_siswa, function ($query, $nomorIndukSiswa) {
+                $query->where('nomor_induk_siswa', 'like', "%{$nomorIndukSiswa}%");
+            })
             ->when($request->role, function ($query, $role) {
                 $query->whereHas('roles', function ($q) use ($role) {
                     $q->where('name', 'like', "%{$role}%");
@@ -52,7 +55,7 @@ class UserController extends Controller
 
         return Inertia::render('master/users/index', [
             'users' => $users,
-            'filters' => $request->only(['name', 'email', 'role', 'jenjang', 'kelas', 'orangTua']),
+            'filters' => $request->only(['name', 'email', 'nomor_induk_siswa', 'role', 'jenjang', 'kelas', 'orangTua']),
         ]);
     }
 
@@ -78,6 +81,7 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+            'nomor_induk_siswa' => ['nullable', 'string', 'max:255', 'unique:users,nomor_induk_siswa'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'role_id' => ['required', 'exists:roles,id'],
             'jenjang_id' => ['nullable', 'exists:jenjangs,id'],
@@ -88,6 +92,7 @@ class UserController extends Controller
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
+            'nomor_induk_siswa' => $validated['nomor_induk_siswa'] ?? null,
             'password' => Hash::make($validated['password']),
             'jenjang_id' => $validated['jenjang_id'] ?? null,
             'kelas_id' => $validated['kelas_id'] ?? null,
@@ -147,6 +152,7 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'nomor_induk_siswa' => ['nullable', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
             'role_id' => ['required', 'exists:roles,id'],
             'jenjang_id' => ['nullable', 'exists:jenjangs,id'],
@@ -157,6 +163,7 @@ class UserController extends Controller
         $user->update([
             'name' => $validated['name'],
             'email' => $validated['email'],
+            'nomor_induk_siswa' => $validated['nomor_induk_siswa'] ?? null,
             'jenjang_id' => $validated['jenjang_id'] ?? null,
             'kelas_id' => $validated['kelas_id'] ?? null,
             'orang_tua_id' => $validated['orang_tua_id'] ?? null,

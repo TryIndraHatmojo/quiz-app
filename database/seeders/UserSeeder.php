@@ -77,6 +77,7 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Andi Pratama',
                 'email' => 'andi.siswa@example.com',
+                'nomor_induk_siswa' => 'SISWA-001',
                 'password' => Hash::make('password'),
                 'jenjang_id' => $smkId,
                 'kelas_id' => $kelasXFarmasi1Id,
@@ -85,6 +86,7 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Lina Marlina',
                 'email' => 'lina.siswa@example.com',
+                'nomor_induk_siswa' => 'SISWA-002',
                 'password' => Hash::make('password'),
                 'jenjang_id' => $smaId,
                 'kelas_id' => $kelasXIIIps1Id,
@@ -93,6 +95,7 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Rudi Hermawan',
                 'email' => 'rudi.siswa@example.com',
+                'nomor_induk_siswa' => 'SISWA-003',
                 'password' => Hash::make('password'),
                 'jenjang_id' => $smpId,
                 'kelas_id' => $kelas7AId,
@@ -101,6 +104,7 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Maya Sari',
                 'email' => 'maya.siswa@example.com',
+                'nomor_induk_siswa' => 'SISWA-004',
                 'password' => Hash::make('password'),
                 'jenjang_id' => $smpId,
                 'kelas_id' => $kelas8AId,
@@ -109,6 +113,7 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Doni Setiawan',
                 'email' => 'doni.siswa@example.com',
+                'nomor_induk_siswa' => 'SISWA-005',
                 'password' => Hash::make('password'),
                 'jenjang_id' => $smpId,
                 'kelas_id' => $kelas9AId,
@@ -141,6 +146,7 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Nadia Siswa Tamu',
                 'email' => 'tamu.siswa@example.com',
+                'nomor_induk_siswa' => 'TAMU-SISWA-001',
                 'password' => Hash::make('password'),
                 'jenjang_id' => $smpId,
                 'kelas_id' => $kelas7AId,

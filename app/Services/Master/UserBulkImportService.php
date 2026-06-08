@@ -30,6 +30,10 @@ class UserBulkImportService
         'name' => 'name',
         'email' => 'email',
         'alamat_email' => 'email',
+        'nis' => 'nomor_induk_siswa',
+        'nomor_induk_siswa' => 'nomor_induk_siswa',
+        'nomor_induk' => 'nomor_induk_siswa',
+        'nomor_induk_siswa_nis' => 'nomor_induk_siswa',
         'password' => 'password',
         'kata_sandi' => 'password',
         'peran' => 'role',
@@ -180,6 +184,7 @@ class UserBulkImportService
         $jenjangs = Jenjang::query()->get()->keyBy('id');
         $kelases = Kelas::query()->get()->keyBy('id');
         $existingUsersByEmail = $this->existingUsersByEmail($rawRows);
+        $existingUsersByNis = $this->existingUsersByNis($rawRows);
         $existingParentUsersById = $this->existingParentUsersById($rawRows);
 
         if (! $parentRole) {
@@ -188,6 +193,7 @@ class UserBulkImportService
 
         $preparedRows = [];
         $mainRowsByEmail = [];
+        $seenNis = [];
         $seenEmails = [];
 
         foreach ($rawRows as $rawRow) {
@@ -197,6 +203,7 @@ class UserBulkImportService
 
             $name = $data['name'] ?? '';
             $email = $data['email'] ?? '';
+            $nomorIndukSiswa = $data['nomor_induk_siswa'] ?? '';
             $password = $data['password'] ?? '';
             $roleInput = $data['role'] ?? '';
             $role = $this->resolveRole($roleInput, $roleLookup);
@@ -234,6 +241,20 @@ class UserBulkImportService
             }
 
             $seenEmails[$emailKey] = $rowNumber;
+
+            $nomorIndukSiswaKey = Str::lower($nomorIndukSiswa);
+
+            if ($nomorIndukSiswa !== '' && isset($seenNis[$nomorIndukSiswaKey])) {
+                $errors[] = "Baris {$rowNumber}: nomor_induk_siswa sudah dipakai di baris {$seenNis[$nomorIndukSiswaKey]} pada file ini.";
+            }
+
+            if ($nomorIndukSiswa !== '' && isset($existingUsersByNis[$nomorIndukSiswaKey])) {
+                $errors[] = "Baris {$rowNumber}: nomor_induk_siswa sudah terdaftar di sistem.";
+            }
+
+            if ($nomorIndukSiswa !== '') {
+                $seenNis[$nomorIndukSiswaKey] = $rowNumber;
+            }
 
             $jenjangId = $this->readOptionalId($data['jenjang_id'] ?? '', $rowNumber, 'jenjang_id', $errors);
             $kelasId = $this->readOptionalId($data['kelas_id'] ?? '', $rowNumber, 'kelas_id', $errors);
@@ -303,6 +324,8 @@ class UserBulkImportService
                 'name' => $name,
                 'email' => $email,
                 'email_key' => $emailKey,
+                'nomor_induk_siswa' => $nomorIndukSiswa,
+                'nomor_induk_siswa_key' => $nomorIndukSiswaKey,
                 'password' => $password,
                 'role' => $role,
                 'jenjang_id' => $jenjangId,
@@ -413,6 +436,7 @@ class UserBulkImportService
             $user = User::query()->create([
                 'name' => $row['name'],
                 'email' => $row['email'],
+                'nomor_induk_siswa' => $row['nomor_induk_siswa'] ?: null,
                 'password' => Hash::make($row['password']),
                 'jenjang_id' => $row['jenjang_id'],
                 'kelas_id' => $row['kelas_id'],
@@ -515,6 +539,26 @@ class UserBulkImportService
             ->whereIn(DB::raw('LOWER(email)'), $emails->all())
             ->get()
             ->keyBy(fn (User $user) => Str::lower($user->email))
+            ->all();
+    }
+
+    private function existingUsersByNis(array $rows): array
+    {
+        $nisValues = collect($rows)
+            ->map(fn (array $row) => $row['data']['nomor_induk_siswa'] ?? null)
+            ->filter()
+            ->map(fn (string $nis) => Str::lower($nis))
+            ->unique()
+            ->values();
+
+        if ($nisValues->isEmpty()) {
+            return [];
+        }
+
+        return User::query()
+            ->whereIn(DB::raw('LOWER(nomor_induk_siswa)'), $nisValues->all())
+            ->get()
+            ->keyBy(fn (User $user) => Str::lower($user->nomor_induk_siswa ?? ''))
             ->all();
     }
 

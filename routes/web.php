@@ -8,8 +8,18 @@ Route::get('/', function () {
     return redirect()->route('dashboard');
 })->name('home');
 
+Route::post('password-reset-requests', [App\Http\Controllers\Auth\PasswordResetRequestController::class, 'store'])
+    ->middleware('guest')
+    ->name('password-reset-requests.store');
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
+});
+
+Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('password-reset-requests', [App\Http\Controllers\Admin\PasswordResetRequestController::class, 'index'])->name('password-reset-requests.index');
+    Route::patch('password-reset-requests/{passwordResetRequest}/approve', [App\Http\Controllers\Admin\PasswordResetRequestController::class, 'approve'])->name('password-reset-requests.approve');
+    Route::patch('password-reset-requests/{passwordResetRequest}/reject', [App\Http\Controllers\Admin\PasswordResetRequestController::class, 'reject'])->name('password-reset-requests.reject');
 });
 
 Route::middleware(['auth', 'verified'])->prefix('master')->name('master.')->group(function () {

@@ -50,6 +50,7 @@ interface User {
     id: number;
     name: string;
     email: string;
+    nomor_induk_siswa?: string | null;
     roles: Role[];
     jenjang?: Jenjang | null;
     jenjang_id?: number | null;
@@ -81,6 +82,7 @@ export default function UserEdit({
     const { data, setData, put, processing, errors } = useForm({
         name: user.name,
         email: user.email,
+        nomor_induk_siswa: user.nomor_induk_siswa || '',
         password: '',
         password_confirmation: '',
         role_id: user.roles?.length > 0 ? user.roles[0].id.toString() : '',
@@ -139,6 +141,22 @@ export default function UserEdit({
                                 className="max-w-md"
                             />
                             <InputError message={errors.email} />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="nomor_induk_siswa">
+                                Nomor Induk Siswa (Opsional)
+                            </Label>
+                            <Input
+                                id="nomor_induk_siswa"
+                                value={data.nomor_induk_siswa}
+                                onChange={(e) =>
+                                    setData('nomor_induk_siswa', e.target.value)
+                                }
+                                placeholder="Contoh: 20260001"
+                                className="max-w-md"
+                            />
+                            <InputError message={errors.nomor_induk_siswa} />
                         </div>
 
                         <div className="space-y-2">

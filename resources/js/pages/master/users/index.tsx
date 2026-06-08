@@ -53,6 +53,7 @@ interface Props {
     filters?: {
         name?: string;
         email?: string;
+        nomor_induk_siswa?: string;
         role?: string;
         jenjang?: string;
         kelas?: string;
@@ -73,6 +74,7 @@ export default function UserIndex({ users, filters }: Props) {
     const [searchFilters, setSearchFilters] = useState({
         name: filters?.name || '',
         email: filters?.email || '',
+        nomor_induk_siswa: filters?.nomor_induk_siswa || '',
         role: filters?.role || '',
         jenjang: filters?.jenjang || '',
         kelas: filters?.kelas || '',
@@ -319,6 +321,17 @@ export default function UserIndex({ users, filters }: Props) {
                                     />
                                 </th>
                                 <th scope="col" className="px-6 py-3">
+                                    <div className="mb-2">NIS</div>
+                                    <Input
+                                        type="text"
+                                        name="nomor_induk_siswa"
+                                        value={searchFilters.nomor_induk_siswa}
+                                        onChange={handleFilterChange}
+                                        placeholder="Cari..."
+                                        className="h-8 max-w-[150px] text-xs font-normal"
+                                    />
+                                </th>
+                                <th scope="col" className="px-6 py-3">
                                     <div className="mb-2">Peran</div>
                                     <Input
                                         type="text"
@@ -374,7 +387,7 @@ export default function UserIndex({ users, filters }: Props) {
                             {users.data.length === 0 && (
                                 <tr className="border-b border-sidebar-border bg-background">
                                     <td
-                                        colSpan={7}
+                                        colSpan={8}
                                         className="px-6 py-8 text-center text-sm text-muted-foreground"
                                     >
                                         Tidak ada data pengguna.
@@ -391,6 +404,17 @@ export default function UserIndex({ users, filters }: Props) {
                                         {user.name}
                                     </td>
                                     <td className="px-6 py-4">{user.email}</td>
+                                    <td className="px-6 py-4">
+                                        {user.nomor_induk_siswa ? (
+                                            <span className="font-mono text-sm">
+                                                {user.nomor_induk_siswa}
+                                            </span>
+                                        ) : (
+                                            <span className="text-sm text-muted-foreground">
+                                                -
+                                            </span>
+                                        )}
+                                    </td>
                                     <td className="px-6 py-4">
                                         {user.roles?.map((role) => (
                                             <span

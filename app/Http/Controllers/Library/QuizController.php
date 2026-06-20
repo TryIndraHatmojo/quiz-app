@@ -496,7 +496,12 @@ class QuizController extends Controller
             if ($qData['question_type'] === 'matching_pairs') {
                 $pairs = $qData['matching_pairs'] ?? [];
                 foreach ($pairs as $pIndex => $pData) {
-                    if (! empty($pData['left_text']) || ! empty($pData['right_text'])) {
+                    $hasLeftContent = filled($pData['left_text'] ?? null)
+                        || filled($pData['left_media_path'] ?? null);
+                    $hasRightContent = filled($pData['right_text'] ?? null)
+                        || filled($pData['right_media_path'] ?? null);
+
+                    if ($hasLeftContent && $hasRightContent) {
                         $question->matchingPairs()->create([
                             'left_text' => $pData['left_text'] ?? '',
                             'right_text' => $pData['right_text'] ?? '',

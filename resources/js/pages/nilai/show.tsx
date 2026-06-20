@@ -1,3 +1,4 @@
+import { MatchingPairContent } from '@/components/quiz/matching-pair-content';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -61,10 +62,20 @@ interface QuestionScoreItem {
     question_type: string;
     answer_preview: string;
     answer_key: string;
+    matching_answer_pairs?: MatchingPairSummary[];
+    matching_answer_key_pairs?: MatchingPairSummary[];
     answer_explanation: string | null;
     awarded_points: number;
     max_points: number;
     is_correct: boolean;
+}
+
+interface MatchingPairSummary {
+    left_text?: string | null;
+    left_media_path?: string | null;
+    right_text?: string | null;
+    right_media_path?: string | null;
+    is_correct?: boolean;
 }
 
 interface Props {
@@ -88,6 +99,63 @@ const clampScoreInput = (rawValue: string, maxPoints: number): string => {
     const safeMax = Math.max(0, maxPoints);
 
     return Math.min(value, safeMax).toString();
+};
+
+const MatchingPairSummaryList = ({
+    pairs,
+    fallback,
+    showStatus = false,
+}: {
+    pairs?: MatchingPairSummary[];
+    fallback: string;
+    showStatus?: boolean;
+}) => {
+    if (!pairs || pairs.length === 0) {
+        return <p className="line-clamp-3">{fallback}</p>;
+    }
+
+    return (
+        <div className="space-y-2">
+            {pairs.map((pair, index) => (
+                <div
+                    key={index}
+                    className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-2 rounded-md border border-sidebar-border bg-background p-2"
+                >
+                    <MatchingPairContent
+                        text={pair.left_text}
+                        mediaPath={pair.left_media_path}
+                        imageAlt={`Sisi kiri ${index + 1}`}
+                        compact
+                    />
+                    <span className="pt-1 text-muted-foreground">=&gt;</span>
+                    <div className="min-w-0">
+                        <MatchingPairContent
+                            text={pair.right_text}
+                            mediaPath={pair.right_media_path}
+                            imageAlt={`Sisi kanan ${index + 1}`}
+                            compact
+                        />
+                        {showStatus && pair.is_correct !== undefined && (
+                            <span
+                                className={`mt-1 inline-flex items-center gap-1 text-[11px] font-medium ${
+                                    pair.is_correct
+                                        ? 'text-emerald-600'
+                                        : 'text-red-500'
+                                }`}
+                            >
+                                {pair.is_correct ? (
+                                    <CheckCircle2 className="h-3 w-3" />
+                                ) : (
+                                    <XCircle className="h-3 w-3" />
+                                )}
+                                {pair.is_correct ? 'Benar' : 'Belum tepat'}
+                            </span>
+                        )}
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
 };
 
 export default function NilaiShow({
@@ -433,9 +501,22 @@ export default function NilaiShow({
                                                 </span>
                                             </td>
                                             <td className="max-w-[200px] px-4 py-3 text-xs text-muted-foreground">
-                                                <p className="line-clamp-3">
-                                                    {item.answer_preview}
-                                                </p>
+                                                {item.question_type ===
+                                                'matching_pairs' ? (
+                                                    <MatchingPairSummaryList
+                                                        pairs={
+                                                            item.matching_answer_pairs
+                                                        }
+                                                        fallback={
+                                                            item.answer_preview
+                                                        }
+                                                        showStatus
+                                                    />
+                                                ) : (
+                                                    <p className="line-clamp-3">
+                                                        {item.answer_preview}
+                                                    </p>
+                                                )}
                                                 {item.question_type ===
                                                     'true_false' &&
                                                     item.answer_explanation && (
@@ -452,9 +533,21 @@ export default function NilaiShow({
                                                     )}
                                             </td>
                                             <td className="max-w-[200px] px-4 py-3 text-xs text-muted-foreground">
-                                                <p className="line-clamp-3">
-                                                    {item.answer_key}
-                                                </p>
+                                                {item.question_type ===
+                                                'matching_pairs' ? (
+                                                    <MatchingPairSummaryList
+                                                        pairs={
+                                                            item.matching_answer_key_pairs
+                                                        }
+                                                        fallback={
+                                                            item.answer_key
+                                                        }
+                                                    />
+                                                ) : (
+                                                    <p className="line-clamp-3">
+                                                        {item.answer_key}
+                                                    </p>
+                                                )}
                                             </td>
                                             <td className="px-4 py-3">
                                                 {isEditable ? (

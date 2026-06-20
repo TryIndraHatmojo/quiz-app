@@ -1,8 +1,9 @@
+import { MatchingPairContent } from '@/components/quiz/matching-pair-content';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { BreadcrumbItem } from '@/types';
-import { Quiz } from '@/types/quiz';
+import { Quiz, QuizMatchingPair } from '@/types/quiz';
 import { Head, Link } from '@inertiajs/react';
 import {
     AlignLeft,
@@ -144,7 +145,7 @@ export default function QuizPreview({ quiz, canManageQuestions }: Props) {
         null,
     );
     const [shuffledRightOptions, setShuffledRightOptions] = useState<
-        Record<number, Array<{ text: string; originalIndex: number }>>
+        Record<number, Array<{ pair: QuizMatchingPair; originalIndex: number }>>
     >({});
     const [renderKey, setRenderKey] = useState(0);
 
@@ -160,7 +161,7 @@ export default function QuizPreview({ quiz, canManageQuestions }: Props) {
             ) {
                 const pairs = question.matching_pairs || [];
                 const rightOptions = pairs.map((p, i) => ({
-                    text: p.right_text,
+                    pair: p,
                     originalIndex: i,
                 }));
                 // Fisher-Yates shuffle
@@ -632,9 +633,11 @@ export default function QuizPreview({ quiz, canManageQuestions }: Props) {
                                     >
                                         {idx + 1}
                                     </span>
-                                    <span className="flex-1 font-medium">
-                                        {pair.left_text}
-                                    </span>
+                                    <MatchingPairContent
+                                        text={pair.left_text}
+                                        mediaPath={pair.left_media_path}
+                                        imageAlt={`Sisi kiri ${idx + 1}`}
+                                    />
                                     {isConnected && !isSelected && (
                                         <span className="text-sm text-green-600">
                                             ✓
@@ -691,14 +694,17 @@ export default function QuizPreview({ quiz, canManageQuestions }: Props) {
                                     >
                                         {String.fromCharCode(65 + shuffledIdx)}
                                     </span>
-                                    <span className="flex-1 font-medium">
-                                        {item.text}
-                                    </span>
-                                    {isConnected && connectedLeftIdx && (
-                                        <span className="rounded-full bg-green-100 px-2 py-1 text-xs font-bold text-green-700">
-                                            {parseInt(connectedLeftIdx) + 1}
-                                        </span>
-                                    )}
+                                    <MatchingPairContent
+                                        text={item.pair.right_text}
+                                        mediaPath={item.pair.right_media_path}
+                                        imageAlt={`Sisi kanan ${String.fromCharCode(65 + shuffledIdx)}`}
+                                    />
+                                    {isConnected &&
+                                        connectedLeftIdx !== undefined && (
+                                            <span className="rounded-full bg-green-100 px-2 py-1 text-xs font-bold text-green-700">
+                                                {parseInt(connectedLeftIdx) + 1}
+                                            </span>
+                                        )}
                                 </div>
                             );
                         })}

@@ -1,3 +1,4 @@
+import { MatchingPairContent } from '@/components/quiz/matching-pair-content';
 import { Button } from '@/components/ui/button';
 import { Quiz } from '@/types/quiz';
 import { Head, router } from '@inertiajs/react';
@@ -51,11 +52,15 @@ interface QuizAnswer {
             id: number;
             left_text: string;
             right_text: string;
+            left_media_path?: string | null;
+            right_media_path?: string | null;
         };
         selected_right_pair?: {
             id: number;
             left_text: string;
             right_text: string;
+            left_media_path?: string | null;
+            right_media_path?: string | null;
         };
     }[];
 }
@@ -536,11 +541,24 @@ export default function QuizResult({
                                                                                         }
                                                                                         className="flex items-center rounded border border-gray-100 bg-white p-2 text-sm shadow-sm"
                                                                                     >
-                                                                                        <div className="flex-1 border-r pr-4 text-right font-medium text-gray-800">
-                                                                                            {mpa
-                                                                                                .left_pair
-                                                                                                ?.left_text ||
-                                                                                                '(tidak ada)'}
+                                                                                        <div className="flex-1 border-r pr-4 text-right text-gray-800">
+                                                                                            <MatchingPairContent
+                                                                                                text={
+                                                                                                    mpa
+                                                                                                        .left_pair
+                                                                                                        ?.left_text
+                                                                                                }
+                                                                                                mediaPath={
+                                                                                                    mpa
+                                                                                                        .left_pair
+                                                                                                        ?.left_media_path
+                                                                                                }
+                                                                                                imageAlt="Sisi kiri"
+                                                                                                compact
+                                                                                                className="items-end"
+                                                                                                textClassName="text-right"
+                                                                                                emptyLabel="(tidak ada)"
+                                                                                            />
                                                                                         </div>
                                                                                         <div className="flex items-center justify-center px-3">
                                                                                             {mpa.is_correct ? (
@@ -552,18 +570,40 @@ export default function QuizResult({
                                                                                         <div
                                                                                             className={`flex-1 pl-4 ${mpa.is_correct ? 'text-green-700' : 'text-red-700'}`}
                                                                                         >
-                                                                                            {mpa
-                                                                                                .selected_right_pair
-                                                                                                ?.right_text ||
-                                                                                                '(tidak dijawab)'}
+                                                                                            <MatchingPairContent
+                                                                                                text={
+                                                                                                    mpa
+                                                                                                        .selected_right_pair
+                                                                                                        ?.right_text
+                                                                                                }
+                                                                                                mediaPath={
+                                                                                                    mpa
+                                                                                                        .selected_right_pair
+                                                                                                        ?.right_media_path
+                                                                                                }
+                                                                                                imageAlt="Sisi kanan yang dipilih"
+                                                                                                compact
+                                                                                                emptyLabel="(tidak dijawab)"
+                                                                                            />
                                                                                             {!mpa.is_correct && (
-                                                                                                <div className="mt-1 text-xs text-green-600">
-                                                                                                    Benar:{' '}
-                                                                                                    {
-                                                                                                        mpa
-                                                                                                            .left_pair
-                                                                                                            ?.right_text
-                                                                                                    }
+                                                                                                <div className="mt-2 rounded bg-green-50 p-2 text-xs text-green-700">
+                                                                                                    <span className="mb-1 block font-medium">
+                                                                                                        Benar:
+                                                                                                    </span>
+                                                                                                    <MatchingPairContent
+                                                                                                        text={
+                                                                                                            mpa
+                                                                                                                .left_pair
+                                                                                                                ?.right_text
+                                                                                                        }
+                                                                                                        mediaPath={
+                                                                                                            mpa
+                                                                                                                .left_pair
+                                                                                                                ?.right_media_path
+                                                                                                        }
+                                                                                                        imageAlt="Sisi kanan yang benar"
+                                                                                                        compact
+                                                                                                    />
                                                                                                 </div>
                                                                                             )}
                                                                                         </div>

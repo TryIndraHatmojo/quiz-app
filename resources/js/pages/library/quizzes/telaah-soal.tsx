@@ -1,3 +1,4 @@
+import { MatchingPairContent } from '@/components/quiz/matching-pair-content';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -276,17 +277,23 @@ export default function TelaahSoal({ quiz }: Props) {
                                         <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-blue-500 text-xs font-bold text-white">
                                             {idx + 1}
                                         </span>
-                                        <span className="text-sm">
-                                            {pair.left_text}
-                                        </span>
+                                        <MatchingPairContent
+                                            text={pair.left_text}
+                                            mediaPath={pair.left_media_path}
+                                            imageAlt={`Sisi kiri ${idx + 1}`}
+                                            compact
+                                        />
                                     </div>
                                     <div className="flex items-center gap-2 rounded-lg border bg-green-50 p-3 dark:bg-green-900/20">
                                         <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-green-500 text-xs font-bold text-white">
                                             {String.fromCharCode(65 + idx)}
                                         </span>
-                                        <span className="text-sm">
-                                            {pair.right_text}
-                                        </span>
+                                        <MatchingPairContent
+                                            text={pair.right_text}
+                                            mediaPath={pair.right_media_path}
+                                            imageAlt={`Sisi kanan ${idx + 1}`}
+                                            compact
+                                        />
                                     </div>
                                 </div>
                             ))}
@@ -397,10 +404,13 @@ export default function TelaahSoal({ quiz }: Props) {
                                 onClick={() => {
                                     if (quiz?.id) {
                                         router.patch(
-                                            route('library.quizzes.status.update', {
-                                                quiz: quiz.id,
-                                                redirect_to_index: 1,
-                                            }),
+                                            route(
+                                                'library.quizzes.status.update',
+                                                {
+                                                    quiz: quiz.id,
+                                                    redirect_to_index: 1,
+                                                },
+                                            ),
                                             { status: 'live' },
                                         );
                                     }

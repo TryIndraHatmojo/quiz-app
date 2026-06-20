@@ -237,7 +237,7 @@ class NilaiController extends Controller
             'quiz:id,title,user_id,passing_score,audience',
             'quiz.questions:id,quiz_id,question_text,question_type,explanation,points,order',
             'quiz.questions.options:id,quiz_question_id,option_text,is_correct,order',
-            'quiz.questions.matchingPairs:id,quiz_question_id,left_text,right_text,order',
+            'quiz.questions.matchingPairs:id,quiz_question_id,left_text,right_text,left_media_path,right_media_path,order',
             'quiz.questions.shortAnswerFields:id,quiz_question_id,expected_answer,order',
             'quiz.teacherAccess:id,quiz_id,user_id,permission',
             'user:id,name,email,jenjang_id,kelas_id,orang_tua_id',
@@ -246,8 +246,8 @@ class NilaiController extends Controller
             'answers:id,quiz_attempt_id,quiz_question_id,quiz_question_option_id,answer_text,answer_explanation,is_correct,awarded_points',
             'answers.selectedOption:id,option_text',
             'answers.matchingPairAnswers:id,quiz_answer_id,left_quiz_matching_pair_id,selected_right_quiz_matching_pair_id,is_correct,awarded_points',
-            'answers.matchingPairAnswers.leftPair:id,left_text',
-            'answers.matchingPairAnswers.selectedRightPair:id,right_text',
+            'answers.matchingPairAnswers.leftPair:id,left_text,right_text,left_media_path,right_media_path',
+            'answers.matchingPairAnswers.selectedRightPair:id,left_text,right_text,left_media_path,right_media_path',
         ]);
 
         if (! $this->canViewAttempt($user, $roles, $attempt)) {
@@ -267,6 +267,22 @@ class NilaiController extends Controller
             $questionExplanation = trim((string) ($question->explanation ?? ''));
 
             $answerPreview = '-';
+            $matchingAnswerPairs = [];
+            $matchingAnswerKeyPairs = [];
+
+            if ($question->question_type === QuizQuestion::TYPE_MATCHING_PAIRS) {
+                $matchingAnswerKeyPairs = $question->matchingPairs
+                    ->sortBy('order')
+                    ->map(fn ($pair) => [
+                        'left_text' => $pair->left_text,
+                        'left_media_path' => $pair->left_media_path,
+                        'right_text' => $pair->right_text,
+                        'right_media_path' => $pair->right_media_path,
+                    ])
+                    ->values()
+                    ->all();
+            }
+
             if ($answer) {
                 if ($question->question_type === QuizQuestion::TYPE_MULTIPLE_CHOICE) {
                     $answerPreview = $answer->selectedOption?->option_text ?? '-';
@@ -280,10 +296,21 @@ class NilaiController extends Controller
                 } elseif (in_array($question->question_type, [QuizQuestion::TYPE_SHORT_ANSWER, QuizQuestion::TYPE_LONG_ANSWER], true)) {
                     $answerPreview = $answer->answer_text ?: '-';
                 } elseif ($question->question_type === QuizQuestion::TYPE_MATCHING_PAIRS) {
+                    $matchingAnswerPairs = $answer->matchingPairAnswers
+                        ->map(fn ($pair) => [
+                            'left_text' => $pair->leftPair?->left_text,
+                            'left_media_path' => $pair->leftPair?->left_media_path,
+                            'right_text' => $pair->selectedRightPair?->right_text,
+                            'right_media_path' => $pair->selectedRightPair?->right_media_path,
+                            'is_correct' => (bool) $pair->is_correct,
+                        ])
+                        ->values()
+                        ->all();
+
                     $pairs = $answer->matchingPairAnswers
                         ->map(function ($pair) {
-                            $left = $pair->leftPair?->left_text ?? '-';
-                            $right = $pair->selectedRightPair?->right_text ?? '-';
+                            $left = $this->formatMatchingPairSide($pair->leftPair, 'left');
+                            $right = $this->formatMatchingPairSide($pair->selectedRightPair, 'right');
 
                             return $left.' => '.$right;
                         })
@@ -300,6 +327,8 @@ class NilaiController extends Controller
                 'question_type' => $question->question_type,
                 'answer_preview' => $answerPreview,
                 'answer_key' => $this->formatAnswerKey($question),
+                'matching_answer_pairs' => $matchingAnswerPairs,
+                'matching_answer_key_pairs' => $matchingAnswerKeyPairs,
                 'answer_explanation' => $answerExplanation !== ''
                     ? $answerExplanation
                     : ($questionExplanation !== '' ? $questionExplanation : null),
@@ -571,14 +600,14 @@ class NilaiController extends Controller
             $pairs = $question->matchingPairs
                 ->sortBy('order')
                 ->map(function ($pair) {
-                    $left = trim((string) $pair->left_text);
-                    $right = trim((string) $pair->right_text);
+                    $left = $this->formatMatchingPairSide($pair, 'left');
+                    $right = $this->formatMatchingPairSide($pair, 'right');
 
-                    if ($left === '' && $right === '') {
+                    if ($left === '-' && $right === '-') {
                         return null;
                     }
 
-                    return ($left !== '' ? $left : '-').' => '.($right !== '' ? $right : '-');
+                    return $left.' => '.$right;
                 })
                 ->filter()
                 ->values();
@@ -593,6 +622,28 @@ class NilaiController extends Controller
         }
 
         return '-';
+    }
+
+    private function formatMatchingPairSide($pair, string $side): string
+    {
+        if (! $pair) {
+            return '-';
+        }
+
+        $textField = $side.'_text';
+        $mediaField = $side.'_media_path';
+        $text = trim((string) ($pair->{$textField} ?? ''));
+        $hasImage = filled($pair->{$mediaField} ?? null);
+
+        if ($text === '' && ! $hasImage) {
+            return '-';
+        }
+
+        if ($text === '') {
+            return '[Gambar]';
+        }
+
+        return $hasImage ? $text.' [Gambar]' : $text;
     }
 
     private function resolveRoles(User $user): array

@@ -44,6 +44,7 @@ import {
     Plus,
     Save,
     Send,
+    Shuffle,
     ToggleLeft,
     Trash2,
     X,
@@ -76,6 +77,15 @@ type QuestionType =
     | 'short_answer'
     | 'matching_pairs'
     | 'true_false';
+
+type MediaTarget =
+    | { type: 'question'; questionIndex: number }
+    | {
+          type: 'matching_pair';
+          questionIndex: number;
+          pairIndex: number;
+          side: 'left' | 'right';
+      };
 
 const questionTypeLabels: Record<
     QuestionType,
@@ -314,6 +324,7 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
     );
     const [currentIndex, setCurrentIndex] = useState(0);
     const [mediaDialogOpen, setMediaDialogOpen] = useState(false);
+    const [mediaTarget, setMediaTarget] = useState<MediaTarget | null>(null);
     const [addQuestionDialogOpen, setAddQuestionDialogOpen] = useState(false);
     const [galleryList, setGalleryList] = useState<Gallery[]>(galleries);
     const [isUploading, setIsUploading] = useState(false);
@@ -512,6 +523,58 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
         }
     };
 
+    const openMediaDialog = (target: MediaTarget) => {
+        setMediaTarget(target);
+        setActiveTab('gallery');
+        setMediaDialogOpen(true);
+    };
+
+    const applyMediaPathToTarget = (mediaPath: string) => {
+        if (!mediaTarget) return;
+
+        setQuestions((previousQuestions) => {
+            const newQuestions = [...previousQuestions];
+            const targetQuestion = newQuestions[mediaTarget.questionIndex];
+
+            if (!targetQuestion) {
+                return previousQuestions;
+            }
+
+            if (mediaTarget.type === 'question') {
+                newQuestions[mediaTarget.questionIndex] = {
+                    ...targetQuestion,
+                    media_path: mediaPath,
+                };
+
+                return newQuestions;
+            }
+
+            const pairs = [...(targetQuestion.matching_pairs || [])];
+            const targetPair = pairs[mediaTarget.pairIndex];
+
+            if (!targetPair) {
+                return previousQuestions;
+            }
+
+            const mediaField =
+                mediaTarget.side === 'left'
+                    ? 'left_media_path'
+                    : 'right_media_path';
+
+            pairs[mediaTarget.pairIndex] = {
+                ...targetPair,
+                [mediaField]: mediaPath,
+            };
+
+            newQuestions[mediaTarget.questionIndex] = {
+                ...targetQuestion,
+                matching_pairs: pairs,
+            };
+
+            return newQuestions;
+        });
+    };
+
     const updateShortAnswerField = (
         fieldIndex: number,
         field: keyof QuizShortAnswerField,
@@ -551,21 +614,31 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
     };
 
     const save = () => {
-        post(route('library.quizzes.questions.store', { quiz: quiz.id, redirect_to_index: 1 }));
+        post(
+            route('library.quizzes.questions.store', {
+                quiz: quiz.id,
+                redirect_to_index: 1,
+            }),
+        );
     };
 
     const handleSelectGalleryItem = (gallery: Gallery) => {
-        updateCurrentQuestion('media_path', gallery.file_path);
+        applyMediaPathToTarget(gallery.file_path);
         setMediaDialogOpen(false);
     };
 
     const handleFileUpload = async (file: File | null) => {
-        if (!file) return;
+        if (!file || !mediaTarget) return;
 
         setIsUploading(true);
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('title', `Question ${currentIndex + 1} Media`);
+        formData.append(
+            'title',
+            mediaTarget.type === 'question'
+                ? `Question ${mediaTarget.questionIndex + 1} Media`
+                : `Question ${mediaTarget.questionIndex + 1} Matching ${mediaTarget.side} ${mediaTarget.pairIndex + 1}`,
+        );
 
         try {
             const getXsrfToken = () => {
@@ -594,7 +667,7 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
             const newGallery = data.gallery;
 
             setGalleryList([newGallery, ...galleryList]);
-            updateCurrentQuestion('media_path', newGallery.file_path);
+            applyMediaPathToTarget(newGallery.file_path);
             setMediaDialogOpen(false);
             setActiveTab('gallery');
         } catch (error) {
@@ -867,9 +940,100 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
 
     const renderMatchingPairsEditor = () => {
         const pairs = currentQuestion.matching_pairs || [];
+
+        const renderPairSideEditor = (
+            pair: QuizMatchingPair,
+            pairIndex: number,
+            side: 'left' | 'right',
+        ) => {
+            const textField: keyof Pick<
+                QuizMatchingPair,
+                'left_text' | 'right_text'
+            > = side === 'left' ? 'left_text' : 'right_text';
+            const mediaField: keyof Pick<
+                QuizMatchingPair,
+                'left_media_path' | 'right_media_path'
+            > = side === 'left' ? 'left_media_path' : 'right_media_path';
+            const mediaPath = pair[mediaField];
+            const sideLabel = side === 'left' ? 'Sisi kiri' : 'Sisi kanan';
+            const badgeClass = side === 'left' ? 'bg-blue-500' : 'bg-green-500';
+
+            return (
+                <div className="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                    <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                            <span
+                                className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-white ${badgeClass}`}
+                            >
+                                {pairIndex + 1}
+                            </span>
+                            {sideLabel}
+                        </div>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8"
+                            title={`Pilih gambar ${sideLabel.toLowerCase()}`}
+                            onClick={() =>
+                                openMediaDialog({
+                                    type: 'matching_pair',
+                                    questionIndex: currentIndex,
+                                    pairIndex,
+                                    side,
+                                })
+                            }
+                        >
+                            <ImageIcon className="h-4 w-4" />
+                        </Button>
+                    </div>
+
+                    {mediaPath && (
+                        <div className="relative overflow-hidden rounded-md border bg-white">
+                            <img
+                                src={mediaPath}
+                                alt={`${sideLabel} pasangan ${pairIndex + 1}`}
+                                className="h-28 w-full object-contain"
+                            />
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    updateMatchingPair(
+                                        pairIndex,
+                                        mediaField,
+                                        '',
+                                    )
+                                }
+                                className="absolute top-2 right-2 rounded-full bg-red-500 p-1.5 text-white transition-colors hover:bg-red-600"
+                                title="Hapus gambar"
+                            >
+                                <X className="h-3.5 w-3.5" />
+                            </button>
+                        </div>
+                    )}
+
+                    <Input
+                        value={pair[textField] || ''}
+                        onChange={(e) =>
+                            updateMatchingPair(
+                                pairIndex,
+                                textField,
+                                e.target.value,
+                            )
+                        }
+                        placeholder={
+                            side === 'left'
+                                ? `Teks item ${pairIndex + 1}`
+                                : `Teks pasangan ${pairIndex + 1}`
+                        }
+                    />
+                </div>
+            );
+        };
+
         return (
             <div className="space-y-4">
-                <div className="mb-2 grid grid-cols-2 gap-4">
+                <div className="mb-2 hidden grid-cols-2 gap-4 lg:grid">
                     <div className="text-center font-medium text-gray-600">
                         Sisi Kiri
                     </div>
@@ -880,52 +1044,20 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                 {pairs.map((pair, idx) => (
                     <div
                         key={idx}
-                        className="grid grid-cols-2 items-center gap-4"
+                        className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]"
                     >
-                        <div className="relative">
-                            <Input
-                                value={pair.left_text}
-                                onChange={(e) =>
-                                    updateMatchingPair(
-                                        idx,
-                                        'left_text',
-                                        e.target.value,
-                                    )
-                                }
-                                placeholder={`Item ${idx + 1}`}
-                                className="pr-8"
-                            />
-                            <div className="absolute top-1/2 right-2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-blue-500 text-xs font-bold text-white">
-                                {idx + 1}
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="relative flex-1">
-                                <Input
-                                    value={pair.right_text}
-                                    onChange={(e) =>
-                                        updateMatchingPair(
-                                            idx,
-                                            'right_text',
-                                            e.target.value,
-                                        )
-                                    }
-                                    placeholder={`Pasangan ${idx + 1}`}
-                                    className="pr-8"
-                                />
-                                <div className="absolute top-1/2 right-2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-green-500 text-xs font-bold text-white">
-                                    {idx + 1}
-                                </div>
-                            </div>
-                            {pairs.length > 1 && (
-                                <button
-                                    onClick={() => removeMatchingPair(idx)}
-                                    className="rounded-lg p-2 text-red-500 transition-colors hover:bg-red-50"
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                </button>
-                            )}
-                        </div>
+                        {renderPairSideEditor(pair, idx, 'left')}
+                        {renderPairSideEditor(pair, idx, 'right')}
+                        {pairs.length > 1 && (
+                            <button
+                                type="button"
+                                onClick={() => removeMatchingPair(idx)}
+                                className="mt-2 rounded-lg p-2 text-red-500 transition-colors hover:bg-red-50"
+                                title="Hapus pasangan"
+                            >
+                                <Trash2 className="h-4 w-4" />
+                            </button>
+                        )}
                     </div>
                 ))}
                 <div className="flex gap-2">
@@ -967,24 +1099,7 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                         }}
                         className="w-full flex-1"
                     >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="24"
-                            height="24"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="mr-2 h-4 w-4"
-                        >
-                            <path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22" />
-                            <path d="m18 2 4 4-4 4" />
-                            <path d="M2 6h1.9c1.5 0 2.8.8 3.6 2.1l1.5 2.5" />
-                            <path d="m22 22-4-4 4-4" />
-                            <path d="M16 16v.1" />
-                        </svg>
+                        <Shuffle className="mr-2 h-4 w-4" />
                         Acak Pasangan
                     </Button>
                 </div>
@@ -1475,18 +1590,27 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                                 {quiz.status !== 'live' && (
                                     <Button
                                         onClick={() => {
-                                            post(route('library.quizzes.questions.store', quiz.id), {
-                                                preserveScroll: true,
-                                                onSuccess: () => {
-                                                    router.patch(
-                                                        route(
-                                                            'library.quizzes.status.update',
-                                                            { quiz: quiz.id, redirect_to_index: 1 }
-                                                        ),
-                                                        { status: 'live' }
-                                                    );
+                                            post(
+                                                route(
+                                                    'library.quizzes.questions.store',
+                                                    quiz.id,
+                                                ),
+                                                {
+                                                    preserveScroll: true,
+                                                    onSuccess: () => {
+                                                        router.patch(
+                                                            route(
+                                                                'library.quizzes.status.update',
+                                                                {
+                                                                    quiz: quiz.id,
+                                                                    redirect_to_index: 1,
+                                                                },
+                                                            ),
+                                                            { status: 'live' },
+                                                        );
+                                                    },
                                                 },
-                                            });
+                                            );
                                         }}
                                         size="sm"
                                         className="bg-green-600 hover:bg-green-700"
@@ -1520,7 +1644,10 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                             <div className="flex items-center justify-end gap-4">
                                 <div className="flex items-center gap-2 rounded-md bg-blue-50 px-3 py-1.5 text-sm text-blue-700">
                                     <span>
-                                        Total waktu: {quiz.duration ? `${quiz.duration} menit` : 'Tidak diatur'}
+                                        Total waktu:{' '}
+                                        {quiz.duration
+                                            ? `${quiz.duration} menit`
+                                            : 'Tidak diatur'}
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -1565,151 +1692,146 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                                         </button>
                                     </div>
                                 ) : (
-                                    <Dialog
-                                        open={mediaDialogOpen}
-                                        onOpenChange={setMediaDialogOpen}
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            openMediaDialog({
+                                                type: 'question',
+                                                questionIndex: currentIndex,
+                                            })
+                                        }
+                                        className="flex aspect-video w-full items-center justify-center rounded-xl border-2 border-dashed border-blue-200 bg-blue-100/50 transition-colors hover:bg-blue-100"
                                     >
-                                        <DialogTrigger asChild>
-                                            <button className="flex aspect-video w-full items-center justify-center rounded-xl border-2 border-dashed border-blue-200 bg-blue-100/50 transition-colors hover:bg-blue-100">
-                                                <div className="flex flex-col items-center gap-4 text-blue-900/50">
-                                                    <div className="rounded-full bg-white p-4 shadow-sm">
-                                                        <Plus className="h-8 w-8" />
-                                                    </div>
-                                                    <span className="font-medium">
-                                                        Sisipkan media
-                                                    </span>
-                                                    <span className="text-sm">
-                                                        Klik untuk memilih dari
-                                                        galeri atau unggah baru
-                                                    </span>
-                                                </div>
+                                        <div className="flex flex-col items-center gap-4 text-blue-900/50">
+                                            <div className="rounded-full bg-white p-4 shadow-sm">
+                                                <Plus className="h-8 w-8" />
+                                            </div>
+                                            <span className="font-medium">
+                                                Sisipkan media
+                                            </span>
+                                            <span className="text-sm">
+                                                Klik untuk memilih dari galeri
+                                                atau unggah baru
+                                            </span>
+                                        </div>
+                                    </button>
+                                )}
+                            </div>
+
+                            <Dialog
+                                open={mediaDialogOpen}
+                                onOpenChange={setMediaDialogOpen}
+                            >
+                                <DialogContent className="max-h-[80vh] max-w-4xl overflow-y-auto">
+                                    <DialogHeader>
+                                        <DialogTitle>Pilih Media</DialogTitle>
+                                    </DialogHeader>
+                                    <div className="space-y-4">
+                                        <div className="flex gap-2 border-b">
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setActiveTab('gallery')
+                                                }
+                                                className={`px-4 py-2 font-medium transition-colors ${
+                                                    activeTab === 'gallery'
+                                                        ? 'border-b-2 border-primary text-primary'
+                                                        : 'text-muted-foreground hover:text-foreground'
+                                                }`}
+                                            >
+                                                Galeri
                                             </button>
-                                        </DialogTrigger>
-                                        <DialogContent className="max-h-[80vh] max-w-4xl overflow-y-auto">
-                                            <DialogHeader>
-                                                <DialogTitle>
-                                                    Pilih Media
-                                                </DialogTitle>
-                                            </DialogHeader>
-                                            <div className="space-y-4">
-                                                {/* Tabs */}
-                                                <div className="flex gap-2 border-b">
-                                                    <button
-                                                        onClick={() =>
-                                                            setActiveTab(
-                                                                'gallery',
-                                                            )
-                                                        }
-                                                        className={`px-4 py-2 font-medium transition-colors ${
-                                                            activeTab ===
-                                                            'gallery'
-                                                                ? 'border-b-2 border-primary text-primary'
-                                                                : 'text-muted-foreground hover:text-foreground'
-                                                        }`}
-                                                    >
-                                                        Galeri
-                                                    </button>
-                                                    <button
-                                                        onClick={() =>
-                                                            setActiveTab(
-                                                                'upload',
-                                                            )
-                                                        }
-                                                        className={`px-4 py-2 font-medium transition-colors ${
-                                                            activeTab ===
-                                                            'upload'
-                                                                ? 'border-b-2 border-primary text-primary'
-                                                                : 'text-muted-foreground hover:text-foreground'
-                                                        }`}
-                                                    >
-                                                        Upload Baru
-                                                    </button>
-                                                </div>
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setActiveTab('upload')
+                                                }
+                                                className={`px-4 py-2 font-medium transition-colors ${
+                                                    activeTab === 'upload'
+                                                        ? 'border-b-2 border-primary text-primary'
+                                                        : 'text-muted-foreground hover:text-foreground'
+                                                }`}
+                                            >
+                                                Upload Baru
+                                            </button>
+                                        </div>
 
-                                                {/* Gallery Tab */}
-                                                {activeTab === 'gallery' && (
-                                                    <div className="grid grid-cols-3 gap-4">
-                                                        {galleryList
-                                                            .filter(
-                                                                (g) =>
-                                                                    g.file_type ===
-                                                                    'image',
-                                                            )
-                                                            .map((gallery) => (
-                                                                <button
-                                                                    key={
-                                                                        gallery.id
-                                                                    }
-                                                                    onClick={() =>
-                                                                        handleSelectGalleryItem(
-                                                                            gallery,
-                                                                        )
-                                                                    }
-                                                                    className="group relative aspect-video overflow-hidden rounded-lg border-2 border-gray-200 transition-colors hover:border-primary"
-                                                                >
-                                                                    <img
-                                                                        src={
-                                                                            gallery.file_path
-                                                                        }
-                                                                        alt={
-                                                                            gallery.title
-                                                                        }
-                                                                        className="h-full w-full object-cover"
-                                                                    />
-                                                                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
-                                                                        <span className="font-medium text-white">
-                                                                            Pilih
-                                                                        </span>
-                                                                    </div>
-                                                                </button>
-                                                            ))}
-                                                        {galleryList.filter(
-                                                            (g) =>
-                                                                g.file_type ===
-                                                                'image',
-                                                        ).length === 0 && (
-                                                            <div className="col-span-3 py-12 text-center text-muted-foreground">
-                                                                Belum ada gambar
-                                                                di galeri
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                )}
-
-                                                {/* Upload Tab */}
-                                                {activeTab === 'upload' && (
-                                                    <div>
-                                                        <FileUploader
-                                                            onFileSelect={
-                                                                handleFileUpload
+                                        {activeTab === 'gallery' && (
+                                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                                                {galleryList
+                                                    .filter(
+                                                        (g) =>
+                                                            g.file_type ===
+                                                            'image',
+                                                    )
+                                                    .map((gallery) => (
+                                                        <button
+                                                            type="button"
+                                                            key={gallery.id}
+                                                            onClick={() =>
+                                                                handleSelectGalleryItem(
+                                                                    gallery,
+                                                                )
                                                             }
-                                                            accept={{
-                                                                'image/*': [
-                                                                    '.jpeg',
-                                                                    '.png',
-                                                                    '.jpg',
-                                                                    '.gif',
-                                                                ],
-                                                            }}
-                                                            label="Upload Gambar"
-                                                            description="Format: JPG, PNG, GIF. Maksimal 10MB."
-                                                            maxSize={
-                                                                10 * 1024 * 1024
-                                                            }
-                                                            fileType="image"
-                                                        />
-                                                        {isUploading && (
-                                                            <div className="mt-4 text-center text-muted-foreground">
-                                                                Mengunggah...
+                                                            className="group relative aspect-video overflow-hidden rounded-lg border-2 border-gray-200 transition-colors hover:border-primary"
+                                                        >
+                                                            <img
+                                                                src={
+                                                                    gallery.file_path
+                                                                }
+                                                                alt={
+                                                                    gallery.title
+                                                                }
+                                                                className="h-full w-full object-cover"
+                                                            />
+                                                            <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+                                                                <span className="font-medium text-white">
+                                                                    Pilih
+                                                                </span>
                                                             </div>
-                                                        )}
+                                                        </button>
+                                                    ))}
+                                                {galleryList.filter(
+                                                    (g) =>
+                                                        g.file_type === 'image',
+                                                ).length === 0 && (
+                                                    <div className="py-12 text-center text-muted-foreground sm:col-span-2 lg:col-span-3">
+                                                        Belum ada gambar di
+                                                        galeri
                                                     </div>
                                                 )}
                                             </div>
-                                        </DialogContent>
-                                    </Dialog>
-                                )}
-                            </div>
+                                        )}
+
+                                        {activeTab === 'upload' && (
+                                            <div>
+                                                <FileUploader
+                                                    onFileSelect={
+                                                        handleFileUpload
+                                                    }
+                                                    accept={{
+                                                        'image/*': [
+                                                            '.jpeg',
+                                                            '.png',
+                                                            '.jpg',
+                                                            '.gif',
+                                                        ],
+                                                    }}
+                                                    label="Upload Gambar"
+                                                    description="Format: JPG, PNG, GIF. Maksimal 10MB."
+                                                    maxSize={10 * 1024 * 1024}
+                                                    fileType="image"
+                                                />
+                                                {isUploading && (
+                                                    <div className="mt-4 text-center text-muted-foreground">
+                                                        Mengunggah...
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                </DialogContent>
+                            </Dialog>
 
                             {/* Type-specific Editor */}
                             {renderQuestionTypeEditor()}

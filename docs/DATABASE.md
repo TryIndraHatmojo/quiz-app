@@ -93,7 +93,7 @@ Defines user roles and permissions.
 - Has many `users` through `role_user` (many-to-many)
 
 **Business Rules:**
-- "Super Admin" role cannot be deleted
+- "Admin" role cannot be deleted
 - Roles cannot be deleted if they have associated users
 
 ---

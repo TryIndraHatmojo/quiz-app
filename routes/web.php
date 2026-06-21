@@ -14,6 +14,8 @@ Route::post('password-reset-requests', [App\Http\Controllers\Auth\PasswordResetR
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('user-guide', [App\Http\Controllers\UserGuideController::class, 'index'])->name('user-guide.index');
+    Route::get('user-guide/download', [App\Http\Controllers\UserGuideController::class, 'download'])->name('user-guide.download');
 });
 
 Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(function () {
@@ -23,6 +25,9 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
 });
 
 Route::middleware(['auth', 'verified'])->prefix('master')->name('master.')->group(function () {
+    Route::get('user-guide', [App\Http\Controllers\Master\UserGuideController::class, 'index'])->name('user-guide.index');
+    Route::post('user-guide', [App\Http\Controllers\Master\UserGuideController::class, 'store'])->name('user-guide.store');
+    Route::delete('user-guide', [App\Http\Controllers\Master\UserGuideController::class, 'destroy'])->name('user-guide.destroy');
     Route::get('users/import-template', [App\Http\Controllers\Master\UserController::class, 'downloadImportTemplate'])->name('users.import-template');
     Route::post('users/import', [App\Http\Controllers\Master\UserController::class, 'import'])->name('users.import');
     Route::resource('users', App\Http\Controllers\Master\UserController::class);

@@ -117,6 +117,23 @@ class MenuSeeder extends Seeder
                 'icon' => 'KeyRound',
                 'order' => 12,
             ],
+            [
+                'group_name' => 'Data Master',
+                'title' => 'Kelola Buku Panduan',
+                'url' => '/master/user-guide',
+                'route_name' => 'master.user-guide.index',
+                'icon' => 'BookMarked',
+                'parent_title' => 'Master Data',
+                'order' => 12,
+            ],
+            [
+                'group_name' => 'Panduan',
+                'title' => 'Buku Panduan',
+                'url' => '/user-guide',
+                'route_name' => 'user-guide.index',
+                'icon' => 'BookOpenCheck',
+                'order' => 13,
+            ],
         ];
 
         // Create Master Data Parent
@@ -146,25 +163,26 @@ class MenuSeeder extends Seeder
             'Admin' => [
                 'Master Data', 'Dashboard', 'Nilai', 'Buat Baru', 'Semua Kuis',
                 'Pengguna', 'Peran', 'Mata Pelajaran', 'Jenjang', 'Kelas',
-                'Backgrounds', 'Galeri', 'Reset Password',
+                'Backgrounds', 'Galeri', 'Kelola Buku Panduan', 'Reset Password',
+                'Buku Panduan',
             ],
             'Guru Telaah Soal' => [
-                'Dashboard', 'Nilai', 'Buat Baru', 'Semua Kuis',
+                'Dashboard', 'Nilai', 'Buat Baru', 'Semua Kuis', 'Buku Panduan',
             ],
             'Guru Mata Pelajaran' => [
-                'Dashboard', 'Nilai', 'Buat Baru', 'Semua Kuis',
+                'Dashboard', 'Nilai', 'Buat Baru', 'Semua Kuis', 'Buku Panduan',
             ],
             'Siswa' => [
-                'Dashboard', 'Nilai',
+                'Dashboard', 'Nilai', 'Buku Panduan',
             ],
             'Orang Tua' => [
-                'Dashboard', 'Nilai',
+                'Dashboard', 'Nilai', 'Buku Panduan',
             ],
             'Guru Tamu' => [
-                'Dashboard', 'Nilai', 'Buat Baru', 'Semua Kuis',
+                'Dashboard', 'Nilai', 'Buat Baru', 'Semua Kuis', 'Buku Panduan',
             ],
             'Siswa Tamu' => [
-                'Dashboard', 'Nilai',
+                'Dashboard', 'Nilai', 'Buku Panduan',
             ],
         ];
 

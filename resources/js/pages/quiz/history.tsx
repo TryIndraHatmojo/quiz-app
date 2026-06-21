@@ -55,6 +55,7 @@ interface Props {
     quiz: QuizInfo;
     attempts: AttemptData[];
     maxPoints: number;
+    canAttempt: boolean;
 }
 
 function formatDuration(seconds: number | null): string {
@@ -94,7 +95,12 @@ function getScoreGradient(percentage: number, passingScore: number): string {
     return 'from-red-500/20 to-red-500/5';
 }
 
-export default function QuizHistory({ quiz, attempts, maxPoints }: Props) {
+export default function QuizHistory({
+    quiz,
+    attempts,
+    maxPoints,
+    canAttempt,
+}: Props) {
     const gradedAttempt = attempts.find((a) => a.is_graded);
     const bestAttempt = attempts.reduce(
         (best, a) =>
@@ -509,7 +515,7 @@ export default function QuizHistory({ quiz, attempts, maxPoints }: Props) {
                             Kembali ke Dashboard
                         </Button>
 
-                        {quiz.status === 'live' && (
+                        {canAttempt && (
                             <Button
                                 className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-xl hover:from-indigo-600 hover:to-purple-600"
                                 onClick={() =>

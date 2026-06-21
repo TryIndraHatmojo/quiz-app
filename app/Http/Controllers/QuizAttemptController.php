@@ -39,6 +39,18 @@ class QuizAttemptController extends Controller
                 ->with('error', 'Quiz belum tersedia.');
         }
 
+        $now = now();
+
+        if ($quiz->starts_at && $quiz->starts_at->gt($now)) {
+            return redirect()->route('dashboard')
+                ->with('error', 'Quiz belum dimulai.');
+        }
+
+        if ($quiz->ends_at && $quiz->ends_at->lt($now)) {
+            return redirect()->route('dashboard')
+                ->with('error', 'Waktu pengerjaan quiz sudah berakhir.');
+        }
+
         // Check for existing incomplete attempt
         $attempt = QuizAttempt::where('quiz_id', $quiz->id)
             ->where('user_id', $user->id)
@@ -125,6 +137,12 @@ class QuizAttemptController extends Controller
             Log::warning('saveAnswer: Attempt already completed', ['attempt_id' => $attempt->id]);
 
             return response()->json(['error' => 'Attempt sudah selesai.'], 400);
+        }
+
+        $attempt->loadMissing('quiz');
+
+        if ($attempt->quiz->status !== 'live' || ! $attempt->quiz->isAvailableAt()) {
+            return response()->json(['error' => 'Waktu pengerjaan quiz tidak tersedia.'], 403);
         }
 
         $request->validate([
@@ -384,7 +402,8 @@ class QuizAttemptController extends Controller
         return Inertia::render('quiz/result', [
             'attempt' => $attempt,
             'totalAttempts' => $totalAttempts,
-            'quizIsLive' => $attempt->quiz->status === 'live',
+            'quizIsLive' => $attempt->quiz->status === 'live'
+                && $attempt->quiz->isAvailableAt(),
         ]);
     }
 
@@ -477,6 +496,7 @@ class QuizAttemptController extends Controller
             ],
             'attempts' => $attemptsData,
             'maxPoints' => $maxPoints,
+            'canAttempt' => $quiz->status === 'live' && $quiz->isAvailableAt(),
         ]);
     }
 }

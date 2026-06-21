@@ -24,6 +24,7 @@ class DashboardController extends Controller
                     $q->where('user_id', $user->id);
                 })
                 ->where('status', 'live')
+                ->availableAt()
                 ->orderByDesc('starts_at')
                 ->orderByDesc('created_at')
                 ->with(['category', 'background', 'questions'])

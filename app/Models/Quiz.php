@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -55,6 +57,29 @@ class Quiz extends Model
                 $audienceQuery->orWhereNull('audience');
             }
         });
+    }
+
+    public function scopeAvailableAt(Builder $query, ?CarbonInterface $at = null): Builder
+    {
+        $at ??= now();
+
+        return $query
+            ->where(function (Builder $query) use ($at) {
+                $query->whereNull('starts_at')
+                    ->orWhere('starts_at', '<=', $at);
+            })
+            ->where(function (Builder $query) use ($at) {
+                $query->whereNull('ends_at')
+                    ->orWhere('ends_at', '>=', $at);
+            });
+    }
+
+    public function isAvailableAt(?CarbonInterface $at = null): bool
+    {
+        $at ??= now();
+
+        return (! $this->starts_at || $this->starts_at->lte($at))
+            && (! $this->ends_at || $this->ends_at->gte($at));
     }
 
     public function isGuestAudience(): bool

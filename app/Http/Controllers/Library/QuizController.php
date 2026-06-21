@@ -14,6 +14,7 @@ use App\Models\QuizCategory;
 use App\Models\QuizStudentAccess;
 use App\Models\QuizTeacherAccess;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
@@ -364,6 +365,48 @@ class QuizController extends Controller
             'quiz' => $quiz,
             'galleries' => $galleries,
         ]);
+    }
+
+    public function downloadQuestionsPdf(Quiz $quiz)
+    {
+        if (! $this->canPreviewQuiz($quiz)) {
+            abort(403);
+        }
+
+        $quiz->load([
+            'category',
+            'jenjang',
+            'kelas',
+            'questions.options',
+            'questions.matchingPairs',
+            'questions.shortAnswerFields',
+        ]);
+
+        $quiz->questions->each(function ($question) {
+            $question->setAttribute(
+                'pdf_media_src',
+                $this->pdfImageDataUri($question->media_path)
+            );
+
+            $question->matchingPairs->each(function ($pair) {
+                $pair->setAttribute(
+                    'pdf_left_media_src',
+                    $this->pdfImageDataUri($pair->left_media_path)
+                );
+                $pair->setAttribute(
+                    'pdf_right_media_src',
+                    $this->pdfImageDataUri($pair->right_media_path)
+                );
+            });
+        });
+
+        $pdf = Pdf::loadView('pdf.quiz-questions', [
+            'quiz' => $quiz,
+            'logoSrc' => $this->pdfImageDataUri('/images/Logo-SMP-Al-Falah-Terbaru-24-25.png'),
+            'generatedAt' => now(),
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->download(Str::slug($quiz->title).'-soal.pdf');
     }
 
     public function preview(Quiz $quiz)
@@ -867,5 +910,45 @@ class QuizController extends Controller
                 })
                 ->orWhereNull('user_id');
         });
+    }
+
+    private function pdfImageDataUri(?string $mediaPath): ?string
+    {
+        if (! filled($mediaPath)) {
+            return null;
+        }
+
+        if (str_starts_with($mediaPath, 'data:image/')) {
+            return $mediaPath;
+        }
+
+        $urlPath = parse_url($mediaPath, PHP_URL_PATH);
+        if (! is_string($urlPath) || $urlPath === '') {
+            return null;
+        }
+
+        $publicDirectory = realpath(public_path());
+        $filePath = realpath(public_path(ltrim($urlPath, '/\\')));
+
+        if (! $publicDirectory || ! $filePath || ! is_file($filePath)) {
+            return null;
+        }
+
+        $publicPrefix = strtolower($publicDirectory.DIRECTORY_SEPARATOR);
+        if (! str_starts_with(strtolower($filePath), $publicPrefix)) {
+            return null;
+        }
+
+        $mimeType = mime_content_type($filePath);
+        if (! is_string($mimeType) || ! str_starts_with($mimeType, 'image/')) {
+            return null;
+        }
+
+        $contents = file_get_contents($filePath);
+        if ($contents === false) {
+            return null;
+        }
+
+        return 'data:'.$mimeType.';base64,'.base64_encode($contents);
     }
 }

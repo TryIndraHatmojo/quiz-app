@@ -21,6 +21,7 @@ import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     CheckCircle2,
+    Download,
     Eye,
     MessageSquareWarning,
     Pencil,
@@ -662,6 +663,24 @@ export default function QuizIndex({
                                                     </span>
                                                 )}
                                             </Link>
+                                        </Button>
+                                    )}
+                                    {quiz.can_preview && (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            asChild
+                                        >
+                                            <a
+                                                href={route(
+                                                    'library.quizzes.questions.pdf',
+                                                    quiz.id,
+                                                )}
+                                                title="Unduh soal PDF"
+                                                aria-label={`Unduh soal ${quiz.title} sebagai PDF`}
+                                            >
+                                                <Download className="h-4 w-4" />
+                                            </a>
                                         </Button>
                                     )}
                                     {quiz.can_preview && (

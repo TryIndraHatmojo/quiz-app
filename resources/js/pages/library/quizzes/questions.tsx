@@ -35,6 +35,7 @@ import {
     CheckCircle2,
     ChevronLeft,
     Copy,
+    Download,
     Eye,
     FileText,
     Image as ImageIcon,
@@ -1619,6 +1620,17 @@ export default function QuizQuestions({ quiz, galleries }: Props) {
                                         Publish
                                     </Button>
                                 )}
+                                <Button variant="outline" size="sm" asChild>
+                                    <a
+                                        href={route(
+                                            'library.quizzes.questions.pdf',
+                                            quiz.id,
+                                        )}
+                                    >
+                                        <Download className="mr-2 h-4 w-4" />
+                                        Unduh PDF
+                                    </a>
+                                </Button>
                                 <Button variant="outline" size="sm" asChild>
                                     <Link
                                         href={route(

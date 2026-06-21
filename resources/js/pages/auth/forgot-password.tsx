@@ -9,6 +9,7 @@ import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Spinner } from '@/components/ui/spinner';
 import AuthLayout from '@/layouts/auth-layout';
 
@@ -71,9 +72,8 @@ export default function ForgotPassword({ status }: { status?: string }) {
 
                     <div className="grid gap-2">
                         <Label htmlFor="reset-password">Password Baru</Label>
-                        <Input
+                        <PasswordInput
                             id="reset-password"
-                            type="password"
                             value={resetForm.data.password}
                             onChange={(e) =>
                                 resetForm.setData('password', e.target.value)
@@ -88,9 +88,8 @@ export default function ForgotPassword({ status }: { status?: string }) {
                         <Label htmlFor="reset-password-confirmation">
                             Konfirmasi Password Baru
                         </Label>
-                        <Input
+                        <PasswordInput
                             id="reset-password-confirmation"
-                            type="password"
                             value={resetForm.data.password_confirmation}
                             onChange={(e) =>
                                 resetForm.setData(

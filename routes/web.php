@@ -40,10 +40,11 @@ Route::middleware(['auth', 'verified'])->prefix('library')->name('library.')->gr
     Route::resource('quizzes', App\Http\Controllers\Library\QuizController::class);
     Route::patch('quizzes/{quiz}/status', [App\Http\Controllers\Library\QuizController::class, 'updateStatus'])->name('quizzes.status.update');
     Route::get('quizzes/{quiz}/questions', [App\Http\Controllers\Library\QuizController::class, 'questions'])->name('quizzes.questions');
+    Route::get('quizzes/{quiz}/questions/pdf', [App\Http\Controllers\Library\QuizController::class, 'downloadQuestionsPdf'])->name('quizzes.questions.pdf');
     Route::post('quizzes/{quiz}/questions', [App\Http\Controllers\Library\QuizController::class, 'storeQuestions'])->name('quizzes.questions.store');
     Route::get('quizzes/{quiz}/preview', [App\Http\Controllers\Library\QuizController::class, 'preview'])->name('quizzes.preview');
     Route::get('quizzes/{quiz}/telaah-soal', [App\Http\Controllers\Library\QuizController::class, 'telaahSoal'])->name('quizzes.telaah-soal');
-    
+
     // Quiz Access Management
     Route::get('quizzes/{quiz}/access', [App\Http\Controllers\Library\QuizController::class, 'access'])->name('quizzes.access');
     Route::post('quizzes/{quiz}/access/teacher', [App\Http\Controllers\Library\QuizController::class, 'grantTeacherAccess'])->name('quizzes.access.teacher.grant');

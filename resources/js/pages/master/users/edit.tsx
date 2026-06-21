@@ -2,6 +2,7 @@ import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { PasswordInput } from '@/components/ui/password-input';
 import {
     Select,
     SelectContent,
@@ -307,9 +308,8 @@ export default function UserEdit({
                             <Label htmlFor="password">
                                 Password (Opsional)
                             </Label>
-                            <Input
+                            <PasswordInput
                                 id="password"
-                                type="password"
                                 value={data.password}
                                 onChange={(e) =>
                                     setData('password', e.target.value)
@@ -324,9 +324,8 @@ export default function UserEdit({
                             <Label htmlFor="password_confirmation">
                                 Konfirmasi Password
                             </Label>
-                            <Input
+                            <PasswordInput
                                 id="password_confirmation"
-                                type="password"
                                 value={data.password_confirmation}
                                 onChange={(e) =>
                                     setData(

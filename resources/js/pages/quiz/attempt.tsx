@@ -166,6 +166,8 @@ export default function QuizAttemptPage({
     const [isSaving, setIsSaving] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const isAutoSubmittingRef = useRef(false);
+    const saveQueueRef = useRef<Promise<boolean>>(Promise.resolve(true));
+    const pendingSaveCountRef = useRef(0);
 
     // Matching pairs specific state
     const [selectedLeft, setSelectedLeft] = useState<number | null>(null);
@@ -398,11 +400,29 @@ export default function QuizAttemptPage({
         setCurrentQuestionIndex(index);
     };
 
-    // Save answer to server
-    const saveCurrentAnswer = async (): Promise<boolean> => {
-        const currentAnswer = answers[currentQuestionIndex];
-        if (!currentAnswer || !currentQuestion) return true;
+    // Queue saves so an older request can never overwrite a newer answer.
+    const saveAnswer = (
+        questionIndex: number,
+        answerSnapshot: Answer,
+    ): Promise<boolean> => {
+        const queuedSave = saveQueueRef.current.then(() =>
+            persistAnswer(questionIndex, answerSnapshot),
+        );
 
+        saveQueueRef.current = queuedSave.catch(() => false);
+
+        return queuedSave;
+    };
+
+    // Save one answer to the server.
+    const persistAnswer = async (
+        questionIndex: number,
+        currentAnswer: Answer,
+    ): Promise<boolean> => {
+        const question = questions[questionIndex];
+        if (!question) return true;
+
+        pendingSaveCountRef.current += 1;
         setIsSaving(true);
 
         const answerData: {
@@ -416,17 +436,17 @@ export default function QuizAttemptPage({
                 selected_right_quiz_matching_pair_id: number;
             }>;
         } = {
-            quiz_question_id: currentQuestion.id!,
+            quiz_question_id: question.id!,
         };
 
-        switch (currentQuestion.question_type) {
+        switch (question.question_type) {
             case 'multiple_choice':
                 if (
                     currentAnswer.selectedOption !== null &&
                     currentAnswer.selectedOption !== undefined
                 ) {
                     const option =
-                        currentQuestion.options[currentAnswer.selectedOption];
+                        question.options[currentAnswer.selectedOption];
                     answerData.quiz_question_option_id = option?.id || null;
                 }
                 break;
@@ -435,7 +455,7 @@ export default function QuizAttemptPage({
                     currentAnswer.trueFalseAnswer !== null &&
                     currentAnswer.trueFalseAnswer !== undefined
                 ) {
-                    const option = currentQuestion.options.find(
+                    const option = question.options.find(
                         (o) =>
                             (currentAnswer.trueFalseAnswer &&
                                 o.option_text === 'Benar') ||
@@ -462,7 +482,7 @@ export default function QuizAttemptPage({
                 break;
             case 'matching_pairs':
                 if (currentAnswer.matchingAnswers) {
-                    const pairs = currentQuestion.matching_pairs || [];
+                    const pairs = question.matching_pairs || [];
                     const matchingAnswers = Object.entries(
                         currentAnswer.matchingAnswers,
                     )
@@ -555,8 +575,34 @@ export default function QuizAttemptPage({
             console.error('Failed to save answer:', error);
             return false;
         } finally {
-            setIsSaving(false);
+            pendingSaveCountRef.current -= 1;
+            if (pendingSaveCountRef.current === 0) {
+                setIsSaving(false);
+            }
         }
+    };
+
+    const saveCurrentAnswer = (): Promise<boolean> => {
+        const currentAnswer = answers[currentQuestionIndex];
+        if (!currentAnswer) return Promise.resolve(true);
+
+        return saveAnswer(currentQuestionIndex, currentAnswer);
+    };
+
+    // Flush every locally answered question before completing the attempt.
+    const saveAllAnswers = async (): Promise<boolean> => {
+        const answerSnapshots = Object.entries(answers);
+
+        for (const [questionIndex, answerSnapshot] of answerSnapshots) {
+            const saved = await saveAnswer(
+                Number(questionIndex),
+                answerSnapshot,
+            );
+
+            if (!saved) return false;
+        }
+
+        return true;
     };
 
     // Check if a question has been answered
@@ -607,6 +653,8 @@ export default function QuizAttemptPage({
 
     // Update answer for current question
     const updateAnswer = (update: Partial<Answer>) => {
+        if (isSubmitting) return;
+
         setAnswers((prev) => ({
             ...prev,
             [currentQuestionIndex]: {
@@ -623,7 +671,15 @@ export default function QuizAttemptPage({
         if (isSubmitting) return;
         setIsSubmitting(true);
 
-        await saveCurrentAnswer();
+        const saved = await saveAllAnswers();
+        if (!saved) {
+            console.error(
+                'Quiz belum diselesaikan karena ada jawaban yang gagal disimpan.',
+            );
+            setIsSubmitting(false);
+            isAutoSubmittingRef.current = false;
+            return;
+        }
 
         router.post(
             route('quiz.complete', attempt.id),
@@ -656,8 +712,8 @@ export default function QuizAttemptPage({
 
         setIsSubmitting(true);
 
-        // Save current answer first
-        const saved = await saveCurrentAnswer();
+        // Save all local answers before completing the attempt.
+        const saved = await saveAllAnswers();
         if (!saved) {
             alert(
                 'Jawaban gagal disimpan. Periksa koneksi/CSRF lalu coba submit lagi.',

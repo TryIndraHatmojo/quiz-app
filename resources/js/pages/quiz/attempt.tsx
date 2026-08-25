@@ -5,6 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Quiz, QuizMatchingPair } from '@/types/quiz';
 import { Head, router } from '@inertiajs/react';
 import {
+    AlertTriangle,
     AlignLeft,
     Check,
     ChevronLeft,
@@ -13,8 +14,10 @@ import {
     FileText,
     Link2,
     ListChecks,
+    Maximize,
     RotateCcw,
     Send,
+    ShieldAlert,
     ToggleLeft,
     X,
 } from 'lucide-react';
@@ -165,7 +168,18 @@ export default function QuizAttemptPage({
     const [timeLeft, setTimeLeft] = useState<number | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isFullscreen, setIsFullscreen] = useState(false);
+    const [showFullscreenPrompt, setShowFullscreenPrompt] = useState(true);
+    const [showFullscreenExitWarning, setShowFullscreenExitWarning] =
+        useState(false);
+    const [fullscreenError, setFullscreenError] = useState<string | null>(null);
     const isAutoSubmittingRef = useRef(false);
+    const isSubmittingRef = useRef(false);
+    const hasEnteredFullscreenRef = useRef(false);
+    const fullscreenExitHandledRef = useRef(false);
+    const autoSubmitRef = useRef<
+        (completeEvenIfAnswerSaveFails?: boolean) => Promise<void>
+    >(async () => {});
     const saveQueueRef = useRef<Promise<boolean>>(Promise.resolve(true));
     const pendingSaveCountRef = useRef(0);
 
@@ -372,7 +386,7 @@ export default function QuizAttemptPage({
 
         // Auto-submit immediately, no confirmation dialog
         isAutoSubmittingRef.current = true;
-        handleAutoSubmit();
+        void autoSubmitRef.current();
     }, [timeLeft]);
 
     const formatTime = (seconds: number) => {
@@ -667,15 +681,18 @@ export default function QuizAttemptPage({
     };
 
     // Auto-submit (called by timer expiration — no confirmation dialog)
-    const handleAutoSubmit = async () => {
-        if (isSubmitting) return;
+    const handleAutoSubmit = async (completeEvenIfAnswerSaveFails = false) => {
+        if (isSubmittingRef.current) return;
+
+        isSubmittingRef.current = true;
         setIsSubmitting(true);
 
         const saved = await saveAllAnswers();
-        if (!saved) {
+        if (!saved && !completeEvenIfAnswerSaveFails) {
             console.error(
                 'Quiz belum diselesaikan karena ada jawaban yang gagal disimpan.',
             );
+            isSubmittingRef.current = false;
             setIsSubmitting(false);
             isAutoSubmittingRef.current = false;
             return;
@@ -687,6 +704,7 @@ export default function QuizAttemptPage({
             {
                 onError: (errors) => {
                     console.error('Failed to complete quiz:', errors);
+                    isSubmittingRef.current = false;
                     setIsSubmitting(false);
                     isAutoSubmittingRef.current = false;
                 },
@@ -696,7 +714,7 @@ export default function QuizAttemptPage({
 
     // Submit quiz (manual — shows confirmation if unanswered questions)
     const handleSubmit = async () => {
-        if (isSubmitting) return;
+        if (isSubmittingRef.current) return;
 
         const answeredCount = questions.filter((_, idx) =>
             isAnswered(idx),
@@ -710,6 +728,7 @@ export default function QuizAttemptPage({
             if (!confirmed) return;
         }
 
+        isSubmittingRef.current = true;
         setIsSubmitting(true);
 
         // Save all local answers before completing the attempt.
@@ -718,6 +737,7 @@ export default function QuizAttemptPage({
             alert(
                 'Jawaban gagal disimpan. Periksa koneksi/CSRF lalu coba submit lagi.',
             );
+            isSubmittingRef.current = false;
             setIsSubmitting(false);
             return;
         }
@@ -729,11 +749,70 @@ export default function QuizAttemptPage({
             {
                 onError: (errors) => {
                     console.error('Failed to complete quiz:', errors);
+                    isSubmittingRef.current = false;
                     setIsSubmitting(false);
                 },
             },
         );
     };
+
+    autoSubmitRef.current = handleAutoSubmit;
+
+    const requestQuizFullscreen = async () => {
+        if (!document.documentElement.requestFullscreen) {
+            setFullscreenError(
+                'Browser ini tidak mendukung mode layar penuh. Gunakan browser terbaru untuk mengerjakan quiz.',
+            );
+            return;
+        }
+
+        try {
+            setFullscreenError(null);
+            await document.documentElement.requestFullscreen();
+        } catch (error) {
+            console.error('Gagal mengaktifkan mode layar penuh:', error);
+            setFullscreenError(
+                'Mode layar penuh belum aktif. Klik tombol di bawah untuk mencoba lagi.',
+            );
+        }
+    };
+
+    // Browser only permits entering fullscreen after a user gesture. Once the
+    // student has entered it, leaving fullscreen completes the attempt.
+    useEffect(() => {
+        const handleFullscreenChange = () => {
+            const fullscreenActive = document.fullscreenElement !== null;
+
+            setIsFullscreen(fullscreenActive);
+
+            if (fullscreenActive) {
+                hasEnteredFullscreenRef.current = true;
+                setShowFullscreenPrompt(false);
+                return;
+            }
+
+            if (
+                hasEnteredFullscreenRef.current &&
+                !fullscreenExitHandledRef.current &&
+                !isSubmittingRef.current
+            ) {
+                fullscreenExitHandledRef.current = true;
+                isAutoSubmittingRef.current = true;
+                setShowFullscreenExitWarning(true);
+                void autoSubmitRef.current(true);
+            }
+        };
+
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        handleFullscreenChange();
+
+        return () => {
+            document.removeEventListener(
+                'fullscreenchange',
+                handleFullscreenChange,
+            );
+        };
+    }, []);
 
     // Get question number button color
     const getQuestionButtonColor = (index: number): string => {
@@ -1248,6 +1327,70 @@ export default function QuizAttemptPage({
         >
             <Head title={`${quiz.title}`} />
 
+            {showFullscreenPrompt && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 p-6 text-white"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="fullscreen-title"
+                >
+                    <div className="w-full max-w-xl rounded-3xl border border-amber-300/30 bg-slate-900 p-8 text-center shadow-2xl">
+                        <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-amber-400/15 text-amber-300">
+                            <ShieldAlert className="h-9 w-9" />
+                        </div>
+                        <h2
+                            id="fullscreen-title"
+                            className="text-2xl font-bold"
+                        >
+                            Mode layar penuh wajib diaktifkan
+                        </h2>
+                        <p className="mt-4 leading-relaxed text-slate-200">
+                            Quiz hanya dapat dikerjakan dalam mode layar penuh.
+                            Jika Anda menekan Esc atau keluar dari layar penuh,
+                            quiz akan langsung diselesaikan secara otomatis.
+                        </p>
+                        <p className="mt-3 text-sm text-amber-200">
+                            Pastikan Anda siap sebelum melanjutkan.
+                        </p>
+                        {fullscreenError && (
+                            <p className="mt-4 rounded-xl bg-red-500/15 px-4 py-3 text-sm text-red-200">
+                                {fullscreenError}
+                            </p>
+                        )}
+                        <Button
+                            size="lg"
+                            className="mt-7 bg-amber-400 px-7 text-slate-950 hover:bg-amber-300"
+                            onClick={() => void requestQuizFullscreen()}
+                        >
+                            <Maximize className="mr-2 h-5 w-5" />
+                            Mulai dalam layar penuh
+                        </Button>
+                    </div>
+                </div>
+            )}
+
+            {showFullscreenExitWarning && (
+                <div
+                    className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/95 p-6 text-white"
+                    role="alert"
+                >
+                    <div className="w-full max-w-xl rounded-3xl border border-red-300/30 bg-slate-900 p-8 text-center shadow-2xl">
+                        <AlertTriangle className="mx-auto h-12 w-12 text-red-300" />
+                        <h2 className="mt-5 text-2xl font-bold">
+                            Anda keluar dari mode layar penuh
+                        </h2>
+                        <p className="mt-4 leading-relaxed text-slate-200">
+                            Sesuai aturan quiz, pengerjaan sedang diakhiri dan
+                            jawaban Anda sedang disimpan. Jangan menutup atau
+                            memuat ulang halaman ini.
+                        </p>
+                        <p className="mt-5 animate-pulse text-sm font-medium text-amber-200">
+                            Menyelesaikan quiz secara otomatis...
+                        </p>
+                    </div>
+                </div>
+            )}
+
             {/* Header */}
             <div className="flex items-center justify-between bg-black/40 p-4 text-white backdrop-blur-sm">
                 <div className="flex items-center gap-4">
@@ -1260,6 +1403,12 @@ export default function QuizAttemptPage({
                             </span>
                         </div>
                         <div className="mt-1 flex items-center gap-2 text-sm text-white/80">
+                            {isFullscreen && (
+                                <span className="flex items-center gap-1 rounded bg-amber-400/20 px-2 py-0.5 text-xs font-medium text-amber-100">
+                                    <Maximize className="h-3 w-3" />
+                                    Layar penuh wajib aktif
+                                </span>
+                            )}
                             <span
                                 className={`flex items-center gap-1 rounded px-2 py-0.5 ${questionTypeLabels[currentQuestion.question_type]?.color || 'bg-gray-500'}`}
                             >

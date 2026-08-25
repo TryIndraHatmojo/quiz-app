@@ -29,4 +29,4 @@ yarn-error.log
 /.zed
 debug_log.txt
 ts_log.txt
-/graphify-out
+/graphify-out/

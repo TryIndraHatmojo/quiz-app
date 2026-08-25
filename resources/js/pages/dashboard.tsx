@@ -1,9 +1,22 @@
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
-import { type BreadcrumbItem, type QuizCategory, type QuizBackground } from '@/types';
+import {
+    type BreadcrumbItem,
+    type QuizBackground,
+    type QuizCategory,
+} from '@/types';
 import { Head, Link } from '@inertiajs/react';
-import { BookOpen, Calendar, Clock, HelpCircle, History, Play, CheckCircle2, Zap } from 'lucide-react';
+import {
+    BookOpen,
+    Calendar,
+    CheckCircle2,
+    Clock,
+    HelpCircle,
+    History,
+    Play,
+    Zap,
+} from 'lucide-react';
 
 interface StudentQuiz {
     id: number;
@@ -32,6 +45,21 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function Dashboard({ isStudent, studentQuizzes }: Props) {
+    const startQuizInFullscreen = () => {
+        if (
+            document.fullscreenElement ||
+            !document.documentElement.requestFullscreen
+        ) {
+            return;
+        }
+
+        // Fullscreen must be requested in the same user interaction that starts
+        // the quiz. The attempt page will show its fallback prompt if blocked.
+        void document.documentElement.requestFullscreen().catch((error) => {
+            console.warn('Fullscreen tidak dapat diaktifkan:', error);
+        });
+    };
+
     // Format duration display
     const formatDuration = (quiz: StudentQuiz) => {
         if (!quiz.duration) return 'Tidak ada batas waktu';
@@ -43,7 +71,7 @@ export default function Dashboard({ isStudent, studentQuizzes }: Props) {
         return new Date(dateString).toLocaleDateString('id-ID', {
             day: 'numeric',
             month: 'short',
-            year: 'numeric'
+            year: 'numeric',
         });
     };
 
@@ -55,7 +83,9 @@ export default function Dashboard({ isStudent, studentQuizzes }: Props) {
                 {isStudent && (
                     <div className="space-y-6">
                         <div>
-                            <h1 className="text-2xl font-bold tracking-tight">Quiz Saya</h1>
+                            <h1 className="text-2xl font-bold tracking-tight">
+                                Quiz Saya
+                            </h1>
                             <p className="text-muted-foreground">
                                 Daftar quiz yang harus Anda kerjakan
                             </p>
@@ -63,10 +93,13 @@ export default function Dashboard({ isStudent, studentQuizzes }: Props) {
 
                         {studentQuizzes.length === 0 ? (
                             <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-sidebar-border py-16">
-                                <BookOpen className="h-12 w-12 text-muted-foreground/50 mb-4" />
-                                <h3 className="text-lg font-medium text-muted-foreground">Belum Ada Quiz</h3>
-                                <p className="text-sm text-muted-foreground/70 mt-1">
-                                    Anda belum memiliki quiz yang harus dikerjakan.
+                                <BookOpen className="mb-4 h-12 w-12 text-muted-foreground/50" />
+                                <h3 className="text-lg font-medium text-muted-foreground">
+                                    Belum Ada Quiz
+                                </h3>
+                                <p className="mt-1 text-sm text-muted-foreground/70">
+                                    Anda belum memiliki quiz yang harus
+                                    dikerjakan.
                                 </p>
                             </div>
                         ) : (
@@ -79,45 +112,57 @@ export default function Dashboard({ isStudent, studentQuizzes }: Props) {
                                         {/* Background Image */}
                                         {quiz.background?.image_path && (
                                             <div className="absolute inset-0 opacity-10">
-                                                <img 
-                                                    src={quiz.background.image_path} 
-                                                    alt="" 
+                                                <img
+                                                    src={
+                                                        quiz.background
+                                                            .image_path
+                                                    }
+                                                    alt=""
                                                     className="h-full w-full object-cover"
                                                 />
                                             </div>
                                         )}
-                                        
+
                                         <div className="relative p-5">
                                             {/* Category Badge */}
                                             {quiz.category && (
-                                                <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary mb-3">
+                                                <span className="mb-3 inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
                                                     {quiz.category.name}
                                                 </span>
                                             )}
 
                                             {/* Title & Description */}
-                                            <h3 className="font-semibold text-lg mb-1 line-clamp-1">
+                                            <h3 className="mb-1 line-clamp-1 text-lg font-semibold">
                                                 {quiz.title}
                                             </h3>
                                             {quiz.description && (
-                                                <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
+                                                <p className="mb-4 line-clamp-2 text-sm text-muted-foreground">
                                                     {quiz.description}
                                                 </p>
                                             )}
 
                                             {/* Quiz Info */}
-                                            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-4">
+                                            <div className="mb-4 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                                                 <div className="flex items-center gap-1.5">
                                                     <HelpCircle className="h-4 w-4" />
-                                                    <span>{quiz.questions_count} soal</span>
+                                                    <span>
+                                                        {quiz.questions_count}{' '}
+                                                        soal
+                                                    </span>
                                                 </div>
                                                 <div className="flex items-center gap-1.5">
                                                     <Clock className="h-4 w-4" />
-                                                    <span>{formatDuration(quiz)}</span>
+                                                    <span>
+                                                        {formatDuration(quiz)}
+                                                    </span>
                                                 </div>
                                                 <div className="flex items-center gap-1.5">
                                                     <Calendar className="h-4 w-4" />
-                                                    <span>{formatDate(quiz.starts_at)}</span>
+                                                    <span>
+                                                        {formatDate(
+                                                            quiz.starts_at,
+                                                        )}
+                                                    </span>
                                                 </div>
                                             </div>
 
@@ -128,7 +173,10 @@ export default function Dashboard({ isStudent, studentQuizzes }: Props) {
                                                         <>
                                                             <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
                                                                 <CheckCircle2 className="h-3 w-3" />
-                                                                {quiz.attempt_count}x dikerjakan
+                                                                {
+                                                                    quiz.attempt_count
+                                                                }
+                                                                x dikerjakan
                                                             </span>
                                                             <Link
                                                                 href={`/quiz/${quiz.id}/history`}
@@ -144,10 +192,16 @@ export default function Dashboard({ isStudent, studentQuizzes }: Props) {
                                                         </span>
                                                     )}
                                                 </div>
-                                                
+
                                                 <Button size="sm" asChild>
-                                                    <Link href={`/quiz/${quiz.id}/start`}>
-                                                        {quiz.attempt_count > 0 ? (
+                                                    <Link
+                                                        href={`/quiz/${quiz.id}/start`}
+                                                        onClick={
+                                                            startQuizInFullscreen
+                                                        }
+                                                    >
+                                                        {quiz.attempt_count >
+                                                        0 ? (
                                                             <>
                                                                 <Zap className="mr-1.5 h-3.5 w-3.5" />
                                                                 Coba Lagi
@@ -173,29 +227,37 @@ export default function Dashboard({ isStudent, studentQuizzes }: Props) {
                 {!isStudent && (
                     <div className="space-y-6">
                         <div>
-                            <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+                            <h1 className="text-2xl font-bold tracking-tight">
+                                Dashboard
+                            </h1>
                             <p className="text-muted-foreground">
                                 Selamat datang di Quiz App
                             </p>
                         </div>
-                        
+
                         <div className="grid auto-rows-min gap-4 md:grid-cols-3">
                             <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border bg-sidebar p-4">
-                                <div className="flex flex-col justify-center h-full">
-                                    <h3 className="font-semibold">Total Quiz</h3>
-                                    <p className="text-3xl font-bold mt-2">-</p>
+                                <div className="flex h-full flex-col justify-center">
+                                    <h3 className="font-semibold">
+                                        Total Quiz
+                                    </h3>
+                                    <p className="mt-2 text-3xl font-bold">-</p>
                                 </div>
                             </div>
                             <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border bg-sidebar p-4">
-                                <div className="flex flex-col justify-center h-full">
-                                    <h3 className="font-semibold">Total Siswa</h3>
-                                    <p className="text-3xl font-bold mt-2">-</p>
+                                <div className="flex h-full flex-col justify-center">
+                                    <h3 className="font-semibold">
+                                        Total Siswa
+                                    </h3>
+                                    <p className="mt-2 text-3xl font-bold">-</p>
                                 </div>
                             </div>
                             <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border bg-sidebar p-4">
-                                <div className="flex flex-col justify-center h-full">
-                                    <h3 className="font-semibold">Quiz Aktif</h3>
-                                    <p className="text-3xl font-bold mt-2">-</p>
+                                <div className="flex h-full flex-col justify-center">
+                                    <h3 className="font-semibold">
+                                        Quiz Aktif
+                                    </h3>
+                                    <p className="mt-2 text-3xl font-bold">-</p>
                                 </div>
                             </div>
                         </div>
